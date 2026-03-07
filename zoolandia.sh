@@ -248,7 +248,7 @@ display_splash() {
                          by D.Garner -  http://hack3r.gg
 
                    Automated Docker Homelab Deployment System
-                              Version 6.0.18
+                              Version 6.1.3
 
 EOF
     echo ""
@@ -283,6 +283,7 @@ MODULE_DIR="${SCRIPT_DIR}/modules"
 
 # Source modules in order
 source "${MODULE_DIR}/00_core.sh"           # Core variables and utilities
+source "${MODULE_DIR}/license.sh"          # License validation and feature gating
 source "${MODULE_DIR}/01_homepage.sh"       # Homepage and configuration
 source "${MODULE_DIR}/02_main_menu.sh"      # Main menu
 source "${MODULE_DIR}/10_prerequisites.sh"  # Prerequisites menu

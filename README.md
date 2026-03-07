@@ -2,8 +2,8 @@
 
 > Transform your homelab from complex to automated! Zoolandia is your all-in-one solution for deploying, configuring, and managing Docker-based homelab environments with native Linux system integration.
 
-**Version:** 6.0.18
-**Total Applications:** 167 (151 Docker + 16 System)
+**Version:** 6.1.3
+**Total Applications:** 176 (160 Docker + 16 System)
 **Architecture:** Modular, Dialog-based TUI
 
 ---
@@ -158,9 +158,9 @@ cd Zoolandia
 
 ## Application Catalog
 
-### Total: 167 Applications
+### Total: 176 Applications
 
-#### Docker Applications (151 Apps)
+#### Docker Applications (160 Apps)
 
 **Reverse Proxy & Networking** (5 apps)
 - Traefik, Traefik Access/Error Logs, Traefik Certs Dumper, Cloudflare Tunnel
@@ -690,19 +690,207 @@ Use Settings → Reset Options to clear specific configurations or perform a ful
 
 ---
 
-## License Options
+## Licensing
 
-Zoolandia offers flexible licensing to suit different needs:
+Zoolandia uses a **cryptographically signed offline license system** (Ed25519). Licenses are
+verified entirely on-device — no internet connection required after activation.
 
-- **Free Tier**: Essential features for basic homelab setups
-- **Paid Tiers**:
-  - Basic
-  - Plus
-  - Pro
+### Tiers
 
-[View Detailed Comparison](https://www.simplehomelab.com/zoolandia/pricing/)
+| Feature | Free | Starter | Pro | Enterprise |
+|---|:---:|:---:|:---:|:---:|
+| Docker setup & basic apps | yes | yes | yes | yes |
+| Prerequisites & system tools | yes | yes | yes | yes |
+| Traefik reverse proxy | | yes | yes | yes |
+| Authelia (2FA + SSO) | | yes | yes | yes |
+| Authentik (Enterprise SSO) | | | yes | yes |
+| Security & VPN modules | | | yes | yes |
+| Ansible automation | | | | yes |
+| Multi-node support | | | | yes |
+| Priority support | | | | yes |
 
-**Note**: Annual [website memberships](https://www.simplehomelab.com/membership-account/join-the-geek-army/) include full Zoolandia access!
+### Activating Your License
+
+After purchasing, you will receive a license key in the format `ZOOL-...` via email.
+
+**Via the Settings menu (recommended):**
+```
+Zoolandia → Settings → License → Activate
+```
+Enter your key in the dialog — it is validated and saved automatically.
+
+**Via the command line:**
+```bash
+echo "ZOOL-..." > .license/license.key
+```
+
+**Validating your license:**
+```
+Zoolandia → Settings → License → Validate
+```
+Shows your tier, licensed features, email, and expiry date, with full signature verification.
+
+### License Key Details
+
+- Keys are signed with Ed25519 and verifiable offline
+- Format: `ZOOL-<base64url(payload)>.<base64url(signature)>`
+- Stored at `.license/license.key` within your Zoolandia installation (chmod 600)
+- Never committed to version control (`.license/` is gitignored)
+- Removing the key file reverts all features to the Free tier
+
+### Pricing & Purchase
+
+[View Detailed Tier Comparison & Pricing](https://www.simplehomelab.com/zoolandia/pricing/)
+
+**Note**: Annual [website memberships](https://www.simplehomelab.com/membership-account/join-the-geek-army/) include full Zoolandia Pro access!
+
+---
+
+## GitHub Username Configuration
+
+Zoolandia stores your GitHub username for integrations that require GitHub authentication.
+
+### Uses
+
+- **VS Code Tunnel** — provides guidance during GitHub device login and passes the username to the Ansible playbook
+- **Git configuration** — available for any task requiring a GitHub identity
+- **Ansible variables** — automatically passed as `-e github_username=<value>` to any playbook that needs it
+
+### Setting Your Username
+
+**Via the menu (recommended):**
+```
+Zoolandia → Prerequisites → GitHub Username → enter username → Save
+```
+
+**Via the command line:**
+```bash
+mkdir -p .config
+echo "your-github-username" > .config/github
+```
+
+### Storage Location
+
+```
+<zoolandia-dir>/.config/github
+```
+
+This is a project-local file (gitignored, no sensitive data). It contains only your username string.
+
+**Clear the username:**
+```bash
+rm .config/github
+```
+
+**View current username:**
+```bash
+cat .config/github
+# or inside Zoolandia:
+echo $GITHUB_USERNAME
+```
+
+### Validation Rules
+
+GitHub usernames must:
+- Start with a letter or number
+- Contain only letters, numbers, or hyphens (`-`)
+- Be 1–39 characters long
+- Not end with a hyphen
+
+| Valid | Invalid |
+|---|---|
+| `octocat` | `-username` (starts with hyphen) |
+| `john-doe` | `user_name` (underscore not allowed) |
+| `company123` | `username-` (ends with hyphen) |
+
+### Ansible Usage
+
+```bash
+# Zoolandia passes this automatically:
+ansible-playbook playbooks/appserver.yml -e "github_username=your-username"
+```
+
+In playbooks:
+```yaml
+- name: Configure for GitHub user
+  debug:
+    msg: "User: {{ github_username }}"
+  when: github_username | default('') | length > 0
+```
+
+---
+
+## Changelog
+
+### v6.1.3 — March 7, 2026
+
+- All license tooling consolidated into `.signing/` (`license-server.py`, `license-server.sh`)
+- `license-server.sh` paths updated — keys and server are now co-located in the same directory
+
+### v6.1.2 — March 7, 2026
+
+- `license-server.py` moved from `.signing/` to `.admin/`; `license-server.sh` wrapper added
+- `.admin/` added to `.gitignore`
+
+### v6.1.1 — March 7, 2026
+
+- GitHub username storage moved from `~/.config/zoolandia/github_username` to `<install-dir>/.config/github`
+- Introduced `ZL_PROJECT_CONFIG_DIR` in `00_core.sh` for project-local runtime config
+- `.config/` directory added to `.gitignore`
+- `GITHUB_USERNAME.md` and `CHANGELOG.md` content merged into `README.md`
+
+### v6.1.0 — March 7, 2026
+
+- **License system** — Ed25519 cryptographic offline license keys (`ZOOL-...` format)
+- `modules/license.sh` — key validation, feature gating, activation, status reporting
+- **Settings > License menu** — activate, validate, and remove keys via dialog UI
+- **Feature gate** — Reverse Proxy > DNS Provider requires Starter+ license
+- `.signing/zl-sign.sh` — CLI tool to sign test licenses (no payment processor needed)
+- `.signing/license-server.py` — local web UI for signing and validating keys
+- `.license/` directory for secure key storage (gitignored, chmod 700/600)
+
+### v6.0.25 — March 3, 2026
+
+- Bugfixes: GNOME Keyring detection, `secret-tool` fall-through, CloudDNS edit dialog always-empty
+
+### v6.0.24 — March 2, 2026
+
+- Tiered secret backend for DNS credentials: GNOME Keyring, HashiCorp Vault, or file fallback
+- `set_docker_folder()` validation prevents secrets landing inside git working tree
+
+### v6.0.23 — February 23, 2026
+
+- Secret menu: personal Ansible project launcher with optional RSA key auth gate
+
+### v6.0.22 — February 7, 2026
+
+- Full observability monitoring stack via Ansible (Grafana, Prometheus, InfluxDB, Telegraf, ELK)
+- Jenkins CI/CD and Kubernetes CLI tools added to appserver role
+- Node.js 20 LTS, Yarn, and Sublime Text added to common/workstation roles
+
+### v6.0.21 — January 25, 2026
+
+- DNS Provider configuration: Cloudflare, CloudDNS, Route53, DigitalOcean, GoDaddy, Manual
+- Chrome extension installer with AI Chat Exporter (gpt-xptr v1.2.2)
+- Dedicated Security and Configs Ansible roles extracted from common
+
+### v6.0.20 — January 24, 2026
+
+- Docker menu: Zoolandia dashboard, disk usage, UFW rules, granular prune options
+- Reverse proxy overhaul: Traefikify, exposure management, auth bypass, domain passthrough
+- VS Code Tunnel systemd service via Ansible appserver role; GitHub username prerequisite
+
+### v6.0.19 — January 5, 2026
+
+- Alias management overhaul: Docker (30+), Kubernetes (40+), DevOps (150+) alias menus
+- Interactive TUI menus for Docker (`dom`) and Kubernetes (`k8m`) operations
+
+### v6.0.18 — December 30, 2025
+
+- NTFS/exFAT automount configuration via Ansible
+- Universal `run_ansible_playbook()` handler; menu spacing improvements
+
+[Full changelog →](documentation/CHANGELOG.md)
 
 ---
 
@@ -726,8 +914,8 @@ Part of Zoolandia's revenue supports open-source projects through [OpenCollectiv
 
 ## Version Information
 
-**Current Version**: 6.0.18
-**Release Date**: December 30, 2025
+**Current Version**: 6.1.3
+**Release Date**: March 7, 2026
 **Previous Branding**: DeployIQ (rebranded to Zoolandia in v6.0.6)
 **Original Name**: Deployrr (rebranded to DeployIQ, then Zoolandia)
 
@@ -735,21 +923,57 @@ See [CHANGELOG.md](CHANGELOG.md) for complete version history and release notes.
 
 ### Recent Major Changes
 
+**v6.1.3** (March 7, 2026)
+- All license tooling consolidated into `.signing/` — keys, signing CLI, debug server, wrapper
+
+**v6.1.2** (March 7, 2026)
+- License debug server moved to `.admin/`; `license-server.sh` wrapper added
+- `.admin/` added to `.gitignore`
+
+**v6.1.1** (March 7, 2026)
+- GitHub username storage moved to project-local `.config/github` (gitignored)
+- `ZL_PROJECT_CONFIG_DIR` variable introduced for consistent project-local config
+- GITHUB_USERNAME.md and Changelog content consolidated into README.md
+
+**v6.1.0** (March 7, 2026)
+- Ed25519 cryptographic license system with offline key validation
+- Settings > License menu: activate, validate, and remove keys via dialog UI
+- Feature gating on Reverse Proxy > DNS Provider (requires Starter+ license)
+- Local license signing tool and web-based test server (no payment processor needed)
+- `.license/` directory for secure key storage (gitignored, chmod 700/600)
+
+**v6.0.25** (March 3, 2026)
+- Bugfixes: GNOME Keyring detection, secret-tool fall-through, CloudDNS edit dialog
+
+**v6.0.24** (March 2, 2026)
+- Tiered secret backend: GNOME Keyring, HashiCorp Vault, or file fallback for DNS credentials
+- Docker folder path validation preventing secrets from landing in git working tree
+
+**v6.0.23** (February 23, 2026)
+- Secret menu: personal Ansible project launcher with optional RSA key auth gate
+
+**v6.0.22** (February 7, 2026)
+- Full observability monitoring stack (Grafana, Prometheus, InfluxDB, Telegraf, ELK)
+- Jenkins CI/CD and Kubernetes CLI tools via Ansible
+- Node.js, Yarn, Sublime Text role additions
+
+**v6.0.21** (January 25, 2026)
+- DNS Provider configuration: Cloudflare, CloudDNS, Route53, DigitalOcean, GoDaddy
+- Chrome extension installer (AI Chat Exporter)
+- Dedicated Security and Configs Ansible roles
+
+**v6.0.20** (January 24, 2026)
+- Docker menu: dashboard, disk usage, UFW rules, enhanced prune
+- Reverse proxy overhaul: Traefikify, exposure management, auth bypass, domain passthrough
+- VS Code Tunnel systemd service via Ansible appserver role
+
+**v6.0.19** (January 5, 2026)
+- Alias management overhaul: Docker, Kubernetes, and DevOps alias menus
+- Interactive TUI menus for Docker and Kubernetes operations
+
 **v6.0.18** (December 30, 2025)
 - NTFS/exFAT automount configuration via Ansible
-- Menu spacing improvements
 - Universal playbook execution handler
-
-**v6.0.17** (December 30, 2025)
-- Power tier addition (VLC media player)
-
-**v6.0.16** (December 30, 2025)
-- Security tier addition (YubiKey manager)
-
-**v6.0.15** (December 30, 2025)
-- Filesystem support (NTFS, exFAT)
-- Build tools (gcc, g++, cmake)
-- Disk management (gparted)
 
 **v6.0.0** (December 30, 2025)
 - Complete modular architecture refactor
@@ -809,6 +1033,6 @@ Zoolandia isn't just another container manager - it's your pathway to homelab ma
 
 [Get Started](https://www.simplehomelab.com/zoolandia/) | [Documentation](https://docs.zoolandia.app) | [Join Discord](https://www.simplehomelab.com/discord/) | [Watch Tutorial](https://www.simplehomelab.com/go/zoolandia-v5-intro/)
 
-**167 Applications • Modular Architecture • Enterprise Security • Active Community**
+**176 Applications • Modular Architecture • Enterprise Security • Active Community**
 
 </div>

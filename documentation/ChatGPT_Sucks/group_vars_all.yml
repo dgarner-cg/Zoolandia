@@ -1,4 +1,0 @@
-db_install_method: "apt"  # or "docker"
-backup_retention_days: 7
-media_stack_enabled: true
-homeassistant_enabled: true

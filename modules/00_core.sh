@@ -1,13 +1,13 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v6.0.11 - Core Module
+# Zoolandia v6.1.3 - Core Module
 #
 # Description: Core variables, configuration, and utility functions
 # This module is sourced first and provides foundation for all other modules
 ################################################################################
 
 # Script version
-ZOOLANDIA_VERSION="6.0.18"
+ZOOLANDIA_VERSION="6.1.3"
 SCRIPT_NAME="Zoolandia"
 
 # Color codes
@@ -83,9 +83,12 @@ SERVER_IP=""
 DOMAIN_1=""
 GITHUB_USERNAME=""
 
+# Project-local config directory (gitignored) — stores non-sensitive runtime config
+ZL_PROJECT_CONFIG_DIR="${SCRIPT_DIR}/.config"
+
 # Load saved GitHub username if exists
-if [[ -f "$ZOOLANDIA_CONFIG_DIR/github_username" ]]; then
-    GITHUB_USERNAME=$(cat "$ZOOLANDIA_CONFIG_DIR/github_username" 2>/dev/null)
+if [[ -f "${ZL_PROJECT_CONFIG_DIR}/github" ]]; then
+    GITHUB_USERNAME=$(cat "${ZL_PROJECT_CONFIG_DIR}/github" 2>/dev/null)
 fi
 
 ################################################################################

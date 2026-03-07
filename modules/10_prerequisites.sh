@@ -1322,14 +1322,14 @@ set_github_username() {
 
         # Save the username
         GITHUB_USERNAME="$new_username"
-        mkdir -p "$ZOOLANDIA_CONFIG_DIR"
-        echo "$GITHUB_USERNAME" > "$ZOOLANDIA_CONFIG_DIR/github_username"
+        mkdir -p "$ZL_PROJECT_CONFIG_DIR"
+        echo "$GITHUB_USERNAME" > "${ZL_PROJECT_CONFIG_DIR}/github"
 
         dialog --msgbox "GitHub username saved!\n\nUsername: $GITHUB_USERNAME\n\nThis will be used for VS Code Tunnel and other GitHub integrations." 12 60
     else
         # Clear the username if empty
         GITHUB_USERNAME=""
-        rm -f "$ZOOLANDIA_CONFIG_DIR/github_username"
+        rm -f "${ZL_PROJECT_CONFIG_DIR}/github"
         dialog --msgbox "GitHub username cleared." 8 50
     fi
 }

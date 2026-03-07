@@ -285,6 +285,8 @@ toggle_exposure_mode() {
 ################################################################################
 
 configure_dns_provider() {
+    zl_require_license "traefik" "Reverse Proxy / DNS Provider" || return 0
+
     local choice
     choice=$(dialog --clear --backtitle "$SCRIPT_NAME - DNS Provider" \
         --title "ACME DNS Challenge Provider" \
