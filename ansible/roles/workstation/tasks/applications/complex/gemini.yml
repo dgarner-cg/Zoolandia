@@ -1,0 +1,67 @@
+---
+################################################################################
+# Google Gemini CLI Installation
+# Method: npm global install
+#
+# Install command:
+#   npm install -g @google/gemini-cli@latest
+#
+# Requires Node.js (install Codex first, or ensure nodejs is present).
+#
+# Execute:
+#   ansible-playbook workstations.yml --tags "gemini"
+#
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} GEMINI | Installing Google Gemini CLI..."
+  ansible.builtin.debug:
+    msg: "Installing Google Gemini CLI via npm global install..."
+  tags: ['applications', 'gemini', 'ai', 'complex']
+
+- name: Google Gemini CLI installation
+  block:
+    - name: "{{ user_experience.emoji_working | default('🔄') }} GEMINI | Step 1/2 - Ensuring Node.js is present..."
+      ansible.builtin.apt:
+        name: nodejs
+        state: present
+      become: yes
+      register: nodejs_gemini_result
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} GEMINI | Step 2/2 - Installing @google/gemini-cli globally..."
+      ansible.builtin.command: npm install -g @google/gemini-cli@latest
+      become: yes
+      register: gemini_npm_result
+      changed_when: "'added' in gemini_npm_result.stdout"
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} GEMINI | Installation successful!"
+      ansible.builtin.debug:
+        msg: "Google Gemini CLI installed successfully. Run 'gemini' to get started."
+
+    - name: Log Gemini installation success
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] GEMINI: Successfully installed via npm global install"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} GEMINI | Installation failed"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_failure | default('❌') }} Google Gemini CLI installation failed
+          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+
+    - name: Log Gemini installation failure
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] GEMINI: Installation FAILED - {{ ansible_failed_result.msg | default('Unknown error') }}"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+    - name: Add to failures list
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Gemini CLI: ' + (ansible_failed_result.msg | default('Installation failed'))] }}"
+
+  tags: ['applications', 'gemini', 'ai', 'complex']

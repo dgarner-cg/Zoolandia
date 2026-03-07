@@ -1,0 +1,48 @@
+---
+################################################################################
+# Prometheus Deployment
+################################################################################
+
+- name: Prometheus deployment
+  block:
+    - name: Create Prometheus appdata directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: '0755'
+      loop:
+        - "{{ docker_dir }}/appdata/prometheus/config"
+        - "{{ docker_dir }}/appdata/prometheus/data"
+
+    - name: Template Prometheus configuration
+      ansible.builtin.template:
+        src: prometheus.yml.j2
+        dest: "{{ docker_dir }}/appdata/prometheus/config/prometheus.yml"
+        mode: '0644'
+      notify: restart prometheus
+
+    - name: Add Prometheus compose file to Docker stack
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/../includes/docker/starter.yml"
+        insertbefore: "# SERVICE-PLACEHOLDER-DO-NOT-DELETE"
+        line: "  - compose/prometheus.yml"
+        state: present
+
+    - name: Deploy Prometheus container
+      ansible.builtin.command: docker compose -f "{{ playbook_dir }}/../includes/docker/starter.yml" up -d prometheus
+      register: prometheus_deploy
+      changed_when: "'Started' in prometheus_deploy.stdout or 'Created' in prometheus_deploy.stdout"
+      ignore_errors: yes
+
+    - name: Verify Prometheus container is running
+      ansible.builtin.command: docker ps --filter "name=prometheus" --format "{{ '{{' }}.Status{{ '}}' }}"
+      register: prometheus_status
+      changed_when: false
+      failed_when: prometheus_status.stdout == ""
+
+  rescue:
+    - name: Track Prometheus deployment failure
+      ansible.builtin.set_fact:
+        monitoring_failures: "{{ monitoring_failures | default([]) + ['Prometheus: ' + (ansible_failed_result.msg | default('Deployment failed'))] }}"
+
+  tags: ['monitoring', 'prometheus']

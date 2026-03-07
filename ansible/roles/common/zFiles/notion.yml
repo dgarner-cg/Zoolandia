@@ -1,0 +1,20 @@
+---
+- name: Install Notion using Snap
+  block:
+    - name: Check if Notion is installed
+      shell: "snap list | grep notion-snap-reborn"
+      register: notion_check
+      ignore_errors: true
+
+    - name: Install Notion
+      snap:
+        name: notion-snap-reborn
+        state: present
+      when: notion_check.rc != 0
+      ignore_errors: true
+      register: notion_install
+
+- name: Add to failures list - Notion install
+  set_fact:
+    failures: "{{ failures + ['Notion installation failed'] }}"
+  when: notion_install is defined and notion_install is mapping and notion_install.failed | default(false)

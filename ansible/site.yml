@@ -1,0 +1,6 @@
+---
+# Master playbook
+- import_playbook: webservers.yml
+- import_playbook: dbservers.yml
+- import_playbook: appserver.yml
+- import_playbook: monitoring.yml

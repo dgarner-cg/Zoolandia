@@ -1,0 +1,30 @@
+---
+################################################################################
+# Monitoring Role - Default Variables
+################################################################################
+
+# Failure tracking list
+monitoring_failures: []
+
+# Feature flags - enable/disable individual components
+install_grafana: true
+install_prometheus: true
+install_influxdb: true
+install_telegraf: true
+install_node_exporter: true
+install_cadvisor: true
+install_elasticsearch: true
+install_kibana: true
+
+# Docker directory
+docker_dir: "{{ lookup('env', 'DOCKER_DIR') | default('/home/' + ansible_user_id + '/docker', true) }}"
+
+# Ports (matching existing compose env vars)
+grafana_port: 3000
+prometheus_port: 9090
+influxdb_port: 8086
+elasticsearch_port: 9200
+kibana_port: 5601
+telegraf_port: 8125
+node_exporter_port: 9100
+cadvisor_port: 8081

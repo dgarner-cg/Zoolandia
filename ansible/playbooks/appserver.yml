@@ -1,0 +1,76 @@
+---
+################################################################################
+# Zoolandia App Server Setup
+# File: playbooks/appserver.yml
+# Purpose: Install and configure application server tools and services
+#
+# USAGE:
+#   ansible-playbook playbooks/appserver.yml
+#   ansible-playbook playbooks/appserver.yml --tags "vscode-tunnel"
+#   ansible-playbook playbooks/appserver.yml -e "vscode_tunnel_user=myuser"
+#   ansible-playbook playbooks/appserver.yml --check
+#
+################################################################################
+
+- name: App Server Installation
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    # Failure tracking
+    appserver_failures: []
+
+    # VS Code tunnel configuration
+    vscode_tunnel_user: "{{ vscode_tunnel_user | default(ansible_user_id) }}"
+    vscode_tunnel_group: "{{ vscode_tunnel_group | default(ansible_user_id) }}"
+
+    # GitHub username (passed from Zoolandia or via -e flag)
+    github_username: "{{ github_username | default('') }}"
+
+  roles:
+    - role: appserver
+      tags: ['appserver', 'application']
+
+  post_tasks:
+    - name: "✅ APP SERVER ROLE COMPLETE"
+      ansible.builtin.debug:
+        msg: |
+          ═══════════════════════════════════════════════════════════════════
+          ✅ APP SERVER SETUP COMPLETE!
+          ═══════════════════════════════════════════════════════════════════
+
+          Installed services include:
+            - VS Code Tunnel (persistent remote development)
+            - Jenkins CI/CD (Docker container)
+            - Kubernetes CLI tools (kubectl, kubeadm, kubelet)
+
+          {% if appserver_failures | default([]) | length > 0 %}
+          ⚠ FAILURES ({{ appserver_failures | length }}):
+          {% for failure in appserver_failures %}
+            - {{ failure }}
+          {% endfor %}
+          {% endif %}
+
+          VS CODE TUNNEL SETUP:
+            {% if github_username | default('') | length > 0 %}
+            GitHub Account: {{ github_username }}
+            {% endif %}
+            ⚠ First-time setup requires GitHub authentication:
+              1. Run: code tunnel --accept-server-license-terms
+              2. Follow the GitHub device login prompts{% if github_username | default('') | length > 0 %} (login as {{ github_username }}){% endif %}
+
+              3. Press Ctrl+C after authentication completes
+              4. The systemd service will handle persistent connections
+
+            Access URL (after setup):
+              https://vscode.dev/tunnel/{{ ansible_hostname }}
+
+          SERVICE MANAGEMENT:
+            - Status: sudo systemctl status code-tunnel
+            - Start:  sudo systemctl start code-tunnel
+            - Stop:   sudo systemctl stop code-tunnel
+            - Logs:   sudo journalctl -u code-tunnel -f
+
+          ═══════════════════════════════════════════════════════════════════
+      tags: ['always', 'summary']

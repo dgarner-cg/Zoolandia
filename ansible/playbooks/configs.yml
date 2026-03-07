@@ -1,0 +1,44 @@
+---
+################################################################################
+# Zoolandia System Configuration
+# File: playbooks/configs.yml
+# Purpose: Apply system settings (power, touchpad, mouse, NTFS, Nautilus, etc.)
+#
+# USAGE:
+#   ansible-playbook playbooks/configs.yml
+#   ansible-playbook playbooks/configs.yml --tags "power,touchpad"
+#   ansible-playbook playbooks/configs.yml --check
+#
+################################################################################
+
+- name: System Configuration
+  hosts: localhost
+  connection: local
+  become: no
+
+  vars:
+    # Failure tracking
+    configs_failures: []
+
+  roles:
+    - role: configs
+      tags: ['configs']
+
+  post_tasks:
+    - name: "CONFIGS ROLE COMPLETE"
+      ansible.builtin.debug:
+        msg: |
+          ===================================================================
+          SYSTEM CONFIGURATION COMPLETE!
+          ===================================================================
+
+          Applied configurations:
+            - Power Management: {{ 'enabled' if power_management.enabled | default(false) else 'disabled' }}
+            - Touchpad: {{ 'enabled' if touchpad.enabled | default(false) else 'disabled' }}
+            - Mouse: {{ 'enabled' if mouse.enabled | default(false) else 'disabled' }}
+            - NTFS Support: {{ 'enabled' if ntfs_support.enabled | default(false) else 'disabled' }}
+            - Nautilus: {{ 'enabled' if nautilus.enabled | default(false) else 'disabled' }}
+            - Razer GRUB: {{ 'enabled' if razer_grub.enabled | default(false) else 'disabled' }}
+
+          ===================================================================
+      tags: ['always', 'summary']

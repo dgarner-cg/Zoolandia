@@ -1,0 +1,120 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/tasks/system/nautilus_sort.yml
+# Purpose: Configure Nautilus file manager sort order
+#
+# Feature: Set default sort order to 'type' for better file organization
+# Requested by: User
+#
+################################################################################
+
+- name: "{{ user_experience.emoji_config | default('⚙️') }} NAUTILUS | Configuring file manager..."
+  ansible.builtin.debug:
+    msg: "Configuring Nautilus sort order and preferences..."
+  tags: ['system', 'nautilus', 'gnome']
+
+- name: Nautilus configuration
+  block:
+    ############################################################################
+    # STEP 1: Check Current Sort Order
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} NAUTILUS | Checking current sort order..."
+      ansible.builtin.command:
+        cmd: gsettings get org.gnome.nautilus.preferences default-sort-order
+      register: current_sort_order
+      changed_when: false
+      failed_when: false
+      become: no
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+
+    - name: Display current sort order
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_info | default('ℹ️') }}: Current Nautilus sort order: {{ current_sort_order.stdout | default('unknown') }}
+      when: current_sort_order.rc == 0
+
+    ############################################################################
+    # STEP 2: Set Sort Order to 'type' (if not already set)
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} NAUTILUS | Setting sort order to '{{ nautilus.sort_order }}'..."
+      ansible.builtin.command:
+        cmd: gsettings set org.gnome.nautilus.preferences default-sort-order '{{ nautilus.sort_order }}'
+      when:
+        - current_sort_order.rc == 0
+        - current_sort_order.stdout.strip("'") != nautilus.sort_order
+      become: no
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      register: sort_order_changed
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} NAUTILUS | Sort order configured"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_success | default('✅') }} Nautilus sort order set to: {{ nautilus.sort_order }}
+
+          Files will now be sorted by type in Nautilus file manager.
+      when: sort_order_changed is changed
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }} NAUTILUS | Sort order already correct"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_info | default('ℹ️') }} Nautilus sort order already set to: {{ nautilus.sort_order }}
+
+          No changes needed.
+      when:
+        - current_sort_order.rc == 0
+        - current_sort_order.stdout.strip("'") == nautilus.sort_order
+
+    ############################################################################
+    # STEP 3: Additional Nautilus Preferences (Optional)
+    ############################################################################
+
+    - name: Set additional Nautilus preferences
+      ansible.builtin.command:
+        cmd: "gsettings set org.gnome.nautilus.preferences {{ item.key }} {{ item.value }}"
+      loop:
+        - { key: "show-hidden-files", value: "{{ nautilus.show_hidden_files | lower }}" }
+        - { key: "default-folder-viewer", value: "'{{ nautilus.default_view }}'" }
+      become: no
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      when:
+        - current_sort_order.rc == 0
+      failed_when: false
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Log Nautilus configuration success
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] NAUTILUS: Sort order set to '{{ nautilus.sort_order }}'"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+  rescue:
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} NAUTILUS | Configuration skipped"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_warning | default('⚠️') }} Nautilus configuration skipped
+
+          Reason: {{ ansible_failed_result.msg | default('gsettings not available or not running GNOME') }}
+
+          This is normal if you're not using GNOME desktop environment.
+
+    - name: Log Nautilus configuration skip
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] NAUTILUS: Configuration skipped (not GNOME or gsettings unavailable)"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+  tags: ['system', 'nautilus', 'gnome']

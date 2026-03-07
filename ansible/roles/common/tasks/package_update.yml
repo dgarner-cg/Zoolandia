@@ -1,0 +1,11 @@
+---
+- name: Update package list
+  apt:
+    update_cache: true
+  ignore_errors: true
+  register: update_result
+
+- name: Add to failures list - package update
+  set_fact:
+    failures: "{{ failures + ['Package list update failed'] }}"
+  when: update_result.failed

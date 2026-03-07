@@ -1,0 +1,14 @@
+[all]
+server1 ansible_host=192.168.1.10
+
+[webservers]
+server1
+
+[dbservers]
+server1
+
+[cicd]
+server1
+
+[homelab]
+server1

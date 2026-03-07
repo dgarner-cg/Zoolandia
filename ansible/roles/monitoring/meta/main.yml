@@ -1,0 +1,30 @@
+---
+################################################################################
+# Monitoring Role - Metadata
+################################################################################
+
+galaxy_info:
+  role_name: monitoring
+  author: Zoolandia
+  description: Monitoring and observability stack (Grafana, Prometheus, InfluxDB, Telegraf, ELK, cAdvisor, Node Exporter)
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+  galaxy_tags:
+    - monitoring
+    - observability
+    - grafana
+    - prometheus
+    - elasticsearch
+    - docker
+
+dependencies: []

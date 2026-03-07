@@ -1,0 +1,31 @@
+- name: Auto assign web role
+  add_host:
+    name: "{{ inventory_hostname }}"
+    groups: webservers
+  when: "'nginx' in ansible_facts.packages"
+
+- name: Auto assign DB role
+  add_host:
+    name: "{{ inventory_hostname }}"
+    groups: dbservers
+  when: "'postgresql' in ansible_facts.packages or 'mariadb-server' in ansible_facts.packages"
+
+- name: Mark workstation
+  set_fact:
+    is_workstation: "{{ 'ubuntu-desktop' in ansible_facts.packages }}"
+
+- name: Auto detect web role
+  add_host:
+    name: "{{ inventory_hostname }}"
+    groups: webservers
+  when: "'nginx' in ansible_facts.packages"
+
+- name: Auto detect database role
+  add_host:
+    name: "{{ inventory_hostname }}"
+    groups: dbservers
+  when: "'postgresql' in ansible_facts.packages or 'mariadb-server' in ansible_facts.packages"
+
+- name: Auto detect workstation
+  set_fact:
+    is_workstation: "{{ 'ubuntu-desktop' in ansible_facts.packages }}"

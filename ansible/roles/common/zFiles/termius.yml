@@ -1,0 +1,37 @@
+---
+- name: Install Termius
+  block:
+    - name: Check if Termius is installed
+      shell: "dpkg -l | grep Termius"
+      register: termius_check
+      ignore_errors: true
+      failed_when: false
+
+    - name: Download Termius .deb package
+      get_url:
+        url: "https://www.termius.com/download/linux/Termius.deb"
+        dest: /tmp/Termius.deb
+      when: termius_check.rc != 0
+      ignore_errors: true
+      register: termius_download
+
+    - name: Install Termius
+      apt:
+        deb: /tmp/Termius.deb
+        state: present
+      when: termius_check.rc != 0
+      ignore_errors: true
+      register: termius_install
+
+    - name: Remove Termius .deb file
+      file:
+        path: /tmp/Termius.deb
+        state: absent
+      ignore_errors: true
+
+- name: Add to failures list - Termius install
+  set_fact:
+    failures: "{{ failures + ['Termius installation failed'] }}"
+  when: >
+    (termius_install is defined and termius_install is mapping and termius_install.failed | default(false)) or
+    (termius_download is defined and termius_download is mapping and termius_download.failed | default(false))

@@ -1,0 +1,49 @@
+---
+################################################################################
+# Zoolandia Common System Tools
+# File: playbooks/common.yml
+# Purpose: Install base system tools and utilities
+#
+# USAGE:
+#   ansible-playbook playbooks/common.yml
+#   ansible-playbook playbooks/common.yml --tags "network,security"
+#   ansible-playbook playbooks/common.yml --check
+#
+################################################################################
+
+- name: Common System Tools Installation
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    # Failure tracking
+    common_failures: []
+
+  roles:
+    - role: common
+      tags: ['common']
+
+  post_tasks:
+    - name: "✅ COMMON ROLE COMPLETE"
+      ansible.builtin.debug:
+        msg: |
+          ═══════════════════════════════════════════════════════════════════
+          ✅ COMMON SYSTEM TOOLS INSTALLATION COMPLETE!
+          ═══════════════════════════════════════════════════════════════════
+
+          Installed packages include:
+            - Essential tools: git, curl, wget, tmux, tree, jq, fzf
+            - Network tools: openssh-server, net-tools, dnsutils
+            - Monitoring: htop, gotop, glances, iotop, netdata
+            - Security: fail2ban, ufw, auditd
+
+          {% if common_failures | default([]) | length > 0 %}
+          ⚠ FAILURES ({{ common_failures | length }}):
+          {% for failure in common_failures %}
+            - {{ failure }}
+          {% endfor %}
+          {% endif %}
+
+          ═══════════════════════════════════════════════════════════════════
+      tags: ['always', 'summary']

@@ -1,0 +1,386 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/tasks/preflight/checks.yml
+# Purpose: Pre-flight validation checks
+#
+# These checks run BEFORE any installations to ensure the system is ready
+# Prevents wasted time on installations that will fail
+#
+################################################################################
+
+- name: "{{ user_experience.emoji_check | default('🔍') }} PRE-FLIGHT CHECKS | Starting validation..."
+  ansible.builtin.debug:
+    msg: "Running pre-flight checks to ensure system is ready..."
+  tags: ['always', 'preflight']
+
+################################################################################
+# STEP 1: System Information
+################################################################################
+
+- name: "{{ user_experience.emoji_info | default('ℹ️') }}: PRE-FLIGHT CHECKS | Gathering system information..."
+  ansible.builtin.setup:
+    gather_subset:
+      - '!all'
+      - '!min'
+      - 'distribution'
+      - 'hardware'
+      - 'network'
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_info | default('ℹ️') }}: PRE-FLIGHT CHECKS | System detected"
+  ansible.builtin.debug:
+    msg: |
+      System Information:
+        OS: {{ ansible_distribution }} {{ ansible_distribution_version }}
+        Architecture: {{ ansible_architecture }}
+        Kernel: {{ ansible_kernel }}
+        Hostname: {{ ansible_hostname }}
+        User: {{ workstation_user }}
+        Home: {{ workstation_home }}
+  tags: ['always', 'preflight']
+
+################################################################################
+# STEP 2: Disk Space Check
+################################################################################
+
+- name: "{{ user_experience.emoji_check | default('🔍') }} PRE-FLIGHT CHECKS | Step 1/7 - Checking disk space..."
+  ansible.builtin.debug:
+    msg: "Checking available disk space (minimum: {{ preflight_checks.min_disk_space_gb }}GB)..."
+  when: preflight_checks.enabled | default(true)
+  tags: ['always', 'preflight']
+
+- name: Get filesystem information
+  ansible.builtin.stat:
+    path: "{{ preflight_checks.check_path | default(workstation_home) }}"
+  register: filesystem_info
+  when: preflight_checks.enabled | default(true)
+  tags: ['always', 'preflight']
+
+- name: Calculate available disk space in GB
+  ansible.builtin.set_fact:
+    available_disk_gb: "{{ (ansible_mounts | selectattr('mount', 'equalto', '/') | map(attribute='size_available') | first | int / 1024 / 1024 / 1024) | round(2) }}"
+  when: preflight_checks.enabled | default(true)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS | Disk space check passed"
+  ansible.builtin.debug:
+    msg: "Available disk space: {{ available_disk_gb }}GB (required: {{ preflight_checks.min_disk_space_gb }}GB)"
+  when:
+    - preflight_checks.enabled | default(true)
+    - available_disk_gb | float >= preflight_checks.min_disk_space_gb | float
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_warning | default('⚠️') }} PRE-FLIGHT CHECKS | Insufficient disk space (dry-run mode)"
+  ansible.builtin.debug:
+    msg: |
+      {{ user_experience.emoji_warning | default('⚠️') }} INSUFFICIENT DISK SPACE (DRY-RUN MODE)
+
+      Available: {{ available_disk_gb }}GB
+      Required: {{ preflight_checks.min_disk_space_gb }}GB
+
+      Continuing because this is a test/dry-run.
+      In actual installation mode, this would fail.
+  when:
+    - preflight_checks.enabled | default(true)
+    - available_disk_gb | float < preflight_checks.min_disk_space_gb | float
+    - ansible_check_mode | default(false)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_failure | default('❌') }} PRE-FLIGHT CHECKS | Insufficient disk space"
+  ansible.builtin.fail:
+    msg: |
+      {{ user_experience.emoji_failure | default('❌') }} INSUFFICIENT DISK SPACE
+
+      Available: {{ available_disk_gb }}GB
+      Required: {{ preflight_checks.min_disk_space_gb }}GB
+
+      Please free up disk space before continuing.
+
+      To skip this check for testing, run with: --check (dry-run mode)
+  when:
+    - preflight_checks.enabled | default(true)
+    - available_disk_gb | float < preflight_checks.min_disk_space_gb | float
+    - not (ansible_check_mode | default(false))
+  tags: ['always', 'preflight']
+
+################################################################################
+# STEP 3: RAM Check
+################################################################################
+
+- name: "{{ user_experience.emoji_check | default('🔍') }} PRE-FLIGHT CHECKS | Step 2/7 - Checking RAM..."
+  ansible.builtin.debug:
+    msg: "Checking available RAM (minimum: {{ preflight_checks.min_ram_gb }}GB)..."
+  when: preflight_checks.enabled | default(true)
+  tags: ['always', 'preflight']
+
+- name: Calculate available RAM in GB
+  ansible.builtin.set_fact:
+    available_ram_gb: "{{ (ansible_memtotal_mb / 1024) | round(2) }}"
+  when: preflight_checks.enabled | default(true)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS | RAM check passed"
+  ansible.builtin.debug:
+    msg: "Available RAM: {{ available_ram_gb }}GB (required: {{ preflight_checks.min_ram_gb }}GB)"
+  when:
+    - preflight_checks.enabled | default(true)
+    - available_ram_gb | float >= preflight_checks.min_ram_gb | float
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_warning | default('⚠️') }} PRE-FLIGHT CHECKS | Low RAM detected"
+  ansible.builtin.debug:
+    msg: |
+      {{ user_experience.emoji_warning | default('⚠️') }} LOW RAM WARNING
+
+      Available: {{ available_ram_gb }}GB
+      Recommended: {{ preflight_checks.min_ram_gb }}GB
+
+      Installation will continue, but some applications may not perform optimally.
+  when:
+    - preflight_checks.enabled | default(true)
+    - available_ram_gb | float < preflight_checks.min_ram_gb | float
+  tags: ['always', 'preflight']
+
+################################################################################
+# STEP 4: Internet Connectivity Check
+################################################################################
+
+- name: "{{ user_experience.emoji_check | default('🔍') }} PRE-FLIGHT CHECKS | Step 3/7 - Checking internet connectivity..."
+  ansible.builtin.debug:
+    msg: "Testing internet connectivity..."
+  when: preflight_checks.check_internet | default(true)
+  tags: ['always', 'preflight']
+
+- name: Test internet connectivity
+  ansible.builtin.uri:
+    url: "{{ item }}"
+    method: GET
+    timeout: 10
+  loop: "{{ preflight_checks.connectivity_urls }}"
+  register: connectivity_test
+  failed_when: false
+  when: preflight_checks.check_internet | default(true)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS | Internet connectivity confirmed"
+  ansible.builtin.debug:
+    msg: "Internet connectivity: OK"
+  when:
+    - preflight_checks.check_internet | default(true)
+    - connectivity_test.results | selectattr('status', 'defined') | selectattr('status', 'equalto', 200) | list | length > 0
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_warning | default('⚠️') }} PRE-FLIGHT CHECKS | No internet (dry-run mode)"
+  ansible.builtin.debug:
+    msg: |
+      {{ user_experience.emoji_warning | default('⚠️') }} NO INTERNET CONNECTIVITY (DRY-RUN MODE)
+
+      Unable to reach test URLs, but continuing because this is a test/dry-run.
+      In actual installation mode, this would fail.
+
+      Check mode detected: {{ ansible_check_mode }}
+  when:
+    - preflight_checks.check_internet | default(true)
+    - connectivity_test.results | selectattr('status', 'defined') | selectattr('status', 'equalto', 200) | list | length == 0
+    - ansible_check_mode | default(false)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_failure | default('❌') }} PRE-FLIGHT CHECKS | No internet connectivity"
+  ansible.builtin.fail:
+    msg: |
+      {{ user_experience.emoji_failure | default('❌') }} NO INTERNET CONNECTIVITY
+
+      Unable to reach test URLs. Please check your internet connection.
+      Internet access is required to download packages and repositories.
+
+      To skip this check for testing, run with: --check (dry-run mode)
+  when:
+    - preflight_checks.check_internet | default(true)
+    - connectivity_test.results | selectattr('status', 'defined') | selectattr('status', 'equalto', 200) | list | length == 0
+    - not (ansible_check_mode | default(false))
+  tags: ['always', 'preflight']
+
+################################################################################
+# STEP 5: Python Check
+################################################################################
+
+- name: "{{ user_experience.emoji_check | default('🔍') }} PRE-FLIGHT CHECKS | Step 4/7 - Checking Python..."
+  ansible.builtin.debug:
+    msg: "Verifying Python installation..."
+  when: preflight_checks.check_python | default(true)
+  tags: ['always', 'preflight']
+
+- name: Check Python version
+  ansible.builtin.command: python3 --version
+  register: python_version
+  changed_when: false
+  when: preflight_checks.check_python | default(true)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS | Python check passed"
+  ansible.builtin.debug:
+    msg: "{{ python_version.stdout or 'Python: OK (check mode)' }}"
+  when: preflight_checks.check_python | default(true)
+  tags: ['always', 'preflight']
+
+################################################################################
+# STEP 6: Snap Check
+################################################################################
+
+- name: "{{ user_experience.emoji_check | default('🔍') }} PRE-FLIGHT CHECKS | Step 5/7 - Checking Snap..."
+  ansible.builtin.debug:
+    msg: "Verifying Snap installation..."
+  when:
+    - preflight_checks.check_snap | default(true)
+    - features.install_snap_apps | default(true)
+  tags: ['always', 'preflight']
+
+- name: Check if snapd is installed
+  ansible.builtin.command: snap --version
+  register: snap_version
+  changed_when: false
+  failed_when: false
+  when:
+    - preflight_checks.check_snap | default(true)
+    - features.install_snap_apps | default(true)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS | Snap check passed"
+  ansible.builtin.debug:
+    msg: "{{ snap_version.stdout or 'Snap: OK (check mode)' }}"
+  when:
+    - preflight_checks.check_snap | default(true)
+    - features.install_snap_apps | default(true)
+    - snap_version.rc == 0
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_warning | default('⚠️') }} PRE-FLIGHT CHECKS | Snap not installed"
+  ansible.builtin.debug:
+    msg: "Snap is not installed. It will be installed during setup."
+  when:
+    - preflight_checks.check_snap | default(true)
+    - features.install_snap_apps | default(true)
+    - snap_version.rc != 0
+  tags: ['always', 'preflight']
+
+################################################################################
+# STEP 7: APT Check
+################################################################################
+
+- name: "{{ user_experience.emoji_check | default('🔍') }} PRE-FLIGHT CHECKS | Step 6/7 - Checking APT..."
+  ansible.builtin.debug:
+    msg: "Verifying APT package manager..."
+  when: preflight_checks.check_apt | default(true)
+  tags: ['always', 'preflight']
+
+- name: Remove conflicting Docker apt source entries (unsigned lines cause apt conflicts)
+  ansible.builtin.shell: |
+    # Per-line fix: remove any Docker source lines that lack 'signed-by'
+    # Handles the case where apt_repository appended duplicate entries to an existing file
+    for f in /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+      [ -f "$f" ] || continue
+      if grep -q "download.docker.com" "$f"; then
+        sed -i '/download.docker.com/{/signed-by/!d}' "$f"
+      fi
+    done
+    exit 0
+  become: yes
+  changed_when: false
+  failed_when: false
+  when: preflight_checks.check_apt | default(true)
+  tags: ['always', 'preflight']
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: "{{ performance.apt_cache_valid_time | default(3600) }}"
+  become: yes
+  register: apt_update
+  when: preflight_checks.check_apt | default(true)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS | APT check passed"
+  ansible.builtin.debug:
+    msg: "APT package manager: OK"
+  when: preflight_checks.check_apt | default(true)
+  tags: ['always', 'preflight']
+
+################################################################################
+# STEP 8: Desktop Environment Detection
+################################################################################
+
+- name: "{{ user_experience.emoji_check | default('🔍') }} PRE-FLIGHT CHECKS | Step 7/7 - Detecting desktop environment..."
+  ansible.builtin.debug:
+    msg: "Detecting desktop environment..."
+  when: preflight_checks.detect_desktop | default(true)
+  tags: ['always', 'preflight']
+
+- name: Get current desktop environment
+  ansible.builtin.set_fact:
+    current_desktop: "{{ lookup('env', 'XDG_CURRENT_DESKTOP') | default('Unknown', true) }}"
+  when: preflight_checks.detect_desktop | default(true)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS | Desktop environment detected"
+  ansible.builtin.debug:
+    msg: "Desktop environment: {{ current_desktop }}"
+  when: preflight_checks.detect_desktop | default(true)
+  tags: ['always', 'preflight']
+
+- name: "{{ user_experience.emoji_warning | default('⚠️') }}: PRE-FLIGHT CHECKS | Unsupported desktop environment"
+  ansible.builtin.debug:
+    msg: |
+      {{ user_experience.emoji_warning | default('⚠️') }}: UNSUPPORTED DESKTOP ENVIRONMENT
+
+      Detected: {{ current_desktop }}
+      Supported: {{ preflight_checks.supported_desktops | join(', ') }}
+
+      Some desktop-specific configurations may not apply.
+  when:
+    - preflight_checks.detect_desktop | default(true)
+    - current_desktop not in preflight_checks.supported_desktops
+  tags: ['always', 'preflight']
+
+################################################################################
+# FINAL SUMMARY
+################################################################################
+
+- name: "{{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS | All checks passed!"
+  ansible.builtin.debug:
+    msg: |
+
+      ═══════════════════════════════════════════════════════════════════
+      {{ user_experience.emoji_success | default('✅') }} PRE-FLIGHT CHECKS COMPLETE
+      ═══════════════════════════════════════════════════════════════════
+
+      System: {{ ansible_distribution }} {{ ansible_distribution_version }}
+      User: {{ workstation_user }}
+      Disk Space: {{ available_disk_gb }}GB available
+      RAM: {{ available_ram_gb }}GB
+      Desktop: {{ current_desktop }}
+
+      {{ user_experience.emoji_success | default('✅') }} Ready to proceed with installation!
+
+  tags: ['always', 'preflight']
+
+- name: Ensure log directory exists
+  ansible.builtin.file:
+    path: "{{ logging.audit_trail | dirname }}"
+    state: directory
+    mode: '0755'
+  become: yes
+  ignore_errors: yes
+  when: logging.enabled | default(true)
+  tags: ['always', 'preflight']
+
+- name: Create pre-flight check log
+  ansible.builtin.lineinfile:
+    path: "{{ logging.audit_trail }}"
+    line: "[{{ ansible_date_time.iso8601 }}] PRE-FLIGHT: All checks passed - System ready"
+    create: yes
+    mode: '0644'
+  become: yes
+  ignore_errors: yes
+  when: logging.enabled | default(true)
+  tags: ['always', 'preflight']

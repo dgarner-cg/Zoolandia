@@ -1,0 +1,44 @@
+---
+- name: Install Zoom
+  block:
+    - name: Check if Zoom is installed
+      shell: "dpkg -l | grep zoom"
+      register: zoom_check
+      ignore_errors: true
+
+    - name: Install dependencies for Zoom
+      apt:
+        name:
+          - wget
+          - libxcb-xtest0
+        state: present
+      when: zoom_check.rc != 0
+      ignore_errors: true
+
+    - name: Download Zoom package
+      get_url:
+        url: https://zoom.us/client/latest/zoom_amd64.deb
+        dest: /tmp/zoom_amd64.deb
+      when: zoom_check.rc != 0
+      ignore_errors: true
+      register: zoom_download
+
+    - name: Install Zoom
+      apt:
+        deb: /tmp/zoom_amd64.deb
+      when: zoom_check.rc != 0
+      ignore_errors: true
+      register: zoom_install
+
+    - name: Clean up Zoom package
+      file:
+        path: /tmp/zoom_amd64.deb
+        state: absent
+      ignore_errors: true
+
+- name: Add to failures list - Zoom install
+  set_fact:
+    failures: "{{ failures + ['Zoom installation failed'] }}"
+  when: >
+    (zoom_install is defined and zoom_install is mapping and zoom_install.failed | default(false)) or
+    (zoom_download is defined and zoom_download is mapping and zoom_download.failed | default(false))

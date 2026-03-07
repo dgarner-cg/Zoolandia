@@ -1,0 +1,214 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: setup-workstation.yml
+# Purpose: Main playbook entry point for workstation setup
+#
+# DUAL COMPATIBILITY:
+#   - Zoolandia Platform: Called automatically with variables
+#   - Ansible CLI: Run directly with auto-detected variables
+#
+# USAGE:
+#   # From CLI (auto-detects variables)
+#   ansible-playbook setup-workstation.yml
+#
+#   # From CLI with overrides
+#   ansible-playbook setup-workstation.yml -e "workstation_user=alice"
+#   ansible-playbook setup-workstation.yml -e "install_docker=false"
+#
+#   # Selective execution with tags
+#   ansible-playbook setup-workstation.yml --tags "snap,deb"
+#   ansible-playbook setup-workstation.yml --skip-tags "docker"
+#
+#   # Dry run (test without changes)
+#   ansible-playbook setup-workstation.yml --check
+#
+#   # From Zoolandia (called automatically)
+#   Variables auto-passed: CURRENT_USER, DOCKER_DIR, BACKUP_DIR
+#
+################################################################################
+
+- name: Zoolandia Workstation Setup - Production Edition
+  hosts: localhost
+  connection: local
+  become: no
+
+  # Variables (can be overridden via -e or from Zoolandia)
+  vars:
+    # Failure tracking
+    workstation_failures: []
+
+  ############################################################################
+  # PRE-FLIGHT CHECKS
+  # Run before anything else to ensure system is ready
+  ############################################################################
+  pre_tasks:
+    - name: Run pre-flight validation checks
+      ansible.builtin.include_tasks: roles/workstation/tasks/preflight/checks.yml
+      when: preflight_checks.enabled | default(true)
+      tags: ['always', 'preflight']
+
+  ############################################################################
+  # MAIN ROLES
+  # All installation and configuration happens here
+  ############################################################################
+  roles:
+    - role: workstation
+      tags: ['workstation']
+
+    - role: security
+      tags: ['security']
+      when: install_security | default(false)
+
+  ############################################################################
+  # POST-TASKS
+  # Final reporting and manifest generation
+  ############################################################################
+  post_tasks:
+    - name: Generate installation manifest
+      ansible.builtin.copy:
+        content: |
+          ################################################################################
+          # Zoolandia Workstation Installation Manifest
+          # Generated: {{ ansible_date_time.iso8601 }}
+          ################################################################################
+
+          installation:
+            started_at: "{{ workstation_start_time | default('Unknown') }}"
+            completed_at: "{{ ansible_date_time.iso8601 }}"
+            duration: "{{ ansible_date_time.iso8601 }}"  # TODO: Calculate actual duration
+            user: "{{ workstation_user }}"
+            hostname: "{{ ansible_hostname }}"
+            os: "{{ ansible_distribution }} {{ ansible_distribution_version }}"
+            kernel: "{{ ansible_kernel }}"
+            architecture: "{{ ansible_architecture }}"
+
+          configuration:
+            docker_dir: "{{ docker_dir }}"
+            backup_dir: "{{ backup_dir }}"
+            zoolandia_dir: "{{ zoolandia_base_dir }}"
+
+          applications:
+            snap_apps_enabled: {{ snap_apps | selectattr('enabled', 'equalto', true) | list | to_nice_yaml | indent(4) }}
+            deb_apps_enabled: {{ deb_apps | selectattr('enabled', 'equalto', true) | list | to_nice_yaml | indent(4) }}
+            docker_installed: {{ install_docker | default(false) }}
+            portainer_installed: {{ install_portainer | default(false) }}
+            twingate_installed: {{ install_twingate | default(false) }}
+            protonvpn_installed: {{ install_protonvpn | default(false) }}
+            ulauncher_installed: {{ install_ulauncher | default(false) }}
+            n8n_installed: {{ install_n8n | default(false) }}
+
+          system_configuration:
+            power_management: {{ power_management.enabled | default(false) }}
+            touchpad_settings: {{ touchpad.enabled | default(false) }}
+            nautilus_configured: {{ nautilus.enabled | default(false) }}
+            ntfs_support: {{ ntfs_support.enabled | default(false) }}
+
+          results:
+            total_failures: {{ workstation_failures | default([]) | length }}
+            failures: {{ workstation_failures | default([]) | to_nice_yaml | indent(4) }}
+
+          logs:
+            audit_trail: "{{ logging.audit_trail }}"
+            manifest: "{{ logging.manifest_file }}"
+
+          version:
+            role_version: "{{ workstation_role_version }}"
+            role_date: "{{ workstation_role_date }}"
+
+        dest: "{{ logging.manifest_file }}"
+        mode: '0644'
+        owner: "{{ workstation_user }}"
+      when: features.generate_manifest | default(true)
+      become: yes
+      tags: ['always', 'manifest']
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} WORKSTATION ROLE COMPLETE"
+      ansible.builtin.debug:
+        msg: |
+
+          ═══════════════════════════════════════════════════════════════════
+          {{ user_experience.emoji_success | default('✅') }} WORKSTATION ROLE EXECUTION COMPLETE!
+          ═══════════════════════════════════════════════════════════════════
+
+          SYSTEM INFORMATION:
+            User:         {{ workstation_user }}
+            Hostname:     {{ ansible_hostname }}
+            OS:           {{ ansible_distribution }} {{ ansible_distribution_version }}
+            Architecture: {{ ansible_architecture }}
+
+          ───────────────────────────────────────────────────────────────────
+          INSTALLATION STATUS:
+          ───────────────────────────────────────────────────────────────────
+          {% if workstation_failures | default([]) | length > 0 %}
+          {{ user_experience.emoji_success | default('✅') }} FAILURES ({{ workstation_failures | length }})
+          {% for failure in workstation_failures %}
+            - {{ failure }}
+          {% endfor %}
+          {% else %}
+          {{ user_experience.emoji_success | default('✅') }} All installations completed successfully!
+          {% endif %}
+
+          ───────────────────────────────────────────────────────────────────
+          {{ user_experience.emoji_success | default('✅') }} POST-INSTALLATION SETUP INSTRUCTIONS
+          ───────────────────────────────────────────────────────────────────
+          {% if install_ulauncher | default(false) %}
+
+          {{ user_experience.emoji_success | default('✅') }} ULAUNCHER - Wayland Configuration
+            1. Open Ulauncher Preferences and set hotkey to something unused
+            2. Go to Settings > Keyboard > Customize Shortcuts > Custom Shortcuts > +
+            3. Set Command: ulauncher-toggle
+            4. Add name and shortcut, then click Add
+          {% endif %}
+          {% if install_twingate | default(false) %}
+
+          {{ user_experience.emoji_success | default('✅') }} TWINGATE - Network Setup
+            1. Run: sudo twingate setup
+            2. Follow the prompts to connect to your network
+          {% endif %}
+          {% if install_portainer | default(false) %}
+
+          {{ user_experience.emoji_success | default('✅') }} PORTAINER - First Access
+            Access URL: https://localhost:{{ portainer.port_https | default(9443) }}
+            1. Open the URL in your browser
+            2. Create your admin account on first access
+            3. Start managing your Docker containers!
+          {% endif %}
+          {% if install_n8n | default(false) %}
+
+          {{ user_experience.emoji_success | default('✅') }} N8N - Workflow Automation
+            Access URL: {{ n8n.protocol | default('http') }}://{{ n8n.host | default('localhost') }}:{{ n8n.port | default(5678) }}
+            Data directory: {{ n8n.data_dir | default(workstation_home + '/.n8n') }}
+            On first access, create an account to start building workflows.
+          {% endif %}
+          {% if install_docker | default(false) %}
+
+          {{ user_experience.emoji_success | default('✅') }} DOCKER - Important
+            {{ user_experience.emoji_success | default('✅') }} Log out and back in for Docker group membership to take effect
+            Verify with: docker ps
+          {% endif %}
+          {% if power_management.enabled | default(false) %}
+
+          {{ user_experience.emoji_success | default('✅') }} POWER MANAGEMENT - Configured
+            - Automatic sleep (AC): Disabled
+            - Automatic sleep (Battery): Disabled
+            - Lid close (AC): {{ power_management.lid_close_ac_action | default('hibernate') }}
+            - Lid close (Battery): {{ power_management.lid_close_battery_action | default('hibernate') }}
+          {% endif %}
+          {% if touchpad.enabled | default(false) %}
+
+          {{ user_experience.emoji_success | default('✅') }} TOUCHPAD - Configured
+            - Speed: {{ touchpad.speed | default(0.5) }}
+            - Secondary Click: {{ touchpad.click_method | default('fingers') }} (two-finger tap)
+          {% endif %}
+
+          ───────────────────────────────────────────────────────────────────
+          {{ user_experience.emoji_success | default('✅') }} DOCUMENTATION & LOGS
+          ───────────────────────────────────────────────────────────────────
+          Audit Trail:  {{ logging.audit_trail }}
+          Manifest:     {{ logging.manifest_file }}
+
+          ═══════════════════════════════════════════════════════════════════
+          {{ user_experience.emoji_success | default('✅') }} WORKSTATION ROLE EXECUTION COMPLETE!
+          ═══════════════════════════════════════════════════════════════════
+      tags: ['always', 'summary']

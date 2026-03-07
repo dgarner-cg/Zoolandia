@@ -1,0 +1,38 @@
+---
+################################################################################
+# Elasticsearch Deployment
+################################################################################
+
+- name: Elasticsearch deployment
+  block:
+    - name: Create Elasticsearch appdata directory
+      ansible.builtin.file:
+        path: "{{ docker_dir }}/appdata/elasticsearch/data"
+        state: directory
+        mode: '0755'
+
+    - name: Add Elasticsearch compose file to Docker stack
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/../includes/docker/starter.yml"
+        insertbefore: "# SERVICE-PLACEHOLDER-DO-NOT-DELETE"
+        line: "  - compose/elasticsearch.yml"
+        state: present
+
+    - name: Deploy Elasticsearch container
+      ansible.builtin.command: docker compose -f "{{ playbook_dir }}/../includes/docker/starter.yml" up -d elasticsearch
+      register: elasticsearch_deploy
+      changed_when: "'Started' in elasticsearch_deploy.stdout or 'Created' in elasticsearch_deploy.stdout"
+      ignore_errors: yes
+
+    - name: Verify Elasticsearch container is running
+      ansible.builtin.command: docker ps --filter "name=elasticsearch" --format "{{ '{{' }}.Status{{ '}}' }}"
+      register: elasticsearch_status
+      changed_when: false
+      failed_when: elasticsearch_status.stdout == ""
+
+  rescue:
+    - name: Track Elasticsearch deployment failure
+      ansible.builtin.set_fact:
+        monitoring_failures: "{{ monitoring_failures | default([]) + ['Elasticsearch: ' + (ansible_failed_result.msg | default('Deployment failed'))] }}"
+
+  tags: ['monitoring', 'elk', 'elasticsearch']

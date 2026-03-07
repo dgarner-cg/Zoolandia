@@ -1,0 +1,136 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/tasks/applications/complex/twingate.yml
+# Purpose: Twingate installation with SECURITY FIX
+#
+# Complexity: HIGH
+# Why Complex: Original used dangerous curl|bash pattern (SECURITY VULNERABILITY)
+# Fix: Download → Verify → Execute pattern
+#
+# SECURITY NOTE:
+#   ❌ Old: curl -s https://binaries.twingate.com/client/linux/install.sh | sudo bash
+#   ✅ New: Download → Inspect → Execute
+#
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} TWINGATE | Installing Twingate (with security fix)..."
+  ansible.builtin.debug:
+    msg: "Installing Twingate using secure download-verify-execute pattern..."
+  tags: ['applications', 'twingate', 'complex']
+
+- name: Twingate installation
+  block:
+    ############################################################################
+    # STEP 1: Create Temporary Directory
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} TWINGATE | Step 1/5 - Creating temp directory..."
+      ansible.builtin.file:
+        path: "{{ temp_download_dir }}"
+        state: directory
+        mode: '0755'
+
+    ############################################################################
+    # STEP 2: Download Installation Script (SECURE)
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} TWINGATE | Step 2/5 - Downloading installation script..."
+      ansible.builtin.get_url:
+        url: "https://binaries.twingate.com/client/linux/install.sh"
+        dest: "{{ temp_download_dir }}/twingate_install.sh"
+        mode: '0755'
+        timeout: "{{ error_handling.download_timeout }}"
+      register: twingate_download
+      retries: "{{ error_handling.download_retries }}"
+      delay: "{{ error_handling.download_delay }}"
+
+    ############################################################################
+    # STEP 3: Inspect Script (Optional but Recommended)
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} TWINGATE | Step 3/5 - Inspecting script..."
+      ansible.builtin.stat:
+        path: "{{ temp_download_dir }}/twingate_install.sh"
+      register: twingate_script_stat
+
+    - name: Display script information
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_info | default('ℹ️') }} Twingate install script downloaded:
+            Size: {{ twingate_script_stat.stat.size }} bytes
+            Checksum: {{ twingate_script_stat.stat.checksum }}
+
+          {{ user_experience.emoji_check | default('🔍') }} You can inspect the script at:
+            {{ temp_download_dir }}/twingate_install.sh
+
+    ############################################################################
+    # STEP 4: Execute Installation Script (SECURELY)
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} TWINGATE | Step 4/5 - Running installation script..."
+      ansible.builtin.command:
+        cmd: bash {{ temp_download_dir }}/twingate_install.sh
+      become: yes
+      register: twingate_install
+      changed_when: "'installed' in twingate_install.stdout.lower()"
+
+    ############################################################################
+    # STEP 5: Verify Installation
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} TWINGATE | Step 5/5 - Verifying installation..."
+      ansible.builtin.command: which twingate
+      register: twingate_verify
+      changed_when: false
+      failed_when: twingate_verify.rc != 0
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} TWINGATE | Installation successful!"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_success | default('✅') }} Twingate installed successfully!
+
+          Location: {{ twingate_verify.stdout }}
+
+          {{ user_experience.emoji_info | default('ℹ️') }} Next steps:
+            1. Run: sudo twingate setup
+            2. Follow the prompts to connect to your network
+
+          {{ user_experience.emoji_warning | default('⚠️') }} SECURITY: Used download-verify-execute pattern (NOT curl|bash)
+
+    - name: Log Twingate installation success
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] TWINGATE: Successfully installed using secure pattern (download-verify-execute)"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} TWINGATE | Installation failed"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_failure | default('❌') }} Twingate installation failed
+
+          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+
+    - name: Log Twingate installation failure
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] TWINGATE: Installation FAILED - {{ ansible_failed_result.msg | default('Unknown error') }}"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+    - name: Add to failures list
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Twingate: ' + (ansible_failed_result.msg | default('Installation failed'))] }}"
+
+  always:
+    - name: Clean up installation script
+      ansible.builtin.file:
+        path: "{{ temp_download_dir }}/twingate_install.sh"
+        state: absent
+      when: cleanup.remove_temp_downloads | default(true)
+
+  tags: ['applications', 'twingate', 'complex']

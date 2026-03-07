@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GovDeals Auction Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #6b7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-danger {
+            background: #dc2626;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .auctions-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .auction-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #2563eb;
+        }
+
+        .auction-card.ending-soon {
+            border-left-color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .auction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .auction-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .auction-url {
+            font-size: 12px;
+            color: #666;
+            text-decoration: none;
+        }
+
+        .auction-url:hover {
+            text-decoration: underline;
+        }
+
+        .auction-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .price {
+            color: #059669;
+        }
+
+        .time-remaining {
+            color: #2563eb;
+        }
+
+        .time-remaining.urgent {
+            color: #dc2626;
+            font-weight: bold;
+        }
+
+        .auction-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .empty-state h2 {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .refresh-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GovDeals Auction Tracker</h1>
+            <p>Monitor and get alerts for government surplus auctions</p>
+        </header>
+
+        <div class="stats" id="stats">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">-</div>
+                <div class="stat-label">Total Watched</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-active">-</div>
+                <div class="stat-label">Active Auctions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-ending">-</div>
+                <div class="stat-label">Ending Soon</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="stat-alerts">-</div>
+                <div class="stat-label">Alerts (24h)</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" onclick="showAddModal()">+ Add Auction</button>
+            <button class="btn btn-secondary" onclick="refreshAll()">Refresh All</button>
+            <span class="refresh-info" id="last-refresh"></span>
+        </div>
+
+        <div id="auctions-container">
+            <div class="loading">Loading auctions...</div>
+        </div>
+    </div>
+
+    <!-- Add Auction Modal -->
+    <div id="add-modal" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Add Auction to Watch</h2>
+            <form id="add-form" onsubmit="addAuction(event)">
+                <div class="form-group">
+                    <label class="form-label">Auction URL *</label>
+                    <input type="url" class="form-input" id="auction-url" required
+                           placeholder="https://www.govdeals.com/...">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Title (optional)</label>
+                    <input type="text" class="form-input" id="auction-title"
+                           placeholder="Will be auto-detected if left empty">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Alert Threshold (minutes)</label>
+                    <input type="number" class="form-input" id="auction-threshold"
+                           value="60" min="1">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes (optional)</label>
+                    <input type="text" class="form-input" id="auction-notes"
+                           placeholder="Personal notes about this auction">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn">Add Auction</button>
+                    <button type="button" class="btn btn-secondary" onclick="hideAddModal()">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let auctions = [];
+        let refreshInterval;
+
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const stats = await response.json();
+
+                document.getElementById('stat-total').textContent = stats.total_watched;
+                document.getElementById('stat-active').textContent = stats.active_auctions;
+                document.getElementById('stat-ending').textContent = stats.ending_soon;
+                document.getElementById('stat-alerts').textContent = stats.alerts_24h;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        async function loadAuctions() {
+            try {
+                const response = await fetch('/api/auctions');
+                auctions = await response.json();
+
+                renderAuctions();
+                document.getElementById('last-refresh').textContent =
+                    `Last refreshed: ${new Date().toLocaleTimeString()}`;
+            } catch (error) {
+                console.error('Error loading auctions:', error);
+                document.getElementById('auctions-container').innerHTML =
+                    '<div class="loading">Error loading auctions</div>';
+            }
+        }
+
+        function renderAuctions() {
+            const container = document.getElementById('auctions-container');
+
+            if (auctions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h2>No auctions being watched</h2>
+                        <p>Click "Add Auction" to start monitoring</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = `<div class="auctions-grid">${auctions.map(renderAuction).join('')}</div>`;
+        }
+
+        function renderAuction(auction) {
+            const latest = auction.latest || {};
+            const isEndingSoon = latest.time_remaining &&
+                (latest.time_remaining.includes('minute') || latest.time_remaining.includes('second'));
+
+            const statusBadge = latest.status === 'active' ? 'badge-success' :
+                               latest.status === 'ended' ? 'badge-danger' : 'badge-warning';
+
+            return `
+                <div class="auction-card ${isEndingSoon ? 'ending-soon' : ''}">
+                    <div class="auction-header">
+                        <div>
+                            <div class="auction-title">${auction.title || 'Untitled Auction'}</div>
+                            <a href="${auction.url}" target="_blank" class="auction-url">${auction.url}</a>
+                        </div>
+                        <span class="badge ${statusBadge}">${latest.status || 'unknown'}</span>
+                    </div>
+
+                    <div class="auction-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Current Bid</span>
+                            <span class="detail-value price">
+                                ${latest.current_bid ? '$' + latest.current_bid.toFixed(2) : 'N/A'}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Time Remaining</span>
+                            <span class="detail-value time-remaining ${isEndingSoon ? 'urgent' : ''}">
+                                ${latest.time_remaining || 'Unknown'}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Bids</span>
+                            <span class="detail-value">${latest.num_bids || 0}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Alert Threshold</span>
+                            <span class="detail-value">${auction.alert_threshold_minutes} min</span>
+                        </div>
+                    </div>
+
+                    ${auction.notes ? `<div style="margin-bottom: 15px; color: #666; font-size: 14px;">Note: ${auction.notes}</div>` : ''}
+
+                    <div class="auction-actions">
+                        <button class="btn btn-small" onclick="refreshAuction(${auction.id})">Refresh</button>
+                        <button class="btn btn-small btn-secondary" onclick="window.open('${auction.url}', '_blank')">View</button>
+                        <button class="btn btn-small btn-danger" onclick="removeAuction(${auction.id})">Remove</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function addAuction(event) {
+            event.preventDefault();
+
+            const url = document.getElementById('auction-url').value;
+            const title = document.getElementById('auction-title').value || null;
+            const threshold = parseInt(document.getElementById('auction-threshold').value);
+            const notes = document.getElementById('auction-notes').value || null;
+
+            try {
+                const response = await fetch('/api/auction/add', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, title, alert_threshold_minutes: threshold, notes })
+                });
+
+                if (response.ok) {
+                    hideAddModal();
+                    document.getElementById('add-form').reset();
+                    await loadAuctions();
+                    await loadStats();
+                } else {
+                    alert('Failed to add auction');
+                }
+            } catch (error) {
+                console.error('Error adding auction:', error);
+                alert('Error adding auction');
+            }
+        }
+
+        async function removeAuction(id) {
+            if (!confirm('Remove this auction from watch list?')) return;
+
+            try {
+                const response = await fetch(`/api/auction/${id}/remove`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    await loadAuctions();
+                    await loadStats();
+                } else {
+                    alert('Failed to remove auction');
+                }
+            } catch (error) {
+                console.error('Error removing auction:', error);
+                alert('Error removing auction');
+            }
+        }
+
+        async function refreshAuction(id) {
+            try {
+                const response = await fetch(`/api/auction/${id}/refresh`, {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    await loadAuctions();
+                    await loadStats();
+                } else {
+                    alert('Failed to refresh auction');
+                }
+            } catch (error) {
+                console.error('Error refreshing auction:', error);
+                alert('Error refreshing auction');
+            }
+        }
+
+        async function refreshAll() {
+            for (const auction of auctions) {
+                await refreshAuction(auction.id);
+            }
+        }
+
+        function showAddModal() {
+            document.getElementById('add-modal').classList.add('active');
+        }
+
+        function hideAddModal() {
+            document.getElementById('add-modal').classList.remove('active');
+        }
+
+        // Initialize
+        loadStats();
+        loadAuctions();
+
+        // Auto-refresh every 60 seconds
+        setInterval(() => {
+            loadAuctions();
+            loadStats();
+        }, 60000);
+    </script>
+</body>
+</html>

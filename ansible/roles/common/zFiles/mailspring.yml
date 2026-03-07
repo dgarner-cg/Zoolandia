@@ -1,0 +1,20 @@
+---
+- name: Install Mailspring using Snap
+  block:
+    - name: Check if Mailspring is installed
+      shell: "snap list | grep mailspring"
+      register: mailspring_check
+      ignore_errors: true
+
+    - name: Install Mailspring
+      snap:
+        name: mailspring
+        state: present
+      when: mailspring_check.rc != 0
+      ignore_errors: true
+      register: mailspring_install
+
+- name: Add to failures list - Mailspring install
+  set_fact:
+    failures: "{{ failures + ['Mailspring installation failed'] }}"
+  when: mailspring_install is defined and mailspring_install is mapping and mailspring_install.failed | default(false)

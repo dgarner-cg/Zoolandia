@@ -1,9 +1,2 @@
-*
-*/
-
-!.gitignore
-!announcement
-dpf*
-dpm*
 .session_summary.md
 .claude/

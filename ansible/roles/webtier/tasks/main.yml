@@ -1,0 +1,241 @@
+---
+################################################################################
+# Web Tier Role - Web Servers and Reverse Proxies
+# Purpose: Install web servers, reverse proxies, SSL/TLS, PHP, and caching
+################################################################################
+
+# Web Servers
+- name: Install nginx web server
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - nginx-extras
+    state: present
+    update_cache: yes
+  register: nginx_result
+  ignore_errors: yes
+  tags: ['nginx', 'webserver']
+
+- name: Track nginx installation failures
+  ansible.builtin.set_fact:
+    webtier_failures: "{{ webtier_failures | default([]) + ['nginx installation failed'] }}"
+  when: nginx_result is failed
+  tags: ['nginx', 'webserver']
+
+- name: Enable and start nginx
+  ansible.builtin.systemd:
+    name: nginx
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: nginx_result is succeeded
+  tags: ['nginx', 'webserver']
+
+- name: Install apache2 web server
+  ansible.builtin.apt:
+    name:
+      - apache2
+      - apache2-utils
+    state: present
+  register: apache_result
+  ignore_errors: yes
+  tags: ['apache', 'webserver']
+
+- name: Track apache installation failures
+  ansible.builtin.set_fact:
+    webtier_failures: "{{ webtier_failures | default([]) + ['apache2 installation failed'] }}"
+  when: apache_result is failed
+  tags: ['apache', 'webserver']
+
+- name: Enable and start apache2
+  ansible.builtin.systemd:
+    name: apache2
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: apache_result is succeeded
+  tags: ['apache', 'webserver']
+
+# SSL/TLS Tools
+- name: Install SSL/TLS tools
+  ansible.builtin.apt:
+    name:
+      - certbot
+      - python3-certbot-nginx
+      - python3-certbot-apache
+      - openssl
+    state: present
+  register: ssl_result
+  ignore_errors: yes
+  tags: ['ssl', 'tls', 'certbot']
+
+- name: Track SSL/TLS installation failures
+  ansible.builtin.set_fact:
+    webtier_failures: "{{ webtier_failures | default([]) + ['SSL/TLS tools installation failed'] }}"
+  when: ssl_result is failed
+  tags: ['ssl', 'tls', 'certbot']
+
+# Install acme.sh
+- name: Check if acme.sh is already installed
+  ansible.builtin.stat:
+    path: /root/.acme.sh/acme.sh
+  register: acme_check
+  tags: ['ssl', 'acme']
+
+- name: Download and install acme.sh
+  ansible.builtin.shell: |
+    curl https://get.acme.sh | sh -s email=admin@localhost
+  args:
+    creates: /root/.acme.sh/acme.sh
+  when: not acme_check.stat.exists
+  ignore_errors: yes
+  register: acme_install_result
+  tags: ['ssl', 'acme']
+
+- name: Track acme.sh installation failures
+  ansible.builtin.set_fact:
+    webtier_failures: "{{ webtier_failures | default([]) + ['acme.sh installation failed'] }}"
+  when:
+    - not acme_check.stat.exists
+    - acme_install_result is failed
+  tags: ['ssl', 'acme']
+
+# PHP Runtime
+- name: Install PHP-FPM and common modules
+  ansible.builtin.apt:
+    name:
+      - php-fpm
+      - php-cli
+      - php-common
+      - php-mysql
+      - php-pgsql
+      - php-redis
+      - php-curl
+      - php-gd
+      - php-mbstring
+      - php-xml
+      - php-zip
+      - php-json
+    state: present
+  register: php_result
+  ignore_errors: yes
+  tags: ['php', 'php-fpm']
+
+- name: Track PHP installation failures
+  ansible.builtin.set_fact:
+    webtier_failures: "{{ webtier_failures | default([]) + ['PHP-FPM installation failed'] }}"
+  when: php_result is failed
+  tags: ['php', 'php-fpm']
+
+- name: Enable and start PHP-FPM
+  ansible.builtin.systemd:
+    name: "{{ item }}"
+    enabled: yes
+    state: started
+  loop:
+    - php8.3-fpm
+    - php8.2-fpm
+    - php8.1-fpm
+  ignore_errors: yes
+  when: php_result is succeeded
+  tags: ['php', 'php-fpm']
+
+# Caching Solutions
+- name: Install Redis caching server
+  ansible.builtin.apt:
+    name:
+      - redis
+      - redis-server
+      - redis-tools
+    state: present
+  register: redis_result
+  ignore_errors: yes
+  tags: ['redis', 'cache']
+
+- name: Track Redis installation failures
+  ansible.builtin.set_fact:
+    webtier_failures: "{{ webtier_failures | default([]) + ['Redis installation failed'] }}"
+  when: redis_result is failed
+  tags: ['redis', 'cache']
+
+- name: Enable and start Redis
+  ansible.builtin.systemd:
+    name: redis-server
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: redis_result is succeeded
+  tags: ['redis', 'cache']
+
+- name: Install Memcached
+  ansible.builtin.apt:
+    name:
+      - memcached
+      - libmemcached-tools
+    state: present
+  register: memcached_result
+  ignore_errors: yes
+  tags: ['memcached', 'cache']
+
+- name: Track Memcached installation failures
+  ansible.builtin.set_fact:
+    webtier_failures: "{{ webtier_failures | default([]) + ['Memcached installation failed'] }}"
+  when: memcached_result is failed
+  tags: ['memcached', 'cache']
+
+- name: Enable and start Memcached
+  ansible.builtin.systemd:
+    name: memcached
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: memcached_result is succeeded
+  tags: ['memcached', 'cache']
+
+# Reverse Proxy - HAProxy
+- name: Install HAProxy
+  ansible.builtin.apt:
+    name:
+      - haproxy
+    state: present
+  register: haproxy_result
+  ignore_errors: yes
+  tags: ['haproxy', 'reverseproxy']
+
+- name: Track HAProxy installation failures
+  ansible.builtin.set_fact:
+    webtier_failures: "{{ webtier_failures | default([]) + ['HAProxy installation failed'] }}"
+  when: haproxy_result is failed
+  tags: ['haproxy', 'reverseproxy']
+
+- name: Enable and start HAProxy
+  ansible.builtin.systemd:
+    name: haproxy
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: haproxy_result is succeeded
+  tags: ['haproxy', 'reverseproxy']
+
+# Traefik is installed via Docker in Zoolandia
+# No apt package installation needed - handled by compose files
+
+- name: Display web tier installation summary
+  ansible.builtin.debug:
+    msg: |
+      Web Tier Installation Complete!
+
+      Installed components:
+      - Web Servers: nginx, apache2
+      - SSL/TLS: certbot, acme.sh, openssl
+      - PHP Runtime: php-fpm with modules
+      - Caching: redis, memcached
+      - Reverse Proxy: haproxy (traefik via Docker)
+
+      {% if webtier_failures | default([]) | length > 0 %}
+      Failures: {{ webtier_failures | length }}
+      {% for failure in webtier_failures %}
+        - {{ failure }}
+      {% endfor %}
+      {% endif %}
+  tags: ['always']

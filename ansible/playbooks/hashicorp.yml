@@ -1,0 +1,70 @@
+---
+################################################################################
+# Zoolandia HashiCorp Stack Installation
+# File: playbooks/hashicorp.yml
+# Purpose: Install HashiCorp tools (Vault, Consul, Nomad, Terraform, Packer, Waypoint)
+#
+# USAGE:
+#   ansible-playbook playbooks/hashicorp.yml
+#   ansible-playbook playbooks/hashicorp.yml --tags "vault,terraform"
+#   ansible-playbook playbooks/hashicorp.yml --tags "hashicorp"  # Install all
+#   ansible-playbook playbooks/hashicorp.yml --check
+#
+################################################################################
+
+- name: HashiCorp Stack Installation
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    # Failure tracking
+    hashicorp_failures: []
+
+  roles:
+    - role: hashicorp
+      tags: ['hashicorp']
+
+  post_tasks:
+    - name: "✅ HASHICORP STACK COMPLETE"
+      ansible.builtin.debug:
+        msg: |
+          ═══════════════════════════════════════════════════════════════════
+          ✅ HASHICORP STACK INSTALLATION COMPLETE!
+          ═══════════════════════════════════════════════════════════════════
+
+          Installed components (alphabetically):
+            - Boundary: Secure remote access
+            - Consul: Service-based networking
+            - Nomad: Workload scheduling and orchestration
+            - Packer: Build and manage images as code
+            - Terraform: Provision cloud infrastructure
+            - Vault: Identity-based secrets management
+            - Vault Radar: Discover and remediate secret sprawl
+            - Waypoint: Internal developer platform
+
+          {% if hashicorp_failures | default([]) | length > 0 %}
+          ⚠ FAILURES ({{ hashicorp_failures | length }}):
+          {% for failure in hashicorp_failures %}
+            - {{ failure }}
+          {% endfor %}
+          {% endif %}
+
+          NEXT STEPS:
+            - Vault: Run 'vault -autocomplete-install' for shell completion
+            - Terraform: Run 'terraform -install-autocomplete'
+            - Consul: Configure agents and start service
+            - Nomad: Configure agents and start service
+
+          Documentation:
+            - Boundary: https://www.boundaryproject.io/docs
+            - Consul: https://www.consul.io/docs
+            - Nomad: https://www.nomadproject.io/docs
+            - Packer: https://www.packer.io/docs
+            - Terraform: https://www.terraform.io/docs
+            - Vault: https://www.vaultproject.io/docs
+            - Vault Radar: https://www.hashicorp.com/products/vault/radar
+            - Waypoint: https://www.waypointproject.io/docs
+
+          ═══════════════════════════════════════════════════════════════════
+      tags: ['always', 'summary']

@@ -1,0 +1,69 @@
+---
+################################################################################
+# Monitoring Role - Task Orchestrator
+# Purpose: Deploy monitoring and observability stack via Docker
+################################################################################
+
+- name: Initialize monitoring setup
+  ansible.builtin.set_fact:
+    monitoring_failures: []
+  tags: ['always']
+
+# Metrics & Visualization
+- name: Include Grafana deployment
+  ansible.builtin.include_tasks: grafana.yml
+  when: install_grafana | default(true)
+  tags: ['monitoring', 'grafana']
+
+- name: Include Prometheus deployment
+  ansible.builtin.include_tasks: prometheus.yml
+  when: install_prometheus | default(true)
+  tags: ['monitoring', 'prometheus']
+
+- name: Include InfluxDB deployment
+  ansible.builtin.include_tasks: influxdb.yml
+  when: install_influxdb | default(true)
+  tags: ['monitoring', 'influxdb']
+
+- name: Include Telegraf deployment
+  ansible.builtin.include_tasks: telegraf.yml
+  when: install_telegraf | default(true)
+  tags: ['monitoring', 'telegraf']
+
+# Host & Container Metrics
+- name: Include Node Exporter deployment
+  ansible.builtin.include_tasks: node_exporter.yml
+  when: install_node_exporter | default(true)
+  tags: ['monitoring', 'node-exporter']
+
+- name: Include cAdvisor deployment
+  ansible.builtin.include_tasks: cadvisor.yml
+  when: install_cadvisor | default(true)
+  tags: ['monitoring', 'cadvisor']
+
+# ELK Stack
+- name: Include Elasticsearch deployment
+  ansible.builtin.include_tasks: elasticsearch.yml
+  when: install_elasticsearch | default(true)
+  tags: ['monitoring', 'elk', 'elasticsearch']
+
+- name: Include Kibana deployment
+  ansible.builtin.include_tasks: kibana.yml
+  when: install_kibana | default(true)
+  tags: ['monitoring', 'elk', 'kibana']
+
+# Summary
+- name: Display monitoring installation summary
+  ansible.builtin.debug:
+    msg: |
+      Monitoring Stack Installation Complete!
+
+      {% if monitoring_failures | default([]) | length > 0 %}
+      Failures: {{ monitoring_failures | length }}
+      {% for failure in monitoring_failures %}
+        - {{ failure }}
+      {% endfor %}
+      {% else %}
+      All monitoring components deployed successfully!
+      {% endif %}
+  tags: ['always']

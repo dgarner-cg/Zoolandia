@@ -1,0 +1,103 @@
+---
+# Power Management Configuration
+# GNOME power settings for laptops - disable automatic sleep/hibernation
+# Tags: power, system, configuration
+
+- name: "{{ user_experience.emoji_config | default('⚙️') }} POWER | Configuring power management settings..."
+  block:
+    - name: Check if GNOME is installed
+      ansible.builtin.command:
+        cmd: which gsettings
+      register: gsettings_check
+      failed_when: false
+      changed_when: false
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} POWER | Disabling automatic sleep (AC power)..."
+      ansible.builtin.command:
+        cmd: gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout 0
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      when: gsettings_check.rc == 0
+      register: power_sleep_ac
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} POWER | Disabling automatic sleep (Battery power)..."
+      ansible.builtin.command:
+        cmd: gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 0
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      when: gsettings_check.rc == 0
+      register: power_sleep_battery
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} POWER | Setting lid close action (AC) - {{ power_management.lid_close_ac_action }}..."
+      ansible.builtin.command:
+        cmd: gsettings set org.gnome.settings-daemon.plugins.power lid-close-ac-action '{{ power_management.lid_close_ac_action }}'
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      when: gsettings_check.rc == 0
+      register: power_lid_ac
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} POWER | Setting lid close action (Battery) - {{ power_management.lid_close_battery_action }}..."
+      ansible.builtin.command:
+        cmd: gsettings set org.gnome.settings-daemon.plugins.power lid-close-battery-action '{{ power_management.lid_close_battery_action }}'
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      when: gsettings_check.rc == 0
+      register: power_lid_battery
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} POWER | Power management configured successfully"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] POWER: Power management settings - SUCCESS"
+        create: true
+      when: gsettings_check.rc == 0
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }}: POWER | Configuration summary"
+      ansible.builtin.debug:
+        msg: |
+          Power management configured:
+          - Automatic sleep (AC): Disabled
+          - Automatic sleep (Battery): Disabled
+          - Lid close (AC): {{ power_management.lid_close_ac_action }}
+          - Lid close (Battery): {{ power_management.lid_close_battery_action }}
+      when: gsettings_check.rc == 0
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} POWER | GNOME not detected"
+      ansible.builtin.debug:
+        msg: "GNOME desktop environment not detected - skipping power management configuration"
+      when: gsettings_check.rc != 0
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} POWER | Configuration failed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] POWER: Power management settings - FAILED"
+        create: true
+
+    - name: Collect failure information
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Power management configuration failed'] }}"
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} POWER | Error details"
+      ansible.builtin.debug:
+        msg: "Power management configuration failed. This may be normal if you're not using GNOME desktop."
+
+  always:
+    - name: "{{ user_experience.emoji_cleanup | default('🧹') }} POWER | Configuration attempt completed"
+      ansible.builtin.debug:
+        msg: "Power management configuration attempt completed"
+
+  tags:
+    - power
+    - system
+    - configuration
+    - gnome
+
+  when: power_management.enabled | default(false)

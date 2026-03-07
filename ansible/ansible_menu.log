@@ -1,0 +1,465 @@
+═══════════════════════════════════════════════════════════════════
+🚀 ZOOLANDIA WORKSTATION SETUP - INTERACTIVE MENU
+═══════════════════════════════════════════════════════════════════
+
+🔍 Running dry run (check mode)...
+
+BECOME password: 
+[WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
+
+PLAY [Zoolandia Workstation Setup - Production Edition] ******************************************************************************************************************************************************************************************************
+
+TASK [Gathering Facts] ***************************************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [Run pre-flight validation checks] **********************************************************************************************************************************************************************************************************************
+included: /home/cicero/Documents/Zoolandia/ansible/roles/workstation/tasks/preflight/checks.yml for localhost
+
+TASK [🔍 PRE-FLIGHT CHECKS | Starting validation...] *********************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Running pre-flight checks to ensure system is ready...
+
+TASK [ℹ️ PRE-FLIGHT CHECKS | Gathering system information...] *************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [ℹ️ PRE-FLIGHT CHECKS | System detected] *****************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    System Information:
+      OS: Ubuntu 24.04
+      Architecture: x86_64
+      Kernel: 6.14.0-1018-oem
+      Hostname: Cicero
+      User: cicero
+      Home: /home/cicero
+
+TASK [🔍 PRE-FLIGHT CHECKS | Step 1/7 - Checking disk space...] **********************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: 'Checking available disk space (minimum: 10GB)...'
+
+TASK [Get filesystem information] ****************************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [Calculate available disk space in GB] ******************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [✅ PRE-FLIGHT CHECKS | Disk space check passed] ********************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: 'Available disk space: 1382.66GB (required: 10GB)'
+
+TASK [🔍 PRE-FLIGHT CHECKS | Step 2/7 - Checking RAM...] *****************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: 'Checking available RAM (minimum: 4GB)...'
+
+TASK [Calculate available RAM in GB] *************************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [✅ PRE-FLIGHT CHECKS | RAM check passed] ***************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: 'Available RAM: 7.65GB (required: 4GB)'
+
+TASK [🔍 PRE-FLIGHT CHECKS | Step 3/7 - Checking internet connectivity...] ***********************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Testing internet connectivity...
+
+TASK [⚠️ PRE-FLIGHT CHECKS | No internet (dry-run mode)] ******************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    ⚠️ NO INTERNET CONNECTIVITY (DRY-RUN MODE)
+  
+    Unable to reach test URLs, but continuing because this is a test/dry-run.
+    In actual installation mode, this would fail.
+  
+    Check mode detected: True
+
+TASK [🔍 PRE-FLIGHT CHECKS | Step 4/7 - Checking Python...] **************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Verifying Python installation...
+
+TASK [✅ PRE-FLIGHT CHECKS | Python check passed] ************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: ''
+
+TASK [🔍 PRE-FLIGHT CHECKS | Step 5/7 - Checking Snap...] ****************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Verifying Snap installation...
+
+TASK [✅ PRE-FLIGHT CHECKS | Snap check passed] **************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: ''
+
+TASK [🔍 PRE-FLIGHT CHECKS | Step 6/7 - Checking APT...] *****************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Verifying APT package manager...
+
+TASK [Update APT cache] **************************************************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [✅ PRE-FLIGHT CHECKS | APT check passed] ***************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: 'APT package manager: OK'
+
+TASK [🔍 PRE-FLIGHT CHECKS | Step 7/7 - Detecting desktop environment...] ************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Detecting desktop environment...
+
+TASK [Get current desktop environment] ***********************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [✅ PRE-FLIGHT CHECKS | Desktop environment detected] ***************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: 'Desktop environment: ubuntu:GNOME'
+
+TASK [⚠️ PRE-FLIGHT CHECKS | Unsupported desktop environment] *************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    ⚠️ UNSUPPORTED DESKTOP ENVIRONMENT
+  
+    Detected: ubuntu:GNOME
+    Supported: GNOME, KDE, XFCE, MATE, Cinnamon
+  
+    Some desktop-specific configurations may not apply.
+
+TASK [✅ PRE-FLIGHT CHECKS | All checks passed!] *************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: "\n═══════════════════════════════════════════════════════════════════\n✅ PRE-FLIGHT CHECKS COMPLETE\n═══════════════════════════════════════════════════════════════════\n\nSystem: Ubuntu 24.04\nUser: cicero\nDisk Space: 1382.66GB available\nRAM: 7.65GB\nDesktop: ubuntu:GNOME\n\n\U0001F680 Ready to proceed with installation!"
+
+TASK [Create pre-flight check log] ***************************************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : 🚀 ZOOLANDIA WORKSTATION SETUP] **********************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: "\n═══════════════════════════════════════════════════════════════════\n\U0001F680 ZOOLANDIA WORKSTATION SETUP - PRODUCTION EDITION\n═══════════════════════════════════════════════════════════════════\n\nVersion: 1.0.0\nUser: cicero\nHome: /home/cicero\nDocker Directory: /home/cicero/docker\n\nStarting installation..."
+
+TASK [workstation : Initialize workstation setup] ************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : Create Zoolandia directories] ************************************************************************************************************************************************************************************************************
+changed: [localhost] => (item=/home/cicero/.zoolandia)
+changed: [localhost] => (item=/home/cicero/.zoolandia/logs)
+changed: [localhost] => (item=/home/cicero/.zoolandia/config)
+
+TASK [workstation : Initialize audit trail] ******************************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : 🎯 PHASE 1/5 | System Preparation] *******************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Updating system packages...
+
+TASK [workstation : Update APT cache] ************************************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : 🎯 PHASE 2/5 | System Configuration] *****************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Configuring system settings...
+
+TASK [workstation : Include Nautilus configuration] **********************************************************************************************************************************************************************************************************
+included: /home/cicero/Documents/Zoolandia/ansible/roles/workstation/tasks/system/nautilus_sort.yml for localhost
+
+TASK [workstation : ⚙️ NAUTILUS | Configuring file manager...] ************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Configuring Nautilus sort order and preferences...
+
+TASK [workstation : Display current sort order] **************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    ℹ️ Current Nautilus sort order:
+
+TASK [workstation : Log Nautilus configuration success] ******************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : Include Power Management configuration] **************************************************************************************************************************************************************************************************
+included: /home/cicero/Documents/Zoolandia/ansible/roles/workstation/tasks/system/power_management.yml for localhost
+
+TASK [workstation : ✅ POWER | Power management configured successfully] *************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : ℹ️ POWER | Configuration summary] *********************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    Power management configured:
+    - Automatic sleep (AC): Disabled
+    - Automatic sleep (Battery): Disabled
+    - Lid close (AC): hibernate
+    - Lid close (Battery): hibernate
+
+TASK [workstation : 🧹 POWER | Configuration attempt completed] **********************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Power management configuration attempt completed
+
+TASK [workstation : Include Touchpad configuration] **********************************************************************************************************************************************************************************************************
+included: /home/cicero/Documents/Zoolandia/ansible/roles/workstation/tasks/system/touchpad_settings.yml for localhost
+
+TASK [workstation : ℹ️ TOUCHPAD | Current settings] ***********************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    Current touchpad settings:
+    - Speed:
+    - Click method:
+  
+    Configuring to:
+    - Speed: 0.5
+    - Click method: 'fingers' (enables two-finger tap for secondary/right-click)
+
+TASK [workstation : ✅ TOUCHPAD | Touchpad configured successfully] ******************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : ℹ️ TOUCHPAD | Configuration summary] ******************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    ═══════════════════════════════════════════════════════════════════
+    ✅ TOUCHPAD CONFIGURATION COMPLETE
+    ═══════════════════════════════════════════════════════════════════
+  
+    Touchpad settings applied:
+    - Speed: 0.5 (actual: )
+    - Secondary Click Method: fingers (actual: )
+  
+    ℹ️ Click Method Details:
+    - 'fingers' = Two-finger tap for secondary/right-click (recommended)
+    - 'areas' = Corner push for secondary/right-click (legacy)
+  
+    Current configuration uses 'fingers' for improved usability.
+
+TASK [workstation : 🧹 TOUCHPAD | Configuration attempt completed] *******************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Touchpad configuration attempt completed
+
+TASK [workstation : 🎯 PHASE 3/5 | Application Installation] *************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Installing applications...
+
+TASK [workstation : Include simple applications installer] ***************************************************************************************************************************************************************************************************
+included: /home/cicero/Documents/Zoolandia/ansible/roles/workstation/tasks/applications/simple/apps.yml for localhost
+
+TASK [workstation : 📦 SNAP APPS | Installing Snap applications...] ******************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Installing 7 Snap applications...
+
+TASK [workstation : Ensure snapd is installed] ***************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : Ensure snapd service is running] *********************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : Install snap applications] ***************************************************************************************************************************************************************************************************************
+ok: [localhost] => (item=vivaldi (browser))
+ok: [localhost] => (item=bitwarden (security))
+ok: [localhost] => (item=notepad-plus-plus (development))
+ok: [localhost] => (item=notion-snap-reborn (productivity))
+changed: [localhost] => (item=mailspring (communication))
+ok: [localhost] => (item=claude-code (development))
+changed: [localhost] => (item=chatgpt-desktop-client (productivity))
+
+TASK [workstation : Log snap installation results] ***********************************************************************************************************************************************************************************************************
+changed: [localhost] => (item=vivaldi)
+changed: [localhost] => (item=bitwarden)
+changed: [localhost] => (item=notepad-plus-plus)
+changed: [localhost] => (item=notion-snap-reborn)
+changed: [localhost] => (item=mailspring)
+changed: [localhost] => (item=claude-code)
+changed: [localhost] => (item=chatgpt-desktop-client)
+
+TASK [workstation : Collect snap failures] *******************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : ✅ SNAP APPS | Successfully installed] ***************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    ✅ Installed 7 snap applications:
+      - vivaldi (Modern Chromium-based browser)
+      - bitwarden (Password manager)
+      - notepad-plus-plus (Advanced text editor)
+      - notion-snap-reborn (Note-taking and collaboration)
+      - mailspring (Email client)
+      - claude-code (Claude AI code assistant CLI)
+      - chatgpt-desktop-client (ChatGPT desktop application)
+
+TASK [workstation : 📦 DEB APPS | Installing DEB package applications...] ************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Installing 3 DEB package applications...
+
+TASK [workstation : Create temporary download directory] *****************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : Download .deb packages] ******************************************************************************************************************************************************************************************************************
+ok: [localhost] => (item=discord (communication))
+ok: [localhost] => (item=zoom (communication))
+ok: [localhost] => (item=onlyoffice (productivity))
+
+TASK [workstation : ✅ DEB APPS | Downloads complete] ********************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Downloaded 3 packages
+
+TASK [workstation : 🔄 DEB APPS | Installing packages...] ****************************************************************************************************************************************************************************************************
+ok: [localhost] => (item=discord)
+ok: [localhost] => (item=zoom)
+ok: [localhost] => (item=onlyoffice)
+
+TASK [workstation : Log DEB installation results] ************************************************************************************************************************************************************************************************************
+changed: [localhost] => (item=discord)
+changed: [localhost] => (item=zoom)
+changed: [localhost] => (item=onlyoffice)
+
+TASK [workstation : Collect DEB failures] ********************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : ✅ DEB APPS | Successfully installed] ****************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    ✅ Installed 3 DEB applications:
+      - discord (Voice and text chat)
+      - zoom (Video conferencing)
+      - onlyoffice (Office suite)
+
+TASK [workstation : Clean up downloaded DEB packages] ********************************************************************************************************************************************************************************************************
+ok: [localhost] => (item={'name': 'discord', 'url': 'https://discord.com/api/download?platform=linux&format=deb', 'dest': '/tmp/zoolandia_ansible_downloads/discord.deb', 'enabled': True, 'category': 'communication', 'description': 'Voice and text chat', 'retries': 3, 'timeout': 1200})
+ok: [localhost] => (item={'name': 'zoom', 'url': 'https://zoom.us/client/latest/zoom_amd64.deb', 'dest': '/tmp/zoolandia_ansible_downloads/zoom_amd64.deb', 'enabled': True, 'category': 'communication', 'description': 'Video conferencing', 'retries': 3, 'timeout': 1200})
+ok: [localhost] => (item={'name': 'onlyoffice', 'url': 'https://download.onlyoffice.com/install/desktop/editors/linux/onlyoffice-desktopeditors_amd64.deb', 'dest': '/tmp/zoolandia_ansible_downloads/onlyoffice_amd64.deb', 'enabled': True, 'category': 'productivity', 'description': 'Office suite', 'retries': 3, 'timeout': 1200})
+
+TASK [workstation : ✅ SIMPLE APPS | Installation summary] ***************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: "\n═══════════════════════════════════════════════════════════════════\n\U0001F4E6 SIMPLE APPLICATIONS INSTALLATION COMPLETE\n═══════════════════════════════════════════════════════════════════\n\nSnap Apps: 7 installed\nDEB Apps: 3 installed"
+
+TASK [workstation : 📦 COMPLEX APPS | Installing complex applications...] ************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Installing applications that require special handling...
+
+TASK [workstation : Include Docker installation] *************************************************************************************************************************************************************************************************************
+included: /home/cicero/Documents/Zoolandia/ansible/roles/workstation/tasks/applications/complex/docker.yml for localhost
+
+TASK [workstation : 📦 DOCKER | Installing Docker...] ********************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Installing Docker CE with repository setup...
+
+TASK [workstation : 🔄 DOCKER | Step 1/6 - Installing prerequisites...] **************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : 🔄 DOCKER | Step 2/6 - Adding Docker GPG key...] *****************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : 🔄 DOCKER | Step 3/6 - Adding Docker repository...] **************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : 🔄 DOCKER | Step 4/6 - Installing Docker packages...] ************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : 🔄 DOCKER | Step 5/6 - Adding user to docker group...] ***********************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : 🔄 DOCKER | Step 6/6 - Starting Docker service...] ***************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : ✅ DOCKER | Installation successful!] ****************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    ✅ Docker installed successfully!
+  
+    Version:
+    User added to docker group: cicero
+  
+    ⚠️ Log out and back in to use docker without sudo
+
+TASK [workstation : Log Docker installation success] *********************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : Include Portainer deployment] ************************************************************************************************************************************************************************************************************
+included: /home/cicero/Documents/Zoolandia/ansible/roles/workstation/tasks/applications/complex/portainer.yml for localhost
+
+TASK [workstation : 📦 PORTAINER | Deploying Portainer container...] *****************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Deploying Portainer ee edition...
+
+TASK [workstation : 🔄 PORTAINER | Step 1/3 - Creating data volume...] ***************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : 🔄 PORTAINER | Step 2/3 - Deploying container...] ****************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : 🔍 PORTAINER | Step 3/3 - Verifying deployment...] ***************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : ✅ PORTAINER | Deployment successful!] ***************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |-
+    ✅ Portainer deployed successfully!
+  
+    Access URLs:
+      HTTP:  http://localhost:8000
+      HTTPS: https://localhost:9443
+  
+    Status: pending (check mode - container will be created on actual run)
+  
+    ℹ️ Next steps:
+      1. Open https://localhost:9443 in your browser
+      2. Create your admin account on first access
+      3. Start managing your Docker containers!
+
+TASK [workstation : Log Portainer deployment success] ********************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : Include Ulauncher installation] **********************************************************************************************************************************************************************************************************
+included: /home/cicero/Documents/Zoolandia/ansible/roles/workstation/tasks/applications/complex/ulauncher.yml for localhost
+
+TASK [workstation : ℹ️ ULAUNCHER | Installation skipped (already installed)] **********************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Ulauncher is already installed - skipping installation
+
+TASK [workstation : 🧹 ULAUNCHER | Cleanup complete] *********************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Ulauncher installation attempt completed
+
+TASK [workstation : 🎯 PHASE 4/5 | Post-Installation Verification] *******************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Verifying installations...
+
+TASK [workstation : 🎯 PHASE 5/5 | Cleanup and Finalization] *************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: Cleaning up and generating reports...
+
+TASK [workstation : Cleanup temporary downloads] *************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : Calculate setup duration] ****************************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [workstation : ✅ WORKSTATION ROLE COMPLETE] ************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: |2-
+  
+    ═══════════════════════════════════════════════════════════════════
+    ✅ WORKSTATION ROLE EXECUTION COMPLETE
+    ═══════════════════════════════════════════════════════════════════
+  
+    Started:   2026-01-09T22:03:56Z
+    Completed: 2026-01-09T22:03:56Z
+  
+    ✅ All installations completed successfully!
+  
+    Logs:
+      Audit Trail: /home/cicero/.zoolandia/logs/setup_2026-01-09.log
+      Manifest:    /home/cicero/.zoolandia/manifest.yml
+  
+    ═══════════════════════════════════════════════════════════════════
+
+TASK [workstation : Finalize audit trail] ********************************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [workstation : Trigger cleanup handler] *****************************************************************************************************************************************************************************************************************
+changed: [localhost] => 
+  msg: Triggering cleanup handlers...
+
+RUNNING HANDLER [workstation : cleanup temp downloads] *******************************************************************************************************************************************************************************************************
+ok: [localhost]
+
+TASK [Generate installation manifest] ************************************************************************************************************************************************************************************************************************
+changed: [localhost]
+
+TASK [Display final summary] *********************************************************************************************************************************************************************************************************************************
+ok: [localhost] => 
+  msg: "\n═══════════════════════════════════════════════════════════════════\n\U0001F680 ZOOLANDIA WORKSTATION SETUP COMPLETE!\n═══════════════════════════════════════════════════════════════════\n\nSYSTEM INFORMATION:\n  User:         cicero\n  Hostname:     Cicero\n  OS:           Ubuntu 24.04\n  Architecture: x86_64\n\nINSTALLATION STATUS:\n  ✅ All installations completed successfully!\n\nDOCUMENTATION:\n  Audit Trail:  /home/cicero/.zoolandia/logs/setup_2026-01-09.log\n  Manifest:     /home/cicero/.zoolandia/manifest.yml\n\nNEXT STEPS:\n  ℹ️ Review the manifest file for installation details\n  ℹ️ Check the audit trail for detailed logs\n  ⚠️ Log out and back in for Docker group membership\n\n═══════════════════════════════════════════════════════════════════\n\U0001F680 Your workstation is ready!\n═══════════════════════════════════════════════════════════════════"
+
+PLAY RECAP ***************************************************************************************************************************************************************************************************************************************************
+localhost                  : ok=97   changed=21   unreachable=0    failed=0    skipped=43   rescued=0    ignored=0   
+
+Press ENTER to continue...

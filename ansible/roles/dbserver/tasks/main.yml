@@ -1,0 +1,315 @@
+---
+################################################################################
+# Database Server Role - SQL and NoSQL Databases
+# Purpose: Install PostgreSQL, MySQL/MariaDB, Redis, MongoDB, and admin tools
+################################################################################
+
+# PostgreSQL Installation
+- name: Install PostgreSQL database server
+  ansible.builtin.apt:
+    name:
+      - postgresql
+      - postgresql-contrib
+      - postgresql-client
+      - libpq-dev
+      - python3-psycopg2
+    state: present
+    update_cache: yes
+  register: postgres_result
+  ignore_errors: yes
+  tags: ['postgresql', 'sql', 'database']
+
+- name: Track PostgreSQL installation failures
+  ansible.builtin.set_fact:
+    dbserver_failures: "{{ dbserver_failures | default([]) + ['PostgreSQL installation failed'] }}"
+  when: postgres_result is failed
+  tags: ['postgresql', 'sql', 'database']
+
+- name: Enable and start PostgreSQL
+  ansible.builtin.systemd:
+    name: postgresql
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: postgres_result is succeeded
+  tags: ['postgresql', 'sql', 'database']
+
+- name: Set PostgreSQL admin password
+  become: yes
+  become_user: postgres
+  ansible.builtin.postgresql_user:
+    name: postgres
+    password: "{{ postgres_password }}"
+    encrypted: yes
+  when:
+    - postgres_result is succeeded
+    - postgres_password is defined
+    - postgres_password | length > 0
+  ignore_errors: yes
+  tags: ['postgresql', 'sql', 'database']
+
+# MySQL/MariaDB Installation
+- name: Install MySQL/MariaDB database server
+  ansible.builtin.apt:
+    name:
+      - mariadb-server
+      - mariadb-client
+      - libmariadb-dev
+      - python3-pymysql
+    state: present
+  register: mariadb_result
+  ignore_errors: yes
+  tags: ['mysql', 'mariadb', 'sql', 'database']
+
+- name: Track MySQL/MariaDB installation failures
+  ansible.builtin.set_fact:
+    dbserver_failures: "{{ dbserver_failures | default([]) + ['MySQL/MariaDB installation failed'] }}"
+  when: mariadb_result is failed
+  tags: ['mysql', 'mariadb', 'sql', 'database']
+
+- name: Enable and start MariaDB
+  ansible.builtin.systemd:
+    name: mariadb
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: mariadb_result is succeeded
+  tags: ['mysql', 'mariadb', 'sql', 'database']
+
+- name: Set MySQL root password
+  ansible.builtin.mysql_user:
+    name: root
+    password: "{{ mysql_root_password }}"
+    host_all: yes
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+  when:
+    - mariadb_result is succeeded
+    - mysql_root_password is defined
+    - mysql_root_password | length > 0
+  ignore_errors: yes
+  tags: ['mysql', 'mariadb', 'sql', 'database']
+
+# Redis Installation (also used for caching)
+- name: Install Redis database
+  ansible.builtin.apt:
+    name:
+      - redis
+      - redis-server
+      - redis-tools
+    state: present
+  register: redis_result
+  ignore_errors: yes
+  tags: ['redis', 'nosql', 'cache', 'database']
+
+- name: Track Redis installation failures
+  ansible.builtin.set_fact:
+    dbserver_failures: "{{ dbserver_failures | default([]) + ['Redis installation failed'] }}"
+  when: redis_result is failed
+  tags: ['redis', 'nosql', 'cache', 'database']
+
+- name: Enable and start Redis
+  ansible.builtin.systemd:
+    name: redis-server
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: redis_result is succeeded
+  tags: ['redis', 'nosql', 'cache', 'database']
+
+- name: Configure Redis password
+  ansible.builtin.lineinfile:
+    path: /etc/redis/redis.conf
+    regexp: '^# requirepass'
+    line: "requirepass {{ redis_password }}"
+    backup: yes
+  when:
+    - redis_result is succeeded
+    - redis_password is defined
+    - redis_password | length > 0
+  ignore_errors: yes
+  notify: restart redis
+  tags: ['redis', 'nosql', 'cache', 'database']
+
+# MongoDB Installation
+- name: Install MongoDB prerequisites
+  ansible.builtin.apt:
+    name:
+      - gnupg
+      - curl
+    state: present
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Add MongoDB GPG key
+  ansible.builtin.apt_key:
+    url: https://www.mongodb.org/static/pgp/server-7.0.asc
+    state: present
+  ignore_errors: yes
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Add MongoDB repository
+  ansible.builtin.apt_repository:
+    repo: "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu {{ ansible_distribution_release }}/mongodb-org/7.0 multiverse"
+    state: present
+    filename: mongodb-org-7.0
+  ignore_errors: yes
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Install MongoDB
+  ansible.builtin.apt:
+    name:
+      - mongodb-org
+      - mongodb-mongosh
+    state: present
+    update_cache: yes
+  register: mongodb_result
+  ignore_errors: yes
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Track MongoDB installation failures
+  ansible.builtin.set_fact:
+    dbserver_failures: "{{ dbserver_failures | default([]) + ['MongoDB installation failed'] }}"
+  when: mongodb_result is failed
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Enable and start MongoDB
+  ansible.builtin.systemd:
+    name: mongod
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  when: mongodb_result is succeeded
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Wait for MongoDB to be ready
+  ansible.builtin.wait_for:
+    port: 27017
+    delay: 2
+    timeout: 30
+  when:
+    - mongodb_result is succeeded
+    - mongodb_password is defined
+    - mongodb_password | length > 0
+  ignore_errors: yes
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Create MongoDB admin user
+  community.mongodb.mongodb_user:
+    login_host: localhost
+    login_port: 27017
+    database: admin
+    name: admin
+    password: "{{ mongodb_password }}"
+    roles:
+      - role: userAdminAnyDatabase
+        db: admin
+      - role: readWriteAnyDatabase
+        db: admin
+      - role: dbAdminAnyDatabase
+        db: admin
+    state: present
+  when:
+    - mongodb_result is succeeded
+    - mongodb_password is defined
+    - mongodb_password | length > 0
+  ignore_errors: yes
+  register: mongodb_user_result
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Track MongoDB user creation failures
+  ansible.builtin.set_fact:
+    dbserver_failures: "{{ dbserver_failures | default([]) + ['MongoDB admin user creation failed'] }}"
+  when:
+    - mongodb_result is succeeded
+    - mongodb_password is defined
+    - mongodb_password | length > 0
+    - mongodb_user_result is failed
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Configure MongoDB authentication
+  ansible.builtin.lineinfile:
+    path: /etc/mongod.conf
+    regexp: '^#?security:'
+    line: 'security:'
+    backup: yes
+  when:
+    - mongodb_result is succeeded
+    - mongodb_password is defined
+    - mongodb_password | length > 0
+    - mongodb_user_result is succeeded
+  ignore_errors: yes
+  tags: ['mongodb', 'nosql', 'database']
+
+- name: Enable MongoDB authentication
+  ansible.builtin.lineinfile:
+    path: /etc/mongod.conf
+    insertafter: '^security:'
+    line: '  authorization: enabled'
+    backup: yes
+  when:
+    - mongodb_result is succeeded
+    - mongodb_password is defined
+    - mongodb_password | length > 0
+    - mongodb_user_result is succeeded
+  ignore_errors: yes
+  notify: restart mongodb
+  tags: ['mongodb', 'nosql', 'database']
+
+# PostgreSQL Backup Tools
+- name: Install pgBackRest
+  ansible.builtin.apt:
+    name:
+      - pgbackrest
+    state: present
+  register: pgbackrest_result
+  ignore_errors: yes
+  when: postgres_result is succeeded
+  tags: ['postgresql', 'backup', 'pgbackrest']
+
+- name: Track pgBackRest installation failures
+  ansible.builtin.set_fact:
+    dbserver_failures: "{{ dbserver_failures | default([]) + ['pgBackRest installation failed'] }}"
+  when: pgbackrest_result is failed
+  tags: ['postgresql', 'backup', 'pgbackrest']
+
+# Database Admin Tools (via Docker - commented out, handled by compose files)
+# - pgAdmin
+# - Adminer
+# - phpMyAdmin
+
+- name: Display database server installation summary
+  ansible.builtin.debug:
+    msg: |
+      Database Server Installation Complete!
+
+      Installed databases:
+      - SQL: PostgreSQL, MySQL/MariaDB
+      - NoSQL: Redis, MongoDB
+      - Backup Tools: pgBackRest
+
+      {% if dbserver_failures | default([]) | length > 0 %}
+      Failures: {{ dbserver_failures | length }}
+      {% for failure in dbserver_failures %}
+        - {{ failure }}
+      {% endfor %}
+      {% endif %}
+
+      Security Note:
+      Passwords have been set for:
+      {% if postgres_password is defined and postgres_password | length > 0 %}
+        - PostgreSQL (postgres user)
+      {% endif %}
+      {% if mysql_root_password is defined and mysql_root_password | length > 0 %}
+        - MySQL/MariaDB (root user)
+      {% endif %}
+      {% if redis_password is defined and redis_password | length > 0 %}
+        - Redis (requirepass)
+      {% endif %}
+      {% if mongodb_password is defined and mongodb_password | length > 0 %}
+        - MongoDB (admin user)
+      {% endif %}
+
+      Credentials stored in:
+        - ~/.zoolandia/credentials.txt
+        - Bitwarden vault (if configured)
+        - HashiCorp Vault (if configured)
+  tags: ['always']

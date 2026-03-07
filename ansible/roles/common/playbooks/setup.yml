@@ -1,0 +1,658 @@
+---
+- name: Install applications
+  hosts: all
+  become: true
+  vars:
+    failures: []
+    ansible_python_interpreter: /usr/bin/python3.12
+
+  tasks:
+    - name: Update package list
+      apt:
+        update_cache: true
+      ignore_errors: true
+      register: update_result
+    - name: Add to failures list - package update
+      set_fact:
+        failures: "{{ failures + ['Package list update failed'] }}"
+      when: update_result.failed
+
+    - name: Install Vivaldi using Snap
+      block:
+        - name: Check if Vivaldi is installed
+          shell: "snap list | grep vivaldi"
+          register: vivaldi_check
+          ignore_errors: true
+
+        - name: Install Vivaldi
+          snap:
+            name: vivaldi
+            state: present
+          when: vivaldi_check.rc != 0
+          ignore_errors: true
+          register: vivaldi_install
+    - name: Add to failures list - Vivaldi install
+      set_fact:
+        failures: "{{ failures + ['Vivaldi installation failed'] }}"
+      when: vivaldi_install is defined and vivaldi_install.failed is defined and vivaldi_install.failed
+
+    - name: Install Discord
+      block:
+        - name: Check if Discord is installed
+          shell: "dpkg -l | grep discord"
+          register: discord_check
+          ignore_errors: true
+          failed_when: false
+
+        - name: Download Discord .deb package with extended timeout
+          get_url:
+            url: "https://discord.com/api/download?platform=linux&format=deb"
+            dest: /tmp/discord.deb
+            timeout: 1200  # Increased timeout to 1200 seconds
+          when: discord_check.rc != 0  # Only download if Discord is not installed
+          ignore_errors: true
+          register: discord_download
+
+        - name: Install Discord
+          apt:
+            deb: /tmp/discord.deb
+            state: present
+          when: discord_check.rc != 0  # Only install if Discord is not installed
+          ignore_errors: true
+          register: discord_install
+
+        - name: Fix missing dependencies
+          apt:
+            update_cache: true
+            name: '*'
+            state: present
+          ignore_errors: true
+
+    - name: Remove Discord .deb file
+      file:
+        path: /tmp/discord.deb
+        state: absent
+      ignore_errors: true
+      when: ansible_distribution == "Ubuntu"
+
+    - name: Add to failures list - Discord install
+      set_fact:
+        failures: "{{ failures + ['Discord installation failed'] }}"
+      when: >
+        (discord_install is defined and discord_install is mapping and discord_install.failed | default(false)) or
+        (discord_download is defined and discord_download is mapping and discord_download.failed | default(false))
+
+    - name: Install Notepad++ using Snap
+      block:
+        - name: Check if Notepad++ is installed
+          shell: "snap list | grep notepad-plus-plus"
+          register: notepadpp_check
+          ignore_errors: true
+
+        - name: Install Notepad++
+          snap:
+            name: notepad-plus-plus
+            state: present
+          when: notepadpp_check.rc != 0
+          ignore_errors: true
+          register: notepadpp_install
+
+    - name: Add to failures list - Notepad++ install
+      set_fact:
+        failures: "{{ failures + ['Notepad++ installation failed'] }}"
+      when: notepadpp_install is defined and notepadpp_install is mapping and notepadpp_install.failed | default(false)
+
+    - name: Install Notion using Snap
+      block:
+        - name: Check if Notion is installed
+          shell: "snap list | grep notion-snap-reborn"
+          register: notion_check
+          ignore_errors: true
+
+        - name: Install Notion
+          snap:
+            name: notion-snap-reborn
+            state: present
+          when: notion_check.rc != 0
+          ignore_errors: true
+          register: notion_install
+
+    - name: Add to failures list - Notion install
+      set_fact:
+        failures: "{{ failures + ['Notion installation failed'] }}"
+      when: notion_install is defined and notion_install is mapping and notion_install.failed | default(false)
+
+    - name: Install Bitwarden using Snap
+      block:
+        - name: Check if Bitwarden is installed
+          shell: "snap list | grep bitwarden"
+          register: bitwarden_check
+          ignore_errors: true
+
+        - name: Install Bitwarden
+          snap:
+            name: bitwarden
+            state: present
+          when: bitwarden_check.rc != 0
+          ignore_errors: true
+          register: bitwarden_install
+        - name: Add to failures list - Bitwarden install
+          set_fact:
+            failures: "{{ failures + ['Bitwarden installation failed'] }}"
+          when: bitwarden_install is defined and bitwarden_install is mapping and bitwarden_install.failed | default(false)
+
+    - name: Install Proton VPN
+      block:
+        - name: Check if Proton VPN is installed
+          shell: "dpkg -l | grep protonvpn"
+          register: protonvpn_check
+          ignore_errors: true
+
+        - name: Download Proton VPN repository config
+          get_url:
+            url: "https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb"
+            dest: /tmp/protonvpn-stable-release_1.0.4_all.deb
+          when: protonvpn_check.rc != 0
+          ignore_errors: true
+          register: protonvpn_download
+
+        - name: Install Proton VPN repository
+          apt:
+            deb: /tmp/protonvpn-stable-release_1.0.4_all.deb
+          when: protonvpn_check.rc != 0
+          ignore_errors: true
+          register: protonvpn_install
+
+        - name: Install Proton VPN
+          apt:
+            name: proton-vpn-gnome-desktop
+            state: present
+          when: protonvpn_check.rc != 0
+          ignore_errors: true
+
+        - name: Remove Proton VPN .deb file
+          file:
+            path: /tmp/protonvpn-stable-release_1.0.4_all.deb
+            state: absent
+          ignore_errors: true
+        - name: Add to failures list - Proton VPN install
+          set_fact:
+            failures: "{{ failures + ['Proton VPN installation failed'] }}"
+          when: >
+            (protonvpn_install is defined and protonvpn_install is mapping and protonvpn_install.failed | default(false)) or
+            (protonvpn_download is defined and protonvpn_download is mapping and protonvpn_download.failed | default(false))
+
+    - name: Install Mailspring using Snap
+      block:
+        - name: Check if Mailspring is installed
+          shell: "snap list | grep mailspring"
+          register: mailspring_check
+          ignore_errors: true
+
+        - name: Install Mailspring
+          snap:
+            name: mailspring
+            state: present
+          when: mailspring_check.rc != 0
+          ignore_errors: true
+          register: mailspring_install
+        - name: Add to failures list - Mailspring install
+          set_fact:
+            failures: "{{ failures + ['Mailspring installation failed'] }}"
+          when: mailspring_install is defined and mailspring_install is mapping and mailspring_install.failed | default(false)
+
+    - name: Install Termius
+      block:
+        - name: Check if Termius is installed
+          shell: "dpkg -l | grep Termius"
+          register: termius_check
+          ignore_errors: true
+          failed_when: false
+
+        - name: Download Termius .deb package
+          get_url:
+            url: "https://www.termius.com/download/linux/Termius.deb"
+            dest: /tmp/Termius.deb
+          when: termius_check.rc != 0
+          ignore_errors: true
+          register: termius_download
+
+        - name: Install Termius
+          apt:
+            deb: /tmp/Termius.deb
+            state: present
+          when: termius_check.rc != 0
+          ignore_errors: true
+          register: termius_install
+
+        - name: Remove Termius .deb file
+          file:
+            path: /tmp/Termius.deb
+            state: absent
+          ignore_errors: true
+        - name: Add to failures list - Termius install
+          set_fact:
+            failures: "{{ failures + ['Termius installation failed'] }}"
+          when: >
+            (termius_install is defined and termius_install is mapping and termius_install.failed | default(false)) or
+            (termius_download is defined and termius_download is mapping and termius_download.failed | default(false))
+
+    - name: Install Zoom
+      block:
+        - name: Check if Zoom is installed
+          shell: "dpkg -l | grep zoom"
+          register: zoom_check
+          ignore_errors: true
+
+        - name: Install dependencies for Zoom
+          apt:
+            name:
+              - wget
+              - libxcb-xtest0
+            state: present
+          when: zoom_check.rc != 0
+          ignore_errors: true
+
+        - name: Download Zoom package
+          get_url:
+            url: https://zoom.us/client/latest/zoom_amd64.deb
+            dest: /tmp/zoom_amd64.deb
+          when: zoom_check.rc != 0
+          ignore_errors: true
+          register: zoom_download
+
+        - name: Install Zoom
+          apt:
+            deb: /tmp/zoom_amd64.deb
+          when: zoom_check.rc != 0
+          ignore_errors: true
+          register: zoom_install
+
+        - name: Clean up Zoom package
+          file:
+            path: /tmp/zoom_amd64.deb
+            state: absent
+          ignore_errors: true
+        - name: Add to failures list - Zoom install
+          set_fact:
+            failures: "{{ failures + ['Zoom installation failed'] }}"
+          when: >
+            (zoom_install is defined and zoom_install is mapping and zoom_install.failed | default(false)) or
+            (zoom_download is defined and zoom_download is mapping and zoom_download.failed | default(false))
+
+    - name: Install ONLYOFFICE
+      block:
+        - name: Check if ONLYOFFICE is installed
+          shell: "dpkg -l | grep onlyoffice-desktopeditors"
+          register: onlyoffice_check
+          ignore_errors: true
+
+        - name: Download ONLYOFFICE .deb package
+          get_url:
+            url: "https://download.onlyoffice.com/install/desktop/editors/linux/onlyoffice-desktopeditors_amd64.deb"
+            dest: /tmp/onlyoffice-desktopeditors_amd64.deb
+          when: onlyoffice_check.rc != 0
+          ignore_errors: true
+          register: onlyoffice_download
+
+        - name: Install ONLYOFFICE
+          apt:
+            deb: /tmp/onlyoffice-desktopeditors_amd64.deb
+          when: onlyoffice_check.rc != 0
+          ignore_errors: true
+          register: onlyoffice_install
+
+        - name: Remove ONLYOFFICE .deb file
+          file:
+            path: /tmp/onlyoffice-desktopeditors_amd64.deb
+            state: absent
+          ignore_errors: true
+
+        - name: Add to failures list - ONLYOFFICE install
+          set_fact:
+            failures: "{{ failures + ['ONLYOFFICE installation failed'] }}"
+          when: >
+            (onlyoffice_install is defined and onlyoffice_install is mapping and onlyoffice_install.failed | default(false)) or
+            (onlyoffice_download is defined and onlyoffice_download is mapping and onlyoffice_download.failed | default(false))
+
+        - name: Install Twingate
+          block:
+            - name: Check if Twingate is installed
+              shell: command -v twingate
+              register: twingate_check
+              ignore_errors: true
+              failed_when: false
+
+            - name: Install Twingate client
+              shell: curl -s https://binaries.twingate.com/client/linux/install.sh | sudo bash
+              when: twingate_check.rc != 0
+              register: twingate_install
+              ignore_errors: true
+          when: ansible_distribution == "Ubuntu"
+
+        - name: Add to failures list - Twingate install
+          set_fact:
+            failures: "{{ failures + ['Twingate installation failed'] }}"
+          when: twingate_install is defined and twingate_install is mapping and twingate_install.failed | default(false)
+
+        - name: Print reminder for Twingate setup
+          debug:
+            msg: "Twingate installed. Please run `sudo twingate setup` to complete the configuration."
+          when: twingate_check.rc != 0  # Only remind if Twingate was installed
+
+    - name: Install iCloud for Linux using Snap
+      block:
+        - name: Check if iCloud for Linux is installed
+          shell: "snap list | grep icloud-for-linux"
+          register: icloud_check
+          ignore_errors: true
+
+        - name: Install iCloud for Linux
+          snap:
+            name: icloud-for-linux
+            state: present
+          when: icloud_check.rc != 0
+          ignore_errors: true
+          register: icloud_install
+
+    - name: Add to failures list - iCloud for Linux install
+      set_fact:
+        failures: "{{ failures + ['iCloud for Linux installation failed'] }}"
+      when: icloud_install is defined and icloud_install is mapping and icloud_install.failed | default(false)
+
+    - name: Install ulauncher
+      block:
+        - name: Check if ulauncher is installed
+          shell: "dpkg -l | grep ulauncher"
+          register: ulauncher_check
+          ignore_errors: true
+          failed_when: false
+
+        - name: Add universe repository
+          apt_repository:
+            repo: universe
+            state: present
+          when: ulauncher_check.rc != 0
+          ignore_errors: true
+
+        - name: Add ulauncher PPA
+          apt_repository:
+            repo: ppa:agornostal/ulauncher
+            state: present
+          when: ulauncher_check.rc != 0
+          ignore_errors: true
+          register: ulauncher_ppa
+
+        - name: Update apt cache after adding PPA
+          apt:
+            update_cache: true
+          when: ulauncher_check.rc != 0
+          ignore_errors: true
+
+        - name: Install ulauncher
+          apt:
+            name: ulauncher
+            state: present
+          when: ulauncher_check.rc != 0
+          ignore_errors: true
+          register: ulauncher_install
+
+        - name: Install wmctrl for Wayland support
+          apt:
+            name: wmctrl
+            state: present
+          when: ulauncher_check.rc != 0
+          ignore_errors: true
+          register: wmctrl_install
+
+    - name: Add to failures list - ulauncher install
+      set_fact:
+        failures: "{{ failures + ['ulauncher installation failed'] }}"
+      when: >
+        (ulauncher_install is defined and ulauncher_install is mapping and ulauncher_install.failed | default(false)) or
+        (ulauncher_ppa is defined and ulauncher_ppa is mapping and ulauncher_ppa.failed | default(false)) or
+        (wmctrl_install is defined and wmctrl_install is mapping and wmctrl_install.failed | default(false))
+
+    - name: Print reminder for ulauncher Wayland setup
+      debug:
+        msg: |
+          ulauncher installed. To configure for Wayland:
+          1. Open Ulauncher Preferences and set hotkey to something you'll never use
+          2. Open Settings > Keyboard > Customize Shortcuts > Custom Shortcuts > +
+          3. Set Command: ulauncher-toggle, add name and shortcut, then click Add
+      when: ulauncher_check.rc != 0
+
+    - name: Install Docker and Docker Compose
+      block:
+        - name: Check if Docker is installed
+          shell: "command -v docker"
+          register: docker_check
+          ignore_errors: true
+          failed_when: false
+
+        - name: Install Docker prerequisites
+          apt:
+            name:
+              - ca-certificates
+              - curl
+              - gnupg
+              - lsb-release
+            state: present
+          when: docker_check.rc != 0
+          ignore_errors: true
+
+        - name: Create keyrings directory
+          file:
+            path: /etc/apt/keyrings
+            state: directory
+            mode: '0755'
+          when: docker_check.rc != 0
+          ignore_errors: true
+
+        - name: Add Docker's official GPG key
+          shell: |
+            curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+            chmod a+r /etc/apt/keyrings/docker.gpg
+          when: docker_check.rc != 0
+          ignore_errors: true
+          register: docker_gpg
+
+        - name: Add Docker repository
+          shell: |
+            echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | tee /etc/apt/sources.list.d/docker.list > /dev/null
+          when: docker_check.rc != 0
+          ignore_errors: true
+          register: docker_repo
+
+        - name: Update apt cache for Docker
+          apt:
+            update_cache: true
+          when: docker_check.rc != 0
+          ignore_errors: true
+
+        - name: Install Docker Engine and Docker Compose
+          apt:
+            name:
+              - docker-ce
+              - docker-ce-cli
+              - containerd.io
+              - docker-buildx-plugin
+              - docker-compose-plugin
+            state: present
+          when: docker_check.rc != 0
+          ignore_errors: true
+          register: docker_install
+
+        - name: Add user to docker group
+          user:
+            name: dgarner
+            groups: docker
+            append: true
+          when: docker_check.rc != 0
+          ignore_errors: true
+
+        - name: Start and enable Docker service
+          systemd:
+            name: docker
+            state: started
+            enabled: true
+          when: docker_check.rc != 0
+          ignore_errors: true
+
+    - name: Add to failures list - Docker install
+      set_fact:
+        failures: "{{ failures + ['Docker installation failed'] }}"
+      when: >
+        (docker_install is defined and docker_install is mapping and docker_install.failed | default(false)) or
+        (docker_gpg is defined and docker_gpg is mapping and docker_gpg.failed | default(false)) or
+        (docker_repo is defined and docker_repo is mapping and docker_repo.failed | default(false))
+
+    - name: Install Portainer Business Edition
+      block:
+        - name: Check if Portainer is already running
+          shell: "docker ps -a | grep portainer"
+          register: portainer_check
+          ignore_errors: true
+          failed_when: false
+
+        - name: Create Portainer volume
+          shell: "docker volume create portainer_data"
+          when: portainer_check.rc != 0
+          ignore_errors: true
+
+        - name: Deploy Portainer Business Edition
+          shell: |
+            docker run -d \
+              -p 8000:8000 \
+              -p 9443:9443 \
+              --name portainer \
+              --restart=always \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              -v portainer_data:/data \
+              portainer/portainer-ee:latest
+          when: portainer_check.rc != 0
+          ignore_errors: true
+          register: portainer_install
+
+    - name: Add to failures list - Portainer install
+      set_fact:
+        failures: "{{ failures + ['Portainer Business Edition installation failed'] }}"
+      when: portainer_install is defined and portainer_install is mapping and portainer_install.failed | default(false)
+
+    - name: Print reminder for Portainer setup
+      debug:
+        msg: "Portainer Business Edition installed. Access it at https://localhost:9443 - You'll need to create an admin account on first access."
+      when: portainer_check.rc != 0
+
+    - name: Install n8n
+      block:
+        - name: Check if n8n is already running
+          shell: "docker ps -a | grep n8n"
+          register: n8n_check
+          ignore_errors: true
+          failed_when: false
+
+        - name: Create n8n data directory
+          file:
+            path: /home/dgarner/.n8n
+            state: directory
+            owner: dgarner
+            group: dgarner
+            mode: '0755'
+          when: n8n_check.rc != 0
+          ignore_errors: true
+
+        - name: Deploy n8n container
+          shell: |
+            docker run -d \
+              --name n8n \
+              --restart=always \
+              -p 5678:5678 \
+              -e N8N_HOST=localhost \
+              -e N8N_PORT=5678 \
+              -e N8N_PROTOCOL=http \
+              -e WEBHOOK_URL=http://localhost:5678/ \
+              -v /home/dgarner/.n8n:/home/node/.n8n \
+              n8nio/n8n:latest
+          when: n8n_check.rc != 0
+          ignore_errors: true
+          register: n8n_install
+
+    - name: Add to failures list - n8n install
+      set_fact:
+        failures: "{{ failures + ['n8n installation failed'] }}"
+      when: n8n_install is defined and n8n_install is mapping and n8n_install.failed | default(false)
+
+    - name: Print reminder for n8n setup
+      debug:
+        msg: "n8n installed. Access it at http://localhost:5678 - You'll need to create an account on first access."
+      when: n8n_check.rc != 0
+
+    - name: Disable sleep and hibernation by default
+      command: sudo -u dgarner gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-ac-timeout 0
+      ignore_errors: true
+
+    - name: Disable sleep and hibernation when on battery
+      command: sudo -u dgarner gsettings set org.gnome.settings-daemon.plugins.power sleep-inactive-battery-timeout 0
+      ignore_errors: true
+
+    - name: Enable sleep only when lid is closed (AC)
+      command: sudo -u dgarner gsettings set org.gnome.settings-daemon.plugins.power lid-close-ac-action 'suspend'
+      ignore_errors: true
+
+    - name: Enable sleep only when lid is closed (Battery)
+      command: sudo -u dgarner gsettings set org.gnome.settings-daemon.plugins.power lid-close-battery-action 'suspend'
+      ignore_errors: true
+
+    - name: Enable hibernation only when lid is closed (AC)
+      command: sudo -u dgarner gsettings set org.gnome.settings-daemon.plugins.power lid-close-ac-action 'hibernate'
+      ignore_errors: true
+
+    - name: Enable hibernation only when lid is closed (Battery)
+      command: sudo -u dgarner gsettings set org.gnome.settings-daemon.plugins.power lid-close-battery-action 'hibernate'
+      ignore_errors: true
+
+    - name: Print completion message
+      debug:
+        msg: "Installation complete!"
+
+    - name: Increase touchpad movement speed to 65% for user
+      command: sudo -u dgarner DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus" gsettings set org.gnome.desktop.peripherals.touchpad speed 0.5
+      become: true
+      become_user: dgarner
+      ignore_errors: true
+
+    - name: Enable two-finger push for secondary click for user
+      command: sudo -u dgarner DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus" gsettings set org.gnome.desktop.peripherals.touchpad click-method 'fingers'
+      become: true
+      become_user: dgarner
+      ignore_errors: true
+
+    - name: Get touchpad speed for user
+      command: sudo -u dgarner DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus" gsettings get org.gnome.desktop.peripherals.touchpad speed
+      register: touchpad_speed
+      become: true
+      become_user: dgarner
+      ignore_errors: true
+
+    - name: Debug touchpad speed
+      debug:
+        msg: "Touchpad speed is set to {{ touchpad_speed.stdout }}"
+      ignore_errors: true
+
+    - name: Get two-finger secondary click setting for user
+      command: sudo -u dgarner DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/1000/bus" gsettings get org.gnome.desktop.peripherals.touchpad click-method
+      register: click_method
+      become: true
+      become_user: dgarner
+      ignore_errors: true
+
+    - name: Debug two-finger secondary click setting
+      debug:
+        msg: "Click method is set to {{ click_method.stdout }}"
+      ignore_errors: true
+
+    - name: Print summary of failed tasks
+      debug:
+        msg: "The following tasks failed: {{ failures }}"
+      when: failures

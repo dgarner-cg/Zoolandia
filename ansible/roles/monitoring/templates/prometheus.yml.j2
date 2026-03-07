@@ -1,0 +1,23 @@
+# Prometheus Configuration
+# Managed by Ansible - changes will be overwritten
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+{% if install_node_exporter | default(true) %}
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['node-exporter:9100']
+{% endif %}
+
+{% if install_cadvisor | default(true) %}
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+{% endif %}

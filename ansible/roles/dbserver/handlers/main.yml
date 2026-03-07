@@ -1,0 +1,26 @@
+---
+# handlers file for dbserver role
+
+- name: restart redis
+  ansible.builtin.systemd:
+    name: redis-server
+    state: restarted
+  ignore_errors: yes
+
+- name: restart postgresql
+  ansible.builtin.systemd:
+    name: postgresql
+    state: restarted
+  ignore_errors: yes
+
+- name: restart mariadb
+  ansible.builtin.systemd:
+    name: mariadb
+    state: restarted
+  ignore_errors: yes
+
+- name: restart mongodb
+  ansible.builtin.systemd:
+    name: mongod
+    state: restarted
+  ignore_errors: yes

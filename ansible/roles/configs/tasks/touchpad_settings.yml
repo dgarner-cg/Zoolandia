@@ -1,0 +1,141 @@
+---
+# Touchpad Configuration
+# GNOME touchpad settings - speed and click method
+# Tags: touchpad, system, configuration
+
+- name: "{{ user_experience.emoji_config | default('⚙️') }} TOUCHPAD | Configuring touchpad settings..."
+  block:
+    - name: Check if GNOME is installed
+      ansible.builtin.command:
+        cmd: which gsettings
+      register: gsettings_check
+      failed_when: false
+      changed_when: false
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} TOUCHPAD | Getting current touchpad settings..."
+      ansible.builtin.command:
+        cmd: gsettings get org.gnome.desktop.peripherals.touchpad {{ item }}
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      loop:
+        - speed
+        - click-method
+      register: current_touchpad_settings
+      changed_when: false
+      failed_when: false
+      when: gsettings_check.rc == 0
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }}: TOUCHPAD | Current settings"
+      ansible.builtin.debug:
+        msg: |
+          Current touchpad settings:
+          - Speed: {{ (current_touchpad_settings.results[0].stdout or 'N/A (check mode)') if (current_touchpad_settings.results is defined and current_touchpad_settings.results | length > 0) else 'N/A (check mode)' }}
+          - Click method: {{ (current_touchpad_settings.results[1].stdout or 'N/A (check mode)') if (current_touchpad_settings.results is defined and current_touchpad_settings.results | length > 1) else 'N/A (check mode)' }}
+
+          Configuring to:
+          - Speed: {{ touchpad.speed }}
+          - Click method: '{{ touchpad.click_method }}' (enables two-finger tap for secondary/right-click)
+      when:
+        - gsettings_check.rc == 0
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} TOUCHPAD | Setting touchpad speed to {{ touchpad.speed }}..."
+      ansible.builtin.command:
+        cmd: gsettings set org.gnome.desktop.peripherals.touchpad speed {{ touchpad.speed }}
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      when: gsettings_check.rc == 0
+      register: touchpad_speed
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} TOUCHPAD | Changing secondary click from 'areas' (corner push) to 'fingers' (two-finger tap)..."
+      ansible.builtin.command:
+        cmd: gsettings set org.gnome.desktop.peripherals.touchpad click-method '{{ touchpad.click_method }}'
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      when: gsettings_check.rc == 0
+      register: touchpad_click
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} TOUCHPAD | Verifying touchpad speed setting..."
+      ansible.builtin.command:
+        cmd: gsettings get org.gnome.desktop.peripherals.touchpad speed
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      register: verify_speed
+      changed_when: false
+      when: gsettings_check.rc == 0
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} TOUCHPAD | Verifying click method setting..."
+      ansible.builtin.command:
+        cmd: gsettings get org.gnome.desktop.peripherals.touchpad click-method
+      become: true
+      become_user: "{{ workstation_user }}"
+      environment:
+        DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+      register: verify_click
+      changed_when: false
+      when: gsettings_check.rc == 0
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} TOUCHPAD | Touchpad configured successfully"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] TOUCHPAD: Touchpad settings - SUCCESS - Speed: {{ verify_speed.stdout }}, Click: {{ verify_click.stdout }}"
+        create: true
+      when: gsettings_check.rc == 0
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }}: TOUCHPAD | Configuration summary"
+      ansible.builtin.debug:
+        msg: |
+          ═══════════════════════════════════════════════════════════════════
+          {{ user_experience.emoji_success | default('✅') }} TOUCHPAD CONFIGURATION COMPLETE
+          ═══════════════════════════════════════════════════════════════════
+
+          Touchpad settings applied:
+          - Speed: {{ touchpad.speed }} (actual: {{ verify_speed.stdout or 'N/A - check mode' }})
+          - Secondary Click Method: {{ touchpad.click_method }} (actual: {{ verify_click.stdout or 'N/A - check mode' }})
+
+          {{ user_experience.emoji_info | default('ℹ️') }} Click Method Details:
+          - 'fingers' = Two-finger tap for secondary/right-click (recommended)
+          - 'areas' = Corner push for secondary/right-click (legacy)
+
+          Current configuration uses '{{ touchpad.click_method }}' for improved usability.
+      when: gsettings_check.rc == 0
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} TOUCHPAD | GNOME not detected"
+      ansible.builtin.debug:
+        msg: "GNOME desktop environment not detected - skipping touchpad configuration"
+      when: gsettings_check.rc != 0
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} TOUCHPAD | Configuration failed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] TOUCHPAD: Touchpad settings - FAILED"
+        create: true
+
+    - name: Collect failure information
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Touchpad configuration failed'] }}"
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} TOUCHPAD | Error details"
+      ansible.builtin.debug:
+        msg: "Touchpad configuration failed. This may be normal if you're not using GNOME desktop or don't have a touchpad."
+
+  always:
+    - name: "{{ user_experience.emoji_cleanup | default('🧹') }} TOUCHPAD | Configuration attempt completed"
+      ansible.builtin.debug:
+        msg: "Touchpad configuration attempt completed"
+
+  tags:
+    - touchpad
+    - system
+    - configuration
+    - gnome
+
+  when: touchpad.enabled | default(false)

@@ -1,0 +1,81 @@
+---
+# ProtonVPN Installation
+# Requires PPA setup and repository configuration
+# Tags: protonvpn, complex, applications
+
+- name: "{{ user_experience.emoji_package | default('📦') }} PROTONVPN | Installing Proton VPN..."
+  block:
+    - name: Check if ProtonVPN is already installed
+      ansible.builtin.command:
+        cmd: dpkg -l | grep protonvpn
+      register: protonvpn_check
+      failed_when: false
+      changed_when: false
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} PROTONVPN | Downloading repository configuration..."
+      ansible.builtin.get_url:
+        url: "{{ protonvpn.repo_deb_url }}"
+        dest: "{{ temp_download_dir }}/protonvpn-stable-release.deb"
+        mode: '0644'
+        timeout: "{{ download_timeout | default(300) }}"
+      when: protonvpn_check.rc != 0
+      register: protonvpn_repo_download
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} PROTONVPN | Installing repository..."
+      ansible.builtin.apt:
+        deb: "{{ temp_download_dir }}/protonvpn-stable-release.deb"
+        state: present
+      when: protonvpn_check.rc != 0
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} PROTONVPN | Updating package cache..."
+      ansible.builtin.apt:
+        update_cache: true
+      when: protonvpn_check.rc != 0
+
+    - name: "{{ user_experience.emoji_package | default('📦') }} PROTONVPN | Installing Proton VPN desktop client..."
+      ansible.builtin.apt:
+        name: "{{ protonvpn.package_name }}"
+        state: present
+      when: protonvpn_check.rc != 0
+      register: protonvpn_install
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} PROTONVPN | Successfully installed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] PROTONVPN: {{ protonvpn.package_name }} - SUCCESS"
+        create: true
+      when: protonvpn_check.rc != 0
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }} PROTONVPN | Installation skipped (already installed)"
+      ansible.builtin.debug:
+        msg: "ProtonVPN is already installed - skipping installation"
+      when: protonvpn_check.rc == 0
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} PROTONVPN | Installation failed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] PROTONVPN: {{ protonvpn.package_name }} - FAILED"
+        create: true
+
+    - name: Collect failure information
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['ProtonVPN installation failed'] }}"
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} PROTONVPN | Error details"
+      ansible.builtin.debug:
+        msg: "ProtonVPN installation failed. Check {{ logging.audit_trail }} for details."
+
+  always:
+    - name: "{{ user_experience.emoji_cleanup | default('🧹') }} PROTONVPN | Cleanup temporary files"
+      ansible.builtin.file:
+        path: "{{ temp_download_dir }}/protonvpn-stable-release.deb"
+        state: absent
+
+  tags:
+    - protonvpn
+    - complex
+    - applications
+    - vpn
+
+  when: install_protonvpn | default(false)

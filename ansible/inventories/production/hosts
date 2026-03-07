@@ -1,0 +1,8 @@
+# Production Inventory
+
+[webservers]
+#web-prod-1.example.com
+#web-prod-2.example.com
+
+[dbservers]
+#db-prod-1.example.com

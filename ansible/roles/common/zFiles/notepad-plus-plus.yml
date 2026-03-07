@@ -1,0 +1,20 @@
+---
+- name: Install Notepad++ using Snap
+  block:
+    - name: Check if Notepad++ is installed
+      shell: "snap list | grep notepad-plus-plus"
+      register: notepadpp_check
+      ignore_errors: true
+
+    - name: Install Notepad++
+      snap:
+        name: notepad-plus-plus
+        state: present
+      when: notepadpp_check.rc != 0
+      ignore_errors: true
+      register: notepadpp_install
+
+- name: Add to failures list - Notepad++ install
+  set_fact:
+    failures: "{{ failures + ['Notepad++ installation failed'] }}"
+  when: notepadpp_install is defined and notepadpp_install is mapping and notepadpp_install.failed | default(false)

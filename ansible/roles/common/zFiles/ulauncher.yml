@@ -1,0 +1,62 @@
+---
+- name: Install ulauncher
+  block:
+    - name: Check if ulauncher is installed
+      shell: "dpkg -l | grep ulauncher"
+      register: ulauncher_check
+      ignore_errors: true
+      failed_when: false
+
+    - name: Add universe repository
+      apt_repository:
+        repo: universe
+        state: present
+      when: ulauncher_check.rc != 0
+      ignore_errors: true
+
+    - name: Add ulauncher PPA
+      apt_repository:
+        repo: ppa:agornostal/ulauncher
+        state: present
+      when: ulauncher_check.rc != 0
+      ignore_errors: true
+      register: ulauncher_ppa
+
+    - name: Update apt cache after adding PPA
+      apt:
+        update_cache: true
+      when: ulauncher_check.rc != 0
+      ignore_errors: true
+
+    - name: Install ulauncher
+      apt:
+        name: ulauncher
+        state: present
+      when: ulauncher_check.rc != 0
+      ignore_errors: true
+      register: ulauncher_install
+
+    - name: Install wmctrl for Wayland support
+      apt:
+        name: wmctrl
+        state: present
+      when: ulauncher_check.rc != 0
+      ignore_errors: true
+      register: wmctrl_install
+
+- name: Add to failures list - ulauncher install
+  set_fact:
+    failures: "{{ failures + ['ulauncher installation failed'] }}"
+  when: >
+    (ulauncher_install is defined and ulauncher_install is mapping and ulauncher_install.failed | default(false)) or
+    (ulauncher_ppa is defined and ulauncher_ppa is mapping and ulauncher_ppa.failed | default(false)) or
+    (wmctrl_install is defined and wmctrl_install is mapping and wmctrl_install.failed | default(false))
+
+- name: Print reminder for ulauncher Wayland setup
+  debug:
+    msg: |
+      ulauncher installed. To configure for Wayland:
+      1. Open Ulauncher Preferences and set hotkey to something you'll never use
+      2. Open Settings > Keyboard > Customize Shortcuts > Custom Shortcuts > +
+      3. Set Command: ulauncher-toggle, add name and shortcut, then click Add
+  when: ulauncher_check.rc != 0

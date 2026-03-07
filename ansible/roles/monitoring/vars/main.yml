@@ -1,0 +1,17 @@
+---
+################################################################################
+# Monitoring Role - Variables
+################################################################################
+
+# Docker images
+grafana_image: "grafana/grafana:latest"
+prometheus_image: "prom/prometheus:latest"
+influxdb_image: "influxdb:latest"
+telegraf_image: "telegraf:latest"
+node_exporter_image: "prom/node-exporter:latest"
+cadvisor_image: "gcr.io/cadvisor/cadvisor:latest"
+elasticsearch_image: "docker.elastic.co/elasticsearch/elasticsearch:8.17.0"
+kibana_image: "docker.elastic.co/kibana/kibana:8.17.0"
+
+# Compose file paths
+monitoring_compose_dir: "{{ playbook_dir }}/../compose"

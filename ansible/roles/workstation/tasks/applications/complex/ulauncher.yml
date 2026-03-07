@@ -1,0 +1,100 @@
+---
+# Ulauncher Installation
+# Application launcher for Linux with PPA setup
+# Tags: ulauncher, complex, applications
+
+- name: "{{ user_experience.emoji_package | default('📦') }} ULAUNCHER | Installing Ulauncher..."
+  block:
+    - name: Check if Ulauncher is already installed
+      ansible.builtin.command:
+        cmd: dpkg -l | grep ulauncher
+      register: ulauncher_check
+      failed_when: false
+      changed_when: false
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} ULAUNCHER | Enabling universe repository..."
+      ansible.builtin.command: add-apt-repository -y universe
+      become: yes
+      changed_when: false
+      when: ulauncher_check.rc != 0
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} ULAUNCHER | Adding Ulauncher PPA..."
+      ansible.builtin.apt_repository:
+        repo: "{{ ulauncher.ppa }}"
+        state: present
+      become: yes
+      when: ulauncher_check.rc != 0
+      register: ulauncher_ppa_add
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} ULAUNCHER | Updating package cache..."
+      ansible.builtin.apt:
+        update_cache: true
+      become: yes
+      when: ulauncher_check.rc != 0 and ulauncher_ppa_add.changed
+
+    - name: "{{ user_experience.emoji_package | default('📦') }} ULAUNCHER | Installing Ulauncher..."
+      ansible.builtin.apt:
+        name: ulauncher
+        state: present
+      become: yes
+      when: ulauncher_check.rc != 0
+      register: ulauncher_install
+
+    - name: "{{ user_experience.emoji_package | default('📦') }} ULAUNCHER | Installing wmctrl for Wayland support..."
+      ansible.builtin.apt:
+        name: wmctrl
+        state: present
+      become: yes
+      when: ulauncher_check.rc != 0
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} ULAUNCHER | Successfully installed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] ULAUNCHER: ulauncher - SUCCESS"
+        create: true
+      when: ulauncher_check.rc != 0
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }} ULAUNCHER | Wayland configuration reminder"
+      ansible.builtin.debug:
+        msg: |
+          Ulauncher installed successfully!
+
+          For Wayland users, configure custom keyboard shortcut:
+          1. Open Ulauncher Preferences and set hotkey to something unused
+          2. Go to Settings > Keyboard > Customize Shortcuts > Custom Shortcuts > +
+          3. Set Command: ulauncher-toggle
+          4. Add name and shortcut, then click Add
+      when: ulauncher_check.rc != 0 and ulauncher_install.changed
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }} ULAUNCHER | Installation skipped (already installed)"
+      ansible.builtin.debug:
+        msg: "Ulauncher is already installed - skipping installation"
+      when: ulauncher_check.rc == 0
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} ULAUNCHER | Installation failed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] ULAUNCHER: ulauncher - FAILED"
+        create: true
+
+    - name: Collect failure information
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Ulauncher installation failed'] }}"
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} ULAUNCHER | Error details"
+      ansible.builtin.debug:
+        msg: "Ulauncher installation failed. Check {{ logging.audit_trail }} for details."
+
+  always:
+    - name: "{{ user_experience.emoji_cleanup | default('🧹') }} ULAUNCHER | Cleanup complete"
+      ansible.builtin.debug:
+        msg: "Ulauncher installation attempt completed"
+
+  tags:
+    - ulauncher
+    - complex
+    - applications
+    - launcher
+
+  when: install_ulauncher | default(false)

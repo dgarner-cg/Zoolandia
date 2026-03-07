@@ -1,0 +1,38 @@
+---
+################################################################################
+# Grafana Deployment
+################################################################################
+
+- name: Grafana deployment
+  block:
+    - name: Create Grafana appdata directory
+      ansible.builtin.file:
+        path: "{{ docker_dir }}/appdata/grafana"
+        state: directory
+        mode: '0755'
+
+    - name: Add Grafana compose file to Docker stack
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/../includes/docker/starter.yml"
+        insertbefore: "# SERVICE-PLACEHOLDER-DO-NOT-DELETE"
+        line: "  - compose/grafana.yml"
+        state: present
+
+    - name: Deploy Grafana container
+      ansible.builtin.command: docker compose -f "{{ playbook_dir }}/../includes/docker/starter.yml" up -d grafana
+      register: grafana_deploy
+      changed_when: "'Started' in grafana_deploy.stdout or 'Created' in grafana_deploy.stdout"
+      ignore_errors: yes
+
+    - name: Verify Grafana container is running
+      ansible.builtin.command: docker ps --filter "name=grafana" --format "{{ '{{' }}.Status{{ '}}' }}"
+      register: grafana_status
+      changed_when: false
+      failed_when: grafana_status.stdout == ""
+
+  rescue:
+    - name: Track Grafana deployment failure
+      ansible.builtin.set_fact:
+        monitoring_failures: "{{ monitoring_failures | default([]) + ['Grafana: ' + (ansible_failed_result.msg | default('Deployment failed'))] }}"
+
+  tags: ['monitoring', 'grafana']

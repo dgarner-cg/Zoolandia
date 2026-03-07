@@ -1,0 +1,55 @@
+---
+################################################################################
+# Zoolandia Web Server Setup
+# File: playbooks/webtier.yml
+# Purpose: Install and configure web servers and reverse proxies
+#
+# USAGE:
+#   ansible-playbook playbooks/webtier.yml
+#   ansible-playbook playbooks/webtier.yml --tags "nginx,ssl"
+#   ansible-playbook playbooks/webtier.yml --check
+#
+################################################################################
+
+- name: Web Server and Reverse Proxy Installation
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    # Failure tracking
+    webtier_failures: []
+
+  roles:
+    - role: webtier
+      tags: ['webtier', 'web']
+
+  post_tasks:
+    - name: "✅ WEB TIER ROLE COMPLETE"
+      ansible.builtin.debug:
+        msg: |
+          ═══════════════════════════════════════════════════════════════════
+          ✅ WEB SERVER SETUP COMPLETE!
+          ═══════════════════════════════════════════════════════════════════
+
+          Installed components include:
+            - Web Servers: nginx, apache2
+            - Reverse Proxies: traefik, haproxy
+            - SSL/TLS: certbot, acme.sh
+            - PHP Runtime: php-fpm
+            - Caching: redis, memcached
+
+          {% if webtier_failures | default([]) | length > 0 %}
+          ⚠ FAILURES ({{ webtier_failures | length }}):
+          {% for failure in webtier_failures %}
+            - {{ failure }}
+          {% endfor %}
+          {% endif %}
+
+          NEXT STEPS:
+            - Configure nginx/apache virtual hosts
+            - Set up SSL certificates with certbot
+            - Configure reverse proxy rules
+
+          ═══════════════════════════════════════════════════════════════════
+      tags: ['always', 'summary']

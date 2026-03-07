@@ -1,0 +1,2 @@
+68,Documentation,MEDIUM,Add,N/A,APPS.md,Create comprehensive application and configuration reference,Complete enumeration of all apps and configs,User can see everything at a glance,COMPLETED,Documentation request,2026-01-06,23 total items documented
+69,Feature,HIGH,Add,preflight/checks.yml,preflight/checks.yml,Smart dry-run detection for pre-flight checks,Detects --check mode and handles failures gracefully,Testing doesn't fail on internet/disk issues,COMPLETED,User request - better dry-run behavior,2026-01-07,Warns in dry-run vs fails in actual mode

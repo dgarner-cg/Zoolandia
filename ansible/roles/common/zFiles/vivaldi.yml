@@ -1,0 +1,20 @@
+---
+- name: Install Vivaldi using Snap
+  block:
+    - name: Check if Vivaldi is installed
+      shell: "snap list | grep vivaldi"
+      register: vivaldi_check
+      ignore_errors: true
+
+    - name: Install Vivaldi
+      snap:
+        name: vivaldi
+        state: present
+      when: vivaldi_check.rc != 0
+      ignore_errors: true
+      register: vivaldi_install
+
+- name: Add to failures list - Vivaldi install
+  set_fact:
+    failures: "{{ failures + ['Vivaldi installation failed'] }}"
+  when: vivaldi_install is defined and vivaldi_install.failed is defined and vivaldi_install.failed

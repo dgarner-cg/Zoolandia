@@ -1,0 +1,35 @@
+---
+- name: Install ONLYOFFICE
+  block:
+    - name: Check if ONLYOFFICE is installed
+      shell: "dpkg -l | grep onlyoffice-desktopeditors"
+      register: onlyoffice_check
+      ignore_errors: true
+
+    - name: Download ONLYOFFICE .deb package
+      get_url:
+        url: "https://download.onlyoffice.com/install/desktop/editors/linux/onlyoffice-desktopeditors_amd64.deb"
+        dest: /tmp/onlyoffice-desktopeditors_amd64.deb
+      when: onlyoffice_check.rc != 0
+      ignore_errors: true
+      register: onlyoffice_download
+
+    - name: Install ONLYOFFICE
+      apt:
+        deb: /tmp/onlyoffice-desktopeditors_amd64.deb
+      when: onlyoffice_check.rc != 0
+      ignore_errors: true
+      register: onlyoffice_install
+
+    - name: Remove ONLYOFFICE .deb file
+      file:
+        path: /tmp/onlyoffice-desktopeditors_amd64.deb
+        state: absent
+      ignore_errors: true
+
+- name: Add to failures list - ONLYOFFICE install
+  set_fact:
+    failures: "{{ failures + ['ONLYOFFICE installation failed'] }}"
+  when: >
+    (onlyoffice_install is defined and onlyoffice_install is mapping and onlyoffice_install.failed | default(false)) or
+    (onlyoffice_download is defined and onlyoffice_download is mapping and onlyoffice_download.failed | default(false))

@@ -1,0 +1,29 @@
+---
+################################################################################
+# App Server Role - Metadata
+################################################################################
+
+galaxy_info:
+  role_name: appserver
+  author: Zoolandia
+  description: Application server tools and services including VS Code Tunnel
+  license: MIT
+  min_ansible_version: "2.9"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+  galaxy_tags:
+    - development
+    - vscode
+    - tunnel
+    - remote
+    - application
+
+dependencies: []

@@ -1,0 +1,240 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/tasks/main.yml
+# Purpose: Main task orchestrator
+#
+# This file coordinates all workstation setup tasks in logical order
+# Uses tags for selective execution and proper error handling
+#
+################################################################################
+
+################################################################################
+# INITIALIZATION
+################################################################################
+
+- name: "{{ user_experience.emoji_rocket | default('🚀') }} ZOOLANDIA WORKSTATION SETUP"
+  ansible.builtin.debug:
+    msg: |
+
+      ═══════════════════════════════════════════════════════════════════
+      {{ user_experience.emoji_success | default('✅') }} ZOOLANDIA WORKSTATION SETUP - PRODUCTION EDITION
+      ═══════════════════════════════════════════════════════════════════
+
+      Version: {{ workstation_role_version }}
+      User: {{ workstation_user }}
+      Home: {{ workstation_home }}
+      Docker Directory: {{ docker_dir }}
+
+      Starting installation...
+
+  tags: ['always']
+
+- name: Initialize workstation setup
+  ansible.builtin.set_fact:
+    workstation_failures: []
+    workstation_start_time: "{{ ansible_date_time.iso8601 }}"
+  tags: ['always']
+
+- name: Create Zoolandia directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ workstation_user }}"
+    group: "{{ workstation_user }}"
+  loop:
+    - "{{ zoolandia_base_dir }}"
+    - "{{ zoolandia_logs_dir }}"
+    - "{{ zoolandia_config_dir }}"
+  become: yes
+  tags: ['always']
+
+- name: Initialize audit trail
+  ansible.builtin.lineinfile:
+    path: "{{ logging.audit_trail }}"
+    line: "[{{ ansible_date_time.iso8601 }}] ═══ SETUP STARTED ═══ User: {{ workstation_user }} ═══"
+    create: yes
+    mode: '0644'
+    owner: "{{ workstation_user }}"
+  when: logging.enabled | default(true)
+  tags: ['always']
+
+################################################################################
+# PHASE 1: SYSTEM PREPARATION
+################################################################################
+
+- name: "{{ user_experience.emoji_target | default('🎯') }} PHASE 1/5 | System Preparation"
+  ansible.builtin.debug:
+    msg: "Updating system packages..."
+  tags: ['always', 'system']
+
+- name: Update APT cache
+  ansible.builtin.apt:
+    update_cache: yes
+    cache_valid_time: "{{ performance.apt_cache_valid_time | default(3600) }}"
+  become: yes
+  tags: ['always', 'system', 'apt']
+
+################################################################################
+# PHASE 2: APPLICATION INSTALLATION
+# (System configs moved to standalone configs role/playbook)
+################################################################################
+
+- name: "{{ user_experience.emoji_target | default('🎯') }} PHASE 2/4 | Application Installation"
+  ansible.builtin.debug:
+    msg: "Installing applications..."
+  tags: ['applications']
+
+# Simple Applications (Loop-based)
+- name: Include simple applications installer
+  ansible.builtin.include_tasks: applications/simple/apps.yml
+  when:
+    - features.install_snap_apps | default(true) or features.install_deb_apps | default(true)
+  tags: ['applications', 'simple']
+
+# Complex Applications (Individual files)
+- name: "{{ user_experience.emoji_package | default('📦') }} COMPLEX APPS | Installing complex applications..."
+  ansible.builtin.debug:
+    msg: "Installing applications that require special handling..."
+  when: features.install_complex_apps | default(true)
+  tags: ['applications', 'complex']
+
+- name: Include Docker installation
+  ansible.builtin.include_tasks: applications/complex/docker.yml
+  when: install_docker | default(false)
+  tags: ['applications', 'docker', 'complex']
+
+- name: Include Twingate installation
+  ansible.builtin.include_tasks: applications/complex/twingate.yml
+  when: install_twingate | default(false)
+  tags: ['applications', 'twingate', 'complex']
+
+- name: Include Portainer deployment
+  ansible.builtin.include_tasks: applications/complex/portainer.yml
+  when: install_portainer | default(false)
+  tags: ['applications', 'portainer', 'docker', 'complex']
+
+- name: Include ProtonVPN installation
+  ansible.builtin.include_tasks: applications/complex/protonvpn.yml
+  when: install_protonvpn | default(false)
+  tags: ['applications', 'protonvpn', 'vpn', 'complex']
+
+- name: Include Ulauncher installation
+  ansible.builtin.include_tasks: applications/complex/ulauncher.yml
+  when: install_ulauncher | default(false)
+  tags: ['applications', 'ulauncher', 'launcher', 'complex']
+
+- name: Include n8n deployment
+  ansible.builtin.include_tasks: applications/complex/n8n.yml
+  when: install_n8n | default(false)
+  tags: ['applications', 'n8n', 'docker', 'automation', 'complex']
+
+- name: Include Chrome extensions installation
+  ansible.builtin.include_tasks: applications/complex/chrome_extensions.yml
+  when: install_chrome_extensions | default(false)
+  tags: ['applications', 'chrome_extensions', 'extensions', 'complex']
+
+- name: Include Sublime Text installation
+  ansible.builtin.include_tasks: applications/complex/sublime_text.yml
+  when: install_sublime_text | default(false)
+  tags: ['applications', 'sublime-text', 'editor', 'complex']
+
+- name: Include Obsidian installation
+  ansible.builtin.include_tasks: applications/complex/obsidian.yml
+  when: install_obsidian | default(false)
+  tags: ['applications', 'obsidian', 'productivity', 'complex']
+
+- name: Include OpenAI Codex CLI installation
+  ansible.builtin.include_tasks: applications/complex/codex.yml
+  when: install_codex | default(false)
+  tags: ['applications', 'codex', 'ai', 'complex']
+
+- name: Include Google Gemini CLI installation
+  ansible.builtin.include_tasks: applications/complex/gemini.yml
+  when: install_gemini | default(false)
+  tags: ['applications', 'gemini', 'ai', 'complex']
+
+################################################################################
+# PHASE 4: POST-INSTALLATION VERIFICATION
+################################################################################
+
+- name: "{{ user_experience.emoji_target | default('🎯') }} PHASE 3/4 | Post-Installation Verification"
+  ansible.builtin.debug:
+    msg: "Verifying installations..."
+  when: post_install_verification.enabled | default(true)
+  tags: ['verification']
+
+# TODO: Create verification.yml file
+# - name: Include post-installation verification
+#   ansible.builtin.include_tasks: preflight/verification.yml
+#   when: post_install_verification.enabled | default(true)
+#   tags: ['verification']
+
+################################################################################
+# PHASE 5: CLEANUP AND FINALIZATION
+################################################################################
+
+- name: "{{ user_experience.emoji_target | default('🎯') }} PHASE 4/4 | Cleanup and Finalization"
+  ansible.builtin.debug:
+    msg: "Cleaning up and generating reports..."
+  tags: ['always', 'cleanup']
+
+- name: Cleanup temporary downloads
+  ansible.builtin.file:
+    path: "{{ temp_download_dir }}"
+    state: absent
+  when: cleanup.enabled | default(true)
+  tags: ['always', 'cleanup']
+
+- name: Calculate setup duration
+  ansible.builtin.set_fact:
+    workstation_end_time: "{{ ansible_date_time.iso8601 }}"
+  tags: ['always']
+
+################################################################################
+# FINAL SUMMARY
+################################################################################
+
+- name: "{{ user_experience.emoji_success | default('✅') }} WORKSTATION ROLE COMPLETE"
+  ansible.builtin.debug:
+    msg: |
+
+      ═══════════════════════════════════════════════════════════════════
+      {{ user_experience.emoji_success | default('✅') }} WORKSTATION ROLE EXECUTION COMPLETE
+      ═══════════════════════════════════════════════════════════════════
+
+      Started:   {{ workstation_start_time }}
+      Completed: {{ workstation_end_time }}
+
+      {% if workstation_failures | default([]) | length > 0 %}
+      {{ user_experience.emoji_warning | default('⚠️') }} Failures: {{ workstation_failures | length }}
+      {% for failure in workstation_failures %}
+        - {{ failure }}
+      {% endfor %}
+      {% else %}
+      {{ user_experience.emoji_success | default('✅') }} All installations completed successfully!
+      {% endif %}
+
+      Logs:
+        Audit Trail: {{ logging.audit_trail }}
+        Manifest:    {{ logging.manifest_file }}
+
+      ═══════════════════════════════════════════════════════════════════
+  tags: ['always']
+
+- name: Finalize audit trail
+  ansible.builtin.lineinfile:
+    path: "{{ logging.audit_trail }}"
+    line: "[{{ ansible_date_time.iso8601 }}] ═══ SETUP COMPLETE ═══ Failures: {{ workstation_failures | default([]) | length }} ═══"
+    create: yes
+    mode: '0644'
+  when: logging.enabled | default(true)
+  tags: ['always']
+
+- name: Trigger cleanup handler
+  ansible.builtin.debug:
+    msg: "Triggering cleanup handlers..."
+  changed_when: true
+  notify: cleanup all
+  tags: ['always']

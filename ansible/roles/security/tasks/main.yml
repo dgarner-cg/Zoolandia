@@ -1,0 +1,153 @@
+---
+################################################################################
+# Security Role - Security Tools and Hardening
+# Purpose: Install and configure security tools including fail2ban, ClamAV, auditd
+################################################################################
+
+- name: "{{ user_experience.emoji_target | default('🎯') }} SECURITY | Installing security tools"
+  ansible.builtin.debug:
+    msg: "Installing security packages: fail2ban, clamav, auditd"
+  tags: ['security']
+
+# Fail2ban - Intrusion Prevention
+- name: Install fail2ban
+  ansible.builtin.apt:
+    name:
+      - fail2ban
+    state: present
+    update_cache: yes
+  become: yes
+  register: fail2ban_result
+  ignore_errors: yes
+  when: install_fail2ban | default(false)
+  tags: ['security', 'fail2ban']
+
+- name: Track fail2ban installation failures
+  ansible.builtin.set_fact:
+    security_failures: "{{ security_failures | default([]) + ['fail2ban installation failed'] }}"
+  when:
+    - install_fail2ban | default(false)
+    - fail2ban_result is failed
+  tags: ['security', 'fail2ban']
+
+- name: Enable and start fail2ban
+  ansible.builtin.systemd:
+    name: fail2ban
+    enabled: yes
+    state: started
+  become: yes
+  when:
+    - install_fail2ban | default(false)
+    - fail2ban_result is succeeded
+  ignore_errors: yes
+  tags: ['security', 'fail2ban']
+
+# ClamAV - Antivirus
+- name: Install ClamAV antivirus
+  ansible.builtin.apt:
+    name:
+      - clamav
+      - clamav-daemon
+      - clamav-freshclam
+    state: present
+  become: yes
+  register: clamav_result
+  ignore_errors: yes
+  when: install_clamav | default(false)
+  tags: ['security', 'clamav', 'antivirus']
+
+- name: Track ClamAV installation failures
+  ansible.builtin.set_fact:
+    security_failures: "{{ security_failures | default([]) + ['ClamAV installation failed'] }}"
+  when:
+    - install_clamav | default(false)
+    - clamav_result is failed
+  tags: ['security', 'clamav', 'antivirus']
+
+- name: Stop freshclam for initial update
+  ansible.builtin.systemd:
+    name: clamav-freshclam
+    state: stopped
+  become: yes
+  when:
+    - install_clamav | default(false)
+    - clamav_result is succeeded
+  ignore_errors: yes
+  tags: ['security', 'clamav', 'antivirus']
+
+- name: Update ClamAV virus definitions
+  ansible.builtin.command: freshclam
+  become: yes
+  when:
+    - install_clamav | default(false)
+    - clamav_result is succeeded
+  ignore_errors: yes
+  register: freshclam_result
+  tags: ['security', 'clamav', 'antivirus']
+
+- name: Enable and start ClamAV daemon
+  ansible.builtin.systemd:
+    name: clamav-daemon
+    enabled: yes
+    state: started
+  become: yes
+  when:
+    - install_clamav | default(false)
+    - clamav_result is succeeded
+  ignore_errors: yes
+  tags: ['security', 'clamav', 'antivirus']
+
+- name: Enable and start freshclam
+  ansible.builtin.systemd:
+    name: clamav-freshclam
+    enabled: yes
+    state: started
+  become: yes
+  when:
+    - install_clamav | default(false)
+    - clamav_result is succeeded
+  ignore_errors: yes
+  tags: ['security', 'clamav', 'antivirus']
+
+# Auditd - System Auditing
+- name: Install auditd
+  ansible.builtin.apt:
+    name:
+      - auditd
+      - audispd-plugins
+    state: present
+  become: yes
+  register: auditd_result
+  ignore_errors: yes
+  when: install_auditd | default(false)
+  tags: ['security', 'auditd', 'audit']
+
+- name: Track auditd installation failures
+  ansible.builtin.set_fact:
+    security_failures: "{{ security_failures | default([]) + ['auditd installation failed'] }}"
+  when:
+    - install_auditd | default(false)
+    - auditd_result is failed
+  tags: ['security', 'auditd', 'audit']
+
+- name: Enable and start auditd
+  ansible.builtin.systemd:
+    name: auditd
+    enabled: yes
+    state: started
+  become: yes
+  when:
+    - install_auditd | default(false)
+    - auditd_result is succeeded
+  ignore_errors: yes
+  tags: ['security', 'auditd', 'audit']
+
+# Summary
+- name: "{{ user_experience.emoji_success | default('✅') }} SECURITY | Installation complete"
+  ansible.builtin.debug:
+    msg: |
+      Security tools installation complete:
+        - fail2ban: {{ 'installed' if (install_fail2ban | default(false)) and (fail2ban_result is defined and fail2ban_result is succeeded) else ('skipped' if not (install_fail2ban | default(false)) else 'failed') }}
+        - clamav: {{ 'installed' if (install_clamav | default(false)) and (clamav_result is defined and clamav_result is succeeded) else ('skipped' if not (install_clamav | default(false)) else 'failed') }}
+        - auditd: {{ 'installed' if (install_auditd | default(false)) and (auditd_result is defined and auditd_result is succeeded) else ('skipped' if not (install_auditd | default(false)) else 'failed') }}
+  tags: ['security']

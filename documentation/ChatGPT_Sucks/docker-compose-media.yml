@@ -1,0 +1,46 @@
+version: "3"
+services:
+  jellyfin:
+    image: jellyfin/jellyfin
+    ports:
+      - "8096:8096"
+    volumes:
+      - /media:/media
+      - /config/jellyfin:/config
+    restart: unless-stopped
+
+  sonarr:
+    image: linuxserver/sonarr
+    ports:
+      - "8989:8989"
+    volumes:
+      - /config/sonarr:/config
+      - /media/tv:/tv
+    restart: unless-stopped
+
+  radarr:
+    image: linuxserver/radarr
+    ports:
+      - "7878:7878"
+    volumes:
+      - /config/radarr:/config
+      - /media/movies:/movies
+    restart: unless-stopped
+
+  qbittorrent:
+    image: linuxserver/qbittorrent
+    ports:
+      - "8080:8080"
+      - "6881:6881"
+    volumes:
+      - /config/qbittorrent:/config
+      - /media/downloads:/downloads
+    restart: unless-stopped
+
+  homeassistant:
+    image: homeassistant/home-assistant
+    ports:
+      - "8123:8123"
+    volumes:
+      - /config/homeassistant:/config
+    restart: unless-stopped

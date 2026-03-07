@@ -1,0 +1,46 @@
+---
+- name: Install Discord
+  block:
+    - name: Check if Discord is installed
+      shell: "dpkg -l | grep discord"
+      register: discord_check
+      ignore_errors: true
+      failed_when: false
+
+    - name: Download Discord .deb package with extended timeout
+      get_url:
+        url: "https://discord.com/api/download?platform=linux&format=deb"
+        dest: /tmp/discord.deb
+        timeout: 1200  # Increased timeout to 1200 seconds
+      when: discord_check.rc != 0  # Only download if Discord is not installed
+      ignore_errors: true
+      register: discord_download
+
+    - name: Install Discord
+      apt:
+        deb: /tmp/discord.deb
+        state: present
+      when: discord_check.rc != 0  # Only install if Discord is not installed
+      ignore_errors: true
+      register: discord_install
+
+    - name: Fix missing dependencies
+      apt:
+        update_cache: true
+        name: '*'
+        state: present
+      ignore_errors: true
+
+- name: Remove Discord .deb file
+  file:
+    path: /tmp/discord.deb
+    state: absent
+  ignore_errors: true
+  when: ansible_distribution == "Ubuntu"
+
+- name: Add to failures list - Discord install
+  set_fact:
+    failures: "{{ failures + ['Discord installation failed'] }}"
+  when: >
+    (discord_install is defined and discord_install is mapping and discord_install.failed | default(false)) or
+    (discord_download is defined and discord_download is mapping and discord_download.failed | default(false))

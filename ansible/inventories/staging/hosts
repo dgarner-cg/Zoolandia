@@ -1,0 +1,7 @@
+# Staging Inventory
+
+[webservers]
+#web-staging-1.example.com
+
+[dbservers]
+#db-staging-1.example.com

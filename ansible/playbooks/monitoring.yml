@@ -1,0 +1,54 @@
+---
+################################################################################
+# Zoolandia Monitoring Stack
+# File: playbooks/monitoring.yml
+# Purpose: Deploy monitoring and observability containers
+#
+# USAGE:
+#   ansible-playbook playbooks/monitoring.yml
+#   ansible-playbook playbooks/monitoring.yml --tags "grafana,prometheus"
+#   ansible-playbook playbooks/monitoring.yml --tags "elk"
+#   ansible-playbook playbooks/monitoring.yml --check
+#
+################################################################################
+
+- name: Monitoring Stack Installation
+  hosts: localhost
+  connection: local
+  become: yes
+
+  vars:
+    # Failure tracking
+    monitoring_failures: []
+
+  roles:
+    - role: monitoring
+      tags: ['monitoring']
+
+  post_tasks:
+    - name: "MONITORING ROLE COMPLETE"
+      ansible.builtin.debug:
+        msg: |
+          ===================================================================
+          MONITORING STACK SETUP COMPLETE!
+          ===================================================================
+
+          Deployed containers may include:
+            - Grafana (port {{ grafana_port | default(3000) }})
+            - Prometheus (port {{ prometheus_port | default(9090) }})
+            - InfluxDB (port {{ influxdb_port | default(8086) }})
+            - Telegraf (port {{ telegraf_port | default(8125) }}/udp)
+            - Node Exporter (port {{ node_exporter_port | default(9100) }})
+            - cAdvisor (port {{ cadvisor_port | default(8081) }})
+            - Elasticsearch (port {{ elasticsearch_port | default(9200) }})
+            - Kibana (port {{ kibana_port | default(5601) }})
+
+          {% if monitoring_failures | default([]) | length > 0 %}
+          FAILURES ({{ monitoring_failures | length }}):
+          {% for failure in monitoring_failures %}
+            - {{ failure }}
+          {% endfor %}
+          {% endif %}
+
+          ===================================================================
+      tags: ['always', 'summary']

@@ -1,0 +1,17 @@
+---
+################################################################################
+# App Server Role - Variables
+################################################################################
+
+# VS Code download URLs
+vscode_download_base_url: "https://code.visualstudio.com/sha/download"
+
+# Service paths
+vscode_tunnel_service_path: "/etc/systemd/system/code-tunnel.service"
+
+# Jenkins
+jenkins_image: "jenkins/jenkins:lts"
+
+# Kubernetes APT repository
+kubernetes_gpg_url: "https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key"
+kubernetes_repo: "deb [signed-by=/usr/share/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /"

@@ -1,0 +1,76 @@
+---
+################################################################################
+# OpenAI Codex CLI Installation
+# Method: NodeSource 22.x APT repo + npm global install
+#
+# Install commands:
+#   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+#   sudo apt install -y nodejs
+#   sudo npm install -g @openai/codex
+#
+# Execute:
+#   ansible-playbook workstations.yml --tags "codex"
+#
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} CODEX | Installing OpenAI Codex CLI..."
+  ansible.builtin.debug:
+    msg: "Installing OpenAI Codex CLI via NodeSource 22.x + npm global install..."
+  tags: ['applications', 'codex', 'ai', 'complex']
+
+- name: OpenAI Codex CLI installation
+  block:
+    - name: "{{ user_experience.emoji_working | default('🔄') }} CODEX | Step 1/3 - Adding NodeSource 22.x repository..."
+      ansible.builtin.shell: |
+        curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+      args:
+        creates: /etc/apt/sources.list.d/nodesource.list
+      become: yes
+      register: nodesource_result
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} CODEX | Step 2/3 - Installing Node.js 22..."
+      ansible.builtin.apt:
+        name: nodejs
+        state: present
+        update_cache: yes
+      become: yes
+      register: nodejs_install_result
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} CODEX | Step 3/3 - Installing @openai/codex globally..."
+      ansible.builtin.command: npm install -g @openai/codex
+      become: yes
+      register: codex_npm_result
+      changed_when: "'added' in codex_npm_result.stdout"
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} CODEX | Installation successful!"
+      ansible.builtin.debug:
+        msg: "OpenAI Codex CLI installed successfully. Run 'codex' to get started."
+
+    - name: Log Codex installation success
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] CODEX: Successfully installed via NodeSource 22.x + npm"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} CODEX | Installation failed"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_failure | default('❌') }} OpenAI Codex CLI installation failed
+          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+
+    - name: Log Codex installation failure
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] CODEX: Installation FAILED - {{ ansible_failed_result.msg | default('Unknown error') }}"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+    - name: Add to failures list
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Codex CLI: ' + (ansible_failed_result.msg | default('Installation failed'))] }}"
+
+  tags: ['applications', 'codex', 'ai', 'complex']

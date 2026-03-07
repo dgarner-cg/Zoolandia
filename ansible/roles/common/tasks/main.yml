@@ -1,0 +1,466 @@
+---
+################################################################################
+# Common Role - Base System Tools
+# Purpose: Install essential tools, network utilities, monitoring, and security
+################################################################################
+
+# Essential Tools (common to all systems)
+- name: Install essential command-line tools
+  ansible.builtin.apt:
+    name:
+      - git
+      - curl
+      - wget
+      - tree
+      - jq
+      - rsync
+      - rclone
+      - ncdu
+      - neofetch
+      - bash-completion
+      - vim
+    state: present
+    update_cache: yes
+  register: essential_tools_result
+  ignore_errors: yes
+  tags: ['essential', 'tools']
+
+- name: Track essential tools failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Essential tools installation failed'] }}"
+  when: essential_tools_result is failed
+  tags: ['essential', 'tools']
+
+# Network Tools
+- name: Install network tools
+  ansible.builtin.apt:
+    name:
+      - openssh-server
+      - net-tools
+      - iproute2
+      - dnsutils
+    state: present
+  register: network_tools_result
+  ignore_errors: yes
+  tags: ['network']
+
+- name: Track network tools failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Network tools installation failed'] }}"
+  when: network_tools_result is failed
+  tags: ['network']
+
+# System Monitoring Tools
+- name: Install system monitoring tools
+  ansible.builtin.apt:
+    name:
+      - htop
+      - glances
+      - iotop
+      - sysstat
+    state: present
+  register: monitoring_result
+  ignore_errors: yes
+  tags: ['monitoring']
+
+- name: Track monitoring tools failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Monitoring tools installation failed'] }}"
+  when: monitoring_result is failed
+  tags: ['monitoring']
+
+# Install gotop from GitHub (not in apt)
+- name: Check if gotop is already installed
+  ansible.builtin.stat:
+    path: /usr/local/bin/gotop
+  register: gotop_check
+  tags: ['monitoring', 'gotop']
+
+- name: Get latest gotop release
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/xxxserxxx/gotop/releases/latest
+    return_content: yes
+  register: gotop_release
+  when: not gotop_check.stat.exists
+  ignore_errors: yes
+  tags: ['monitoring', 'gotop']
+
+- name: Download gotop binary
+  ansible.builtin.get_url:
+    url: "https://github.com/xxxserxxx/gotop/releases/download/{{ gotop_release.json.tag_name }}/gotop_{{ gotop_release.json.tag_name }}_linux_amd64.tgz"
+    dest: /tmp/gotop.tgz
+    mode: '0644'
+  when:
+    - not gotop_check.stat.exists
+    - gotop_release is succeeded
+    - gotop_release.json is defined
+  ignore_errors: yes
+  register: gotop_download_result
+  tags: ['monitoring', 'gotop']
+
+- name: Extract gotop
+  ansible.builtin.unarchive:
+    src: /tmp/gotop.tgz
+    dest: /usr/local/bin/
+    remote_src: yes
+    mode: '0755'
+  when:
+    - not gotop_check.stat.exists
+    - gotop_download_result is defined
+    - gotop_download_result is succeeded
+  ignore_errors: yes
+  register: gotop_extract_result
+  tags: ['monitoring', 'gotop']
+
+- name: Clean up gotop download
+  ansible.builtin.file:
+    path: /tmp/gotop.tgz
+    state: absent
+  when: not gotop_check.stat.exists and gotop_download_result is defined
+  ignore_errors: yes
+  tags: ['monitoring', 'gotop']
+
+- name: Track gotop installation failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['gotop installation failed'] }}"
+  when:
+    - not gotop_check.stat.exists
+    - (gotop_release is failed or gotop_download_result is failed or gotop_extract_result is failed)
+  tags: ['monitoring', 'gotop']
+
+# Basic Firewall (UFW) - Note: fail2ban, clamav, auditd moved to security role
+- name: Install UFW firewall
+  ansible.builtin.apt:
+    name:
+      - ufw
+    state: present
+  register: ufw_result
+  ignore_errors: yes
+  tags: ['security', 'firewall']
+
+- name: Track UFW installation failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['UFW installation failed'] }}"
+  when: ufw_result is failed
+  tags: ['security', 'firewall']
+
+- name: Enable and start UFW
+  ansible.builtin.systemd:
+    name: ufw
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  tags: ['security', 'firewall']
+
+# Build Tools
+- name: Install build tools
+  ansible.builtin.apt:
+    name:
+      - build-essential
+    state: present
+  register: build_tools_result
+  ignore_errors: yes
+  tags: ['build']
+
+- name: Track build tools failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Build tools installation failed'] }}"
+  when: build_tools_result is failed
+  tags: ['build']
+
+# Time Synchronization
+# Note: Prefer chrony over ntp (both provide time-daemon, can't coexist)
+- name: Check if ntp or ntpsec is installed
+  ansible.builtin.shell: dpkg -l | grep -E '^ii  (ntp|ntpsec) '
+  register: ntp_check
+  changed_when: false
+  failed_when: false
+  tags: ['timesync']
+
+- name: Install chrony if no time daemon is present
+  ansible.builtin.apt:
+    name:
+      - chrony
+    state: present
+  when: ntp_check.rc != 0
+  register: chrony_result
+  ignore_errors: yes
+  tags: ['timesync']
+
+- name: Track chrony installation failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Chrony installation failed (ntp/ntpsec may be installed)'] }}"
+  when:
+    - ntp_check.rc != 0
+    - chrony_result is failed
+  tags: ['timesync']
+
+- name: Enable and start chrony
+  ansible.builtin.systemd:
+    name: chrony
+    enabled: yes
+    state: started
+  when:
+    - ntp_check.rc != 0
+    - chrony_result is defined
+    - chrony_result is succeeded
+  ignore_errors: yes
+  tags: ['timesync']
+
+# Maintenance Tools
+- name: Install system maintenance tools
+  ansible.builtin.apt:
+    name:
+      - cron
+      - anacron
+      - logrotate
+    state: present
+  register: maintenance_result
+  ignore_errors: yes
+  tags: ['maintenance']
+
+- name: Track maintenance tools failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Maintenance tools installation failed'] }}"
+  when: maintenance_result is failed
+  tags: ['maintenance']
+
+- name: Enable and start cron
+  ansible.builtin.systemd:
+    name: cron
+    enabled: yes
+    state: started
+  ignore_errors: yes
+  tags: ['maintenance']
+
+# Desktop Tools (only if workstation detected)
+- name: Check if desktop environment is present
+  ansible.builtin.command: dpkg -l ubuntu-desktop
+  register: desktop_check
+  changed_when: false
+  failed_when: false
+  tags: ['desktop']
+
+- name: Install desktop tools
+  ansible.builtin.apt:
+    name:
+      - gnome-tweaks
+      - gnome-shell-extensions
+      - vlc
+      - flameshot
+    state: present
+  register: desktop_result
+  ignore_errors: yes
+  when: desktop_check.rc == 0
+  tags: ['desktop']
+
+- name: Track desktop tools failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Desktop tools installation failed'] }}"
+  when: desktop_result is failed and desktop_check.rc == 0
+  tags: ['desktop']
+
+# Install netdata monitoring
+- name: Check if netdata is already installed
+  ansible.builtin.stat:
+    path: /usr/sbin/netdata
+  register: netdata_check
+  tags: ['monitoring', 'netdata']
+
+- name: Download netdata installer
+  ansible.builtin.get_url:
+    url: https://get.netdata.cloud/kickstart.sh
+    dest: /tmp/netdata-installer.sh
+    mode: '0755'
+  when: not netdata_check.stat.exists
+  ignore_errors: yes
+  register: netdata_download_result
+  tags: ['monitoring', 'netdata']
+
+- name: Run netdata installer
+  ansible.builtin.command: bash /tmp/netdata-installer.sh --dont-wait --disable-telemetry
+  args:
+    creates: /usr/sbin/netdata
+  when: not netdata_check.stat.exists and netdata_download_result is succeeded
+  ignore_errors: yes
+  register: netdata_install_result
+  tags: ['monitoring', 'netdata']
+
+- name: Clean up netdata installer
+  ansible.builtin.file:
+    path: /tmp/netdata-installer.sh
+    state: absent
+  when: not netdata_check.stat.exists and netdata_download_result is defined
+  ignore_errors: yes
+  tags: ['monitoring', 'netdata']
+
+- name: Track netdata installation failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['netdata installation failed'] }}"
+  when:
+    - not netdata_check.stat.exists
+    - (netdata_download_result is failed or netdata_install_result is failed)
+  tags: ['monitoring', 'netdata']
+
+# Language Runtimes - Go (required for some tools)
+- name: Install Go programming language
+  ansible.builtin.apt:
+    name:
+      - golang-go
+      - golang
+    state: present
+  register: golang_result
+  ignore_errors: yes
+  tags: ['golang', 'runtime', 'dev']
+
+- name: Track Go installation failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Go installation failed'] }}"
+  when: golang_result is failed
+  tags: ['golang', 'runtime', 'dev']
+
+# HashiCorp Vault - Secret Management
+# Note: Also available in HashiCorp Stack for full suite installation
+
+- name: Determine HashiCorp repository codename
+  ansible.builtin.set_fact:
+    hashicorp_release: "{{ 'jammy' if ansible_distribution_release == 'noble' else ansible_distribution_release }}"
+  tags: ['vault', 'secrets', 'hashicorp']
+
+- name: Create keyrings directory
+  ansible.builtin.file:
+    path: /usr/share/keyrings
+    state: directory
+    mode: '0755'
+  tags: ['vault', 'secrets', 'hashicorp']
+
+- name: Download HashiCorp GPG key
+  ansible.builtin.get_url:
+    url: https://apt.releases.hashicorp.com/gpg
+    dest: /usr/share/keyrings/hashicorp-archive-keyring.asc
+    mode: '0644'
+  ignore_errors: yes
+  register: hashicorp_gpg_result
+  tags: ['vault', 'secrets', 'hashicorp']
+
+- name: Add HashiCorp repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.asc arch=amd64] https://apt.releases.hashicorp.com {{ hashicorp_release }} main"
+    state: present
+    filename: hashicorp
+  when: hashicorp_gpg_result is succeeded
+  ignore_errors: yes
+  tags: ['vault', 'secrets', 'hashicorp']
+
+- name: Install HashiCorp Vault
+  ansible.builtin.apt:
+    name:
+      - vault
+    state: present
+    update_cache: yes
+  register: vault_result
+  ignore_errors: yes
+  tags: ['vault', 'secrets', 'hashicorp']
+
+- name: Track Vault installation failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['HashiCorp Vault installation failed'] }}"
+  when: vault_result is failed
+  tags: ['vault', 'secrets', 'hashicorp']
+
+- name: Enable Vault autocomplete
+  ansible.builtin.shell: vault -autocomplete-install
+  when: vault_result is succeeded
+  ignore_errors: yes
+  tags: ['vault', 'secrets', 'hashicorp']
+
+# Language Runtimes - Node.js (via NodeSource vendor repo)
+- name: Create keyrings directory for NodeSource
+  ansible.builtin.file:
+    path: /usr/share/keyrings
+    state: directory
+    mode: '0755'
+  tags: ['nodejs', 'development']
+
+- name: Download NodeSource GPG key
+  ansible.builtin.get_url:
+    url: "{{ nodesource_gpg_url }}"
+    dest: /usr/share/keyrings/nodesource.asc
+    mode: '0644'
+  register: nodesource_gpg_result
+  ignore_errors: yes
+  tags: ['nodejs', 'development']
+
+- name: Dearmor NodeSource GPG key
+  ansible.builtin.command: gpg --dearmor -o /usr/share/keyrings/nodesource.gpg /usr/share/keyrings/nodesource.asc
+  args:
+    creates: /usr/share/keyrings/nodesource.gpg
+  when: nodesource_gpg_result is succeeded
+  tags: ['nodejs', 'development']
+
+- name: Add NodeSource APT repository
+  ansible.builtin.apt_repository:
+    repo: "{{ nodesource_repo }}"
+    state: present
+    filename: nodesource
+  when: nodesource_gpg_result is succeeded
+  ignore_errors: yes
+  tags: ['nodejs', 'development']
+
+- name: Install Node.js
+  ansible.builtin.apt:
+    name:
+      - nodejs
+    state: present
+    update_cache: yes
+  register: nodejs_result
+  ignore_errors: yes
+  tags: ['nodejs', 'development']
+
+- name: Track Node.js installation failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Node.js installation failed'] }}"
+  when: nodejs_result is defined and nodejs_result is failed
+  tags: ['nodejs', 'development']
+
+# Yarn (via Yarn vendor repo)
+- name: Download Yarn GPG key
+  ansible.builtin.get_url:
+    url: "{{ yarn_gpg_url }}"
+    dest: /usr/share/keyrings/yarn.asc
+    mode: '0644'
+  register: yarn_gpg_result
+  ignore_errors: yes
+  tags: ['yarn', 'development']
+
+- name: Dearmor Yarn GPG key
+  ansible.builtin.command: gpg --dearmor -o /usr/share/keyrings/yarn.gpg /usr/share/keyrings/yarn.asc
+  args:
+    creates: /usr/share/keyrings/yarn.gpg
+  when: yarn_gpg_result is succeeded
+  tags: ['yarn', 'development']
+
+- name: Add Yarn APT repository
+  ansible.builtin.apt_repository:
+    repo: "{{ yarn_repo }}"
+    state: present
+    filename: yarn
+  when: yarn_gpg_result is succeeded
+  ignore_errors: yes
+  tags: ['yarn', 'development']
+
+- name: Install Yarn
+  ansible.builtin.apt:
+    name:
+      - yarn
+    state: present
+    update_cache: yes
+  register: yarn_result
+  ignore_errors: yes
+  tags: ['yarn', 'development']
+
+- name: Track Yarn installation failures
+  ansible.builtin.set_fact:
+    common_failures: "{{ common_failures | default([]) + ['Yarn installation failed'] }}"
+  when: yarn_result is defined and yarn_result is failed
+  tags: ['yarn', 'development']

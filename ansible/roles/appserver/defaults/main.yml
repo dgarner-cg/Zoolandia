@@ -1,0 +1,27 @@
+---
+################################################################################
+# App Server Role - Default Variables
+################################################################################
+
+# VS Code Tunnel configuration
+# These can be overridden in playbook vars or via -e flag
+vscode_tunnel_user: "{{ ansible_user_id }}"
+vscode_tunnel_group: "{{ ansible_user_id }}"
+
+# GitHub username for VS Code tunnel authentication
+# Passed from Zoolandia prerequisites or via -e github_username=<username>
+github_username: ""
+
+# Jenkins configuration
+install_jenkins: true
+jenkins_port: 8080
+jenkins_agent_port: 50000
+
+# Kubernetes CLI tools
+install_kubernetes: true
+
+# Docker directory
+docker_dir: "{{ lookup('env', 'DOCKER_DIR') | default('/home/' + ansible_user_id + '/docker', true) }}"
+
+# Failure tracking list
+appserver_failures: []

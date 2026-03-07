@@ -1,0 +1,20 @@
+---
+- name: Install iCloud for Linux using Snap
+  block:
+    - name: Check if iCloud for Linux is installed
+      shell: "snap list | grep icloud-for-linux"
+      register: icloud_check
+      ignore_errors: true
+
+    - name: Install iCloud for Linux
+      snap:
+        name: icloud-for-linux
+        state: present
+      when: icloud_check.rc != 0
+      ignore_errors: true
+      register: icloud_install
+
+- name: Add to failures list - iCloud for Linux install
+  set_fact:
+    failures: "{{ failures + ['iCloud for Linux installation failed'] }}"
+  when: icloud_install is defined and icloud_install is mapping and icloud_install.failed | default(false)

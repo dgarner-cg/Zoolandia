@@ -1,0 +1,79 @@
+GovDeals Auction Tracker - Directory Tree
+==========================================
+
+GovDeals/
+│
+├── src/                          # Core Application (8 modules)
+│   ├── __init__.py
+│   ├── alerts.py                 # Email + ntfy notifications
+│   ├── dashboard.py              # Flask web dashboard
+│   ├── database.py               # SQLite operations
+│   ├── monitor.py                # Background monitoring
+│   ├── scraper.py                # Basic scraper
+│   ├── scraper_advanced.py       # Advanced scraper
+│   └── scraper_selenium.py       # Selenium scraper
+│
+├── config/                       # Configuration
+│   ├── config.json               # Alert settings
+│   └── requirements.txt          # Python dependencies
+│
+├── data/                         # Database & Data
+│   ├── auctions.db               # SQLite database
+│   └── exports/                  # CSV exports
+│       └── .gitkeep
+│
+├── docs/                         # Documentation
+│   ├── README.md
+│   ├── COMPREHENSIVE_README.md
+│   ├── STATUS_TRACKING.md
+│   ├── LAST_MESSAGE.md
+│   ├── FIXES_APPLIED.md
+│   ├── STATUS.md
+│   ├── INSTALL_CHROMEDRIVER.md
+│   ├── DIRECTORY_REORGANIZATION.md
+│   └── FILE_STRUCTURE.md
+│
+├── scripts/                      # Setup & Launch Scripts
+│   ├── setup_complete.sh         # Full automated setup
+│   ├── launch.sh                 # Launch services
+│   ├── install_chromedriver.sh
+│   ├── setup.sh
+│   └── quick_start.sh
+│
+├── tests/                        # Test Scripts
+│   ├── test_full_system.py
+│   ├── test_system.py
+│   ├── example_usage.py
+│   └── debug_page.py
+│
+├── templates/                    # Flask HTML Templates
+│   └── index.html
+│
+├── files/                        # User Files
+│   └── 1.png
+│
+├── logs/                         # Log Files (runtime)
+│   └── .gitkeep
+│
+├── backups/                      # Database Backups
+│   └── .gitkeep
+│
+├── .gitignore
+│
+└── Symlinks (Backward Compatibility)
+    ├── dashboard.py -> src/dashboard.py
+    ├── monitor.py -> src/monitor.py
+    ├── config.json -> config/config.json
+    ├── auctions.db -> data/auctions.db
+    └── requirements.txt -> config/requirements.txt
+
+==========================================
+Project Statistics:
+  - Directories: 11
+  - Files: 34
+  - Symlinks: 5
+  - Python Modules: 8
+  - Documentation: 9
+  - Shell Scripts: 5
+  - Tests: 4
+==========================================

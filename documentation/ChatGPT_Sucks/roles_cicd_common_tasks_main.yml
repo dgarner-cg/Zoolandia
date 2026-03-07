@@ -1,0 +1,20 @@
+- name: Install Docker
+  apt:
+    name:
+      - docker.io
+      - docker-compose-plugin
+      - git
+      - build-essential
+    state: present
+    update_cache: yes
+
+- name: Enable docker
+  service:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: deploy docker compose app
+  template:
+    src: docker-compose.yml.j2
+    dest: /opt/dev/docker-compose.yml

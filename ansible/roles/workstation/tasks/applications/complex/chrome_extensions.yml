@@ -1,0 +1,107 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Chrome Extensions Installer
+# File: roles/workstation/tasks/applications/complex/chrome_extensions.yml
+# Purpose: Install Chrome/Chromium browser extensions for development
+#
+# Extensions are copied to a user directory and can be loaded as unpacked
+# extensions in Chrome/Chromium-based browsers (Developer Mode required)
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} CHROME EXTENSIONS | Starting installation"
+  ansible.builtin.debug:
+    msg: "Installing Chrome extensions to {{ chrome_extensions.install_dir }}"
+  tags: ['chrome_extensions', 'extensions']
+
+- name: Create Chrome extensions directory
+  ansible.builtin.file:
+    path: "{{ chrome_extensions.install_dir }}"
+    state: directory
+    mode: '0755'
+    owner: "{{ workstation_user }}"
+    group: "{{ workstation_user }}"
+  become: yes
+  tags: ['chrome_extensions', 'extensions']
+
+# Install each enabled extension
+- name: Install Chrome extensions
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ chrome_extensions.install_dir }}/{{ item.name }}"
+    owner: "{{ workstation_user }}"
+    group: "{{ workstation_user }}"
+    mode: '0755'
+  loop: "{{ chrome_extensions.extensions | selectattr('enabled', 'equalto', true) | list }}"
+  become: yes
+  register: chrome_ext_result
+  tags: ['chrome_extensions', 'extensions']
+
+- name: Log Chrome extensions installation
+  ansible.builtin.lineinfile:
+    path: "{{ logging.audit_trail }}"
+    line: "[{{ ansible_date_time.iso8601 }}] Chrome Extensions installed: {{ chrome_extensions.extensions | selectattr('enabled', 'equalto', true) | map(attribute='name') | list | join(', ') }}"
+    create: yes
+  when: logging.enabled | default(true)
+  tags: ['chrome_extensions', 'extensions']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} CHROME EXTENSIONS | Installation complete"
+  ansible.builtin.debug:
+    msg: |
+
+      ═══════════════════════════════════════════════════════════════════
+      {{ user_experience.emoji_success | default('✅') }} CHROME EXTENSIONS INSTALLED
+      ═══════════════════════════════════════════════════════════════════
+
+      {{ user_experience.emoji_warning | default('⚠️') }} IMPORTANT: Extensions must be loaded manually!
+
+      ┌─────────────────────────────────────────────────────────────────┐
+      │  INSTALLATION PATH:                                             │
+      │  {{ chrome_extensions.install_dir }}
+      └─────────────────────────────────────────────────────────────────┘
+
+      TO LOAD EXTENSIONS (Chrome/Chromium/Vivaldi/Brave):
+      ───────────────────────────────────────────────────
+      1. Open your browser and navigate to: chrome://extensions
+      2. Enable "Developer mode" (toggle switch in top-right corner)
+      3. Click "Load unpacked" button
+      4. Browse to the extension folder and select it:
+      {% for ext in chrome_extensions.extensions | selectattr('enabled', 'equalto', true) | list %}
+         {{ chrome_extensions.install_dir }}/{{ ext.name }}
+      {% endfor %}
+
+      INSTALLED EXTENSIONS:
+      ─────────────────────
+      {% for ext in chrome_extensions.extensions | selectattr('enabled', 'equalto', true) | list %}
+        - {{ ext.name }} (v{{ ext.version }}): {{ ext.description }}
+      {% endfor %}
+
+      ═══════════════════════════════════════════════════════════════════
+  tags: ['chrome_extensions', 'extensions']
+
+- name: Create README with loading instructions
+  ansible.builtin.copy:
+    dest: "{{ chrome_extensions.install_dir }}/README.txt"
+    content: |
+      CHROME EXTENSIONS - LOADING INSTRUCTIONS
+      ========================================
+
+      These extensions must be loaded manually as "unpacked extensions".
+
+      STEPS:
+      1. Open Chrome/Chromium and go to: chrome://extensions
+      2. Enable "Developer mode" (toggle in top-right corner)
+      3. Click "Load unpacked"
+      4. Select one of the extension folders below
+
+      INSTALLED EXTENSIONS:
+      {% for ext in chrome_extensions.extensions | selectattr('enabled', 'equalto', true) | list %}
+      - {{ ext.name }}/ (v{{ ext.version }})
+        {{ ext.description }}
+      {% endfor %}
+
+      Full path: {{ chrome_extensions.install_dir }}
+    owner: "{{ workstation_user }}"
+    group: "{{ workstation_user }}"
+    mode: '0644'
+  become: yes
+  tags: ['chrome_extensions', 'extensions']

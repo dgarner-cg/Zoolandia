@@ -1,0 +1,106 @@
+---
+# n8n Installation
+# Workflow automation platform deployed as Docker container
+# Tags: n8n, complex, applications, docker
+
+- name: "{{ user_experience.emoji_package | default('📦') }} N8N | Installing n8n workflow automation..."
+  block:
+    - name: Check if n8n container already exists
+      ansible.builtin.command:
+        cmd: docker ps -a --filter name=n8n --format "{{ '{{' }}.Names{{ '}}' }}"
+      register: n8n_check
+      failed_when: false
+      changed_when: false
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} N8N | Creating n8n data directory..."
+      ansible.builtin.file:
+        path: "{{ n8n.data_dir }}"
+        state: directory
+        owner: "{{ workstation_user }}"
+        group: "{{ workstation_user }}"
+        mode: '0755'
+      when: n8n_check.stdout != 'n8n'
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} N8N | Deploying n8n Docker container..."
+      ansible.builtin.command:
+        cmd: >
+          docker run -d
+          --name n8n
+          --restart=always
+          -p {{ n8n.port }}:5678
+          -e N8N_HOST={{ n8n.host }}
+          -e N8N_PORT=5678
+          -e N8N_PROTOCOL={{ n8n.protocol }}
+          -e WEBHOOK_URL={{ n8n.protocol }}://{{ n8n.host }}:{{ n8n.port }}/
+          -v {{ n8n.data_dir }}:/home/node/.n8n
+          n8nio/n8n:latest
+      when: n8n_check.stdout != 'n8n'
+      register: n8n_deploy
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} N8N | Waiting for container to be healthy..."
+      ansible.builtin.command:
+        cmd: docker inspect --format="{{ '{{' }}.State.Running{{ '}}' }}" n8n
+      register: n8n_health
+      until: n8n_health.stdout == 'true'
+      retries: 10
+      delay: 3
+      when: n8n_check.stdout != 'n8n'
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} N8N | Successfully deployed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] N8N: n8n container - SUCCESS - Accessible at {{ n8n.protocol }}://{{ n8n.host }}:{{ n8n.port }}"
+        create: true
+      when: n8n_check.stdout != 'n8n'
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }} N8N | Access information"
+      ansible.builtin.debug:
+        msg: |
+          n8n workflow automation deployed successfully!
+
+          Access URL: {{ n8n.protocol }}://{{ n8n.host }}:{{ n8n.port }}
+          Data directory: {{ n8n.data_dir }}
+
+          On first access, you'll need to create an account.
+          All your workflows will be stored in {{ n8n.data_dir }}
+      when: n8n_check.stdout != 'n8n' and n8n_deploy.changed
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }} N8N | Installation skipped (already running)"
+      ansible.builtin.debug:
+        msg: "n8n container is already running - skipping deployment"
+      when: n8n_check.stdout == 'n8n'
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} N8N | Deployment failed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] N8N: n8n container - FAILED"
+        create: true
+
+    - name: Collect failure information
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['n8n deployment failed'] }}"
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} N8N | Error details"
+      ansible.builtin.debug:
+        msg: "n8n deployment failed. Ensure Docker is installed and running. Check {{ logging.audit_trail }} for details."
+
+    - name: Cleanup failed container if exists
+      ansible.builtin.command:
+        cmd: docker rm -f n8n
+      failed_when: false
+      when: n8n_deploy is defined and n8n_deploy.failed
+
+  always:
+    - name: "{{ user_experience.emoji_cleanup | default('🧹') }} N8N | Deployment attempt completed"
+      ansible.builtin.debug:
+        msg: "n8n deployment attempt completed"
+
+  tags:
+    - n8n
+    - complex
+    - applications
+    - docker
+    - automation
+
+  when: install_n8n | default(false)

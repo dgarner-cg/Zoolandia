@@ -1,0 +1,232 @@
+---
+################################################################################
+# App Server Role - Application Development Tools and Services
+# Purpose: Install VS Code Tunnel and other application server tools
+################################################################################
+
+# VS Code Tunnel Installation
+- name: Check if VS Code is already installed
+  ansible.builtin.shell: "command -v code"
+  register: vscode_check
+  ignore_errors: yes
+  failed_when: false
+  changed_when: false
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Detect system architecture
+  ansible.builtin.set_fact:
+    vscode_arch: "{{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}"
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Download VS Code .deb package
+  ansible.builtin.get_url:
+    url: "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-{{ vscode_arch }}"
+    dest: "/tmp/vscode_{{ vscode_arch }}.deb"
+    mode: '0644'
+  when: vscode_check.rc != 0
+  register: vscode_download
+  ignore_errors: yes
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Install VS Code from .deb package
+  ansible.builtin.apt:
+    deb: "/tmp/vscode_{{ vscode_arch }}.deb"
+    state: present
+  when:
+    - vscode_check.rc != 0
+    - vscode_download is succeeded
+  register: vscode_install
+  ignore_errors: yes
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Track VS Code installation failures
+  ansible.builtin.set_fact:
+    appserver_failures: "{{ appserver_failures | default([]) + ['VS Code installation failed'] }}"
+  when: vscode_install is defined and vscode_install is failed
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Clean up VS Code .deb package
+  ansible.builtin.file:
+    path: "/tmp/vscode_{{ vscode_arch }}.deb"
+    state: absent
+  when: vscode_download is succeeded
+  ignore_errors: yes
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+# VS Code Tunnel Systemd Service
+- name: Create VS Code tunnel systemd service
+  ansible.builtin.template:
+    src: code-tunnel.service.j2
+    dest: /etc/systemd/system/code-tunnel.service
+    owner: root
+    group: root
+    mode: '0644'
+  register: vscode_service
+  ignore_errors: yes
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Track VS Code tunnel service creation failures
+  ansible.builtin.set_fact:
+    appserver_failures: "{{ appserver_failures | default([]) + ['VS Code tunnel service creation failed'] }}"
+  when: vscode_service is defined and vscode_service is failed
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  when: vscode_service is changed
+  ignore_errors: yes
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Enable VS Code tunnel service
+  ansible.builtin.systemd:
+    name: code-tunnel
+    enabled: yes
+  when: vscode_service is succeeded
+  register: vscode_enable
+  ignore_errors: yes
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+- name: Track VS Code tunnel service enable failures
+  ansible.builtin.set_fact:
+    appserver_failures: "{{ appserver_failures | default([]) + ['VS Code tunnel service enable failed'] }}"
+  when: vscode_enable is defined and vscode_enable is failed
+  tags: ['vscode', 'vscode-tunnel', 'development']
+
+################################################################################
+# Jenkins CI/CD (Docker-based)
+################################################################################
+
+- name: Jenkins deployment
+  block:
+    - name: Create Jenkins appdata directory
+      ansible.builtin.file:
+        path: "{{ docker_dir }}/appdata/jenkins"
+        state: directory
+        mode: '0755'
+
+    - name: Add Jenkins compose file to Docker stack
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/../includes/docker/starter.yml"
+        insertbefore: "# SERVICE-PLACEHOLDER-DO-NOT-DELETE"
+        line: "  - compose/jenkins.yml"
+        state: present
+
+    - name: Deploy Jenkins container
+      ansible.builtin.command: docker compose -f "{{ playbook_dir }}/../includes/docker/starter.yml" up -d jenkins
+      register: jenkins_deploy
+      changed_when: "'Started' in jenkins_deploy.stdout or 'Created' in jenkins_deploy.stdout"
+      ignore_errors: yes
+
+    - name: Verify Jenkins container is running
+      ansible.builtin.command: docker ps --filter "name=jenkins" --format "{{ '{{' }}.Status{{ '}}' }}"
+      register: jenkins_status
+      changed_when: false
+      failed_when: jenkins_status.stdout == ""
+
+  rescue:
+    - name: Track Jenkins deployment failure
+      ansible.builtin.set_fact:
+        appserver_failures: "{{ appserver_failures | default([]) + ['Jenkins: ' + (ansible_failed_result.msg | default('Deployment failed'))] }}"
+
+  when: install_jenkins | default(true)
+  tags: ['appserver', 'jenkins', 'cicd']
+
+################################################################################
+# Kubernetes CLI Tools (Native APT)
+################################################################################
+
+- name: Kubernetes CLI tools installation
+  block:
+    - name: Create keyrings directory
+      ansible.builtin.file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Download Kubernetes GPG key
+      ansible.builtin.get_url:
+        url: "{{ kubernetes_gpg_url }}"
+        dest: /usr/share/keyrings/kubernetes-apt-keyring.asc
+        mode: '0644'
+      register: k8s_gpg_result
+      ignore_errors: yes
+
+    - name: Dearmor Kubernetes GPG key
+      ansible.builtin.command: gpg --dearmor -o /usr/share/keyrings/kubernetes-apt-keyring.gpg /usr/share/keyrings/kubernetes-apt-keyring.asc
+      args:
+        creates: /usr/share/keyrings/kubernetes-apt-keyring.gpg
+      when: k8s_gpg_result is succeeded
+
+    - name: Add Kubernetes APT repository
+      ansible.builtin.apt_repository:
+        repo: "{{ kubernetes_repo }}"
+        state: present
+        filename: kubernetes
+      when: k8s_gpg_result is succeeded
+
+    - name: Install Kubernetes CLI tools
+      ansible.builtin.apt:
+        name:
+          - kubectl
+          - kubeadm
+          - kubelet
+        state: present
+        update_cache: yes
+      register: k8s_install_result
+
+  rescue:
+    - name: Track Kubernetes installation failure
+      ansible.builtin.set_fact:
+        appserver_failures: "{{ appserver_failures | default([]) + ['Kubernetes CLI tools installation failed'] }}"
+
+  when: install_kubernetes | default(true)
+  tags: ['appserver', 'kubernetes', 'k8s']
+
+################################################################################
+# Summary
+################################################################################
+
+- name: Display VS Code tunnel installation summary
+  ansible.builtin.debug:
+    msg: |
+      VS Code Tunnel Installation Complete!
+
+      Installed components:
+      - VS Code Editor
+      - VS Code Tunnel systemd service (code-tunnel)
+
+      {% if appserver_failures | default([]) | length > 0 %}
+      Failures: {{ appserver_failures | length }}
+      {% for failure in appserver_failures %}
+        - {{ failure }}
+      {% endfor %}
+      {% endif %}
+
+      IMPORTANT - First-time setup required:
+      ═══════════════════════════════════════════════════════════════════
+      {% if github_username | default('') | length > 0 %}
+      GitHub Account: {{ github_username }}
+      {% endif %}
+
+      1. Run the following command to authenticate with GitHub:
+         code tunnel --accept-server-license-terms
+
+      2. Follow the device login prompts{% if github_username | default('') | length > 0 %} (login as {{ github_username }}){% endif %}
+
+
+      3. Press Ctrl+C after authentication completes
+
+      4. Start the service:
+         sudo systemctl start code-tunnel
+
+      5. Access your tunnel at:
+         https://vscode.dev/tunnel/{{ ansible_hostname }}
+      ═══════════════════════════════════════════════════════════════════
+
+      Service configuration:
+        - User: {{ vscode_tunnel_user }}
+        - Group: {{ vscode_tunnel_group }}
+        {% if github_username | default('') | length > 0 %}- GitHub: {{ github_username }}
+        {% endif %}- Service file: /etc/systemd/system/code-tunnel.service
+  tags: ['always']

@@ -1,0 +1,64 @@
+---
+################################################################################
+# Obsidian Installation
+# Method: Snap (classic confinement) — official publisher: obsidianmd
+#
+# Execute:
+#   ansible-playbook workstations.yml --tags "obsidian"
+#
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} OBSIDIAN | Installing Obsidian..."
+  ansible.builtin.debug:
+    msg: "Installing Obsidian via snap (classic)..."
+  tags: ['applications', 'obsidian', 'productivity', 'complex']
+
+- name: Obsidian installation
+  block:
+    - name: "{{ user_experience.emoji_working | default('🔄') }} OBSIDIAN | Step 1/2 - Ensuring snapd is running..."
+      ansible.builtin.service:
+        name: snapd
+        state: started
+        enabled: yes
+      become: yes
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} OBSIDIAN | Step 2/2 - Installing Obsidian snap (classic)..."
+      community.general.snap:
+        name: obsidian
+        state: present
+        classic: yes
+      become: yes
+      register: obsidian_install_result
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} OBSIDIAN | Installation successful!"
+      ansible.builtin.debug:
+        msg: "Obsidian installed successfully. Launch from your application menu."
+
+    - name: Log Obsidian installation success
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] OBSIDIAN: Successfully installed via snap (classic)"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} OBSIDIAN | Installation failed"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_failure | default('❌') }} Obsidian installation failed
+          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+
+    - name: Log Obsidian installation failure
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] OBSIDIAN: Installation FAILED - {{ ansible_failed_result.msg | default('Unknown error') }}"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+    - name: Add to failures list
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Obsidian: ' + (ansible_failed_result.msg | default('Installation failed'))] }}"
+
+  tags: ['applications', 'obsidian', 'productivity', 'complex']

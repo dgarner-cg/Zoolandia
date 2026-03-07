@@ -1,0 +1,32 @@
+---
+################################################################################
+# Kibana Deployment
+################################################################################
+
+- name: Kibana deployment
+  block:
+    - name: Add Kibana compose file to Docker stack
+      ansible.builtin.lineinfile:
+        path: "{{ playbook_dir }}/../includes/docker/starter.yml"
+        insertbefore: "# SERVICE-PLACEHOLDER-DO-NOT-DELETE"
+        line: "  - compose/kibana.yml"
+        state: present
+
+    - name: Deploy Kibana container
+      ansible.builtin.command: docker compose -f "{{ playbook_dir }}/../includes/docker/starter.yml" up -d kibana
+      register: kibana_deploy
+      changed_when: "'Started' in kibana_deploy.stdout or 'Created' in kibana_deploy.stdout"
+      ignore_errors: yes
+
+    - name: Verify Kibana container is running
+      ansible.builtin.command: docker ps --filter "name=kibana" --format "{{ '{{' }}.Status{{ '}}' }}"
+      register: kibana_status
+      changed_when: false
+      failed_when: kibana_status.stdout == ""
+
+  rescue:
+    - name: Track Kibana deployment failure
+      ansible.builtin.set_fact:
+        monitoring_failures: "{{ monitoring_failures | default([]) + ['Kibana: ' + (ansible_failed_result.msg | default('Deployment failed'))] }}"
+
+  tags: ['monitoring', 'elk', 'kibana']

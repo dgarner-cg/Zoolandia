@@ -1,0 +1,82 @@
+---
+- name: Configure NTFS/exFAT Drive Automounting
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Test sudo access (force password prompt if needed)
+      become: yes
+      command: /bin/true
+      changed_when: false
+
+    - name: Update apt cache
+      become: yes
+      apt:
+        update_cache: yes
+        cache_valid_time: 0
+      ignore_errors: true
+      register: apt_update_result
+
+    - name: Install ntfs-3g package
+      become: yes
+      apt:
+        name: ntfs-3g
+        state: present
+      ignore_errors: true
+      register: ntfs3g_result
+
+    - name: Install exfat-fuse package
+      become: yes
+      apt:
+        name: exfat-fuse
+        state: present
+      ignore_errors: true
+      register: exfat_fuse_result
+
+    - name: Install exfatprogs package
+      become: yes
+      apt:
+        name: exfatprogs
+        state: present
+      ignore_errors: true
+      register: exfatprogs_result
+
+    - name: Create modprobe.d directory if it doesn't exist
+      become: yes
+      file:
+        path: /etc/modprobe.d
+        state: directory
+        mode: '0755'
+      ignore_errors: true
+
+    - name: Blacklist ntfs3 kernel module
+      become: yes
+      copy:
+        content: "blacklist ntfs3\n"
+        dest: /etc/modprobe.d/disable-ntfs3.conf
+        mode: '0644'
+      ignore_errors: true
+      register: blacklist_result
+
+    - name: Update initramfs
+      become: yes
+      command: update-initramfs -u
+      ignore_errors: true
+      register: initramfs_result
+      when: blacklist_result is defined and blacklist_result.changed is defined and blacklist_result.changed
+
+    - name: Display installation results
+      debug:
+        msg:
+          - "================================================"
+          - "NTFS/exFAT Automount Configuration Results"
+          - "================================================"
+          - "APT cache update: {{ 'SUCCESS' if (apt_update_result is defined and not apt_update_result.failed) else 'FAILED (GPG/repo issue - non-critical)' }}"
+          - "ntfs-3g installation: {{ 'SUCCESS' if (ntfs3g_result is defined and not ntfs3g_result.failed) else 'FAILED' }}"
+          - "exfat-fuse installation: {{ 'SUCCESS' if (exfat_fuse_result is defined and not exfat_fuse_result.failed) else 'FAILED' }}"
+          - "exfatprogs installation: {{ 'SUCCESS' if (exfatprogs_result is defined and not exfatprogs_result.failed) else 'FAILED' }}"
+          - "ntfs3 blacklist: {{ 'APPLIED' if (blacklist_result is defined and blacklist_result.changed is defined and blacklist_result.changed) else 'ALREADY CONFIGURED' }}"
+          - "initramfs update: {{ 'SUCCESS' if (initramfs_result is defined and initramfs_result.changed is defined and initramfs_result.changed and not initramfs_result.failed) else 'SKIPPED OR FAILED' }}"
+          - ""
+          - "Configuration complete! External NTFS drives should now automount when plugged in."
+          - "Note: A system reboot may be required for all changes to take effect."
+          - "================================================"

@@ -1,0 +1,71 @@
+---
+################################################################################
+# Mouse Settings Configuration
+# Purpose: Configure mouse speed, acceleration, and button settings
+################################################################################
+
+- name: "{{ user_experience.emoji_config | default('⚙️') }} MOUSE | Configuring mouse settings"
+  ansible.builtin.debug:
+    msg: "Configuring mouse settings for user {{ workstation_user }}"
+  when: mouse.enabled | default(false)
+  tags: ['configs', 'mouse', 'peripherals']
+
+- name: Check if GNOME is available
+  ansible.builtin.command: which gsettings
+  register: gsettings_check
+  changed_when: false
+  failed_when: false
+  when: mouse.enabled | default(false)
+  tags: ['configs', 'mouse', 'peripherals']
+
+- name: Configure mouse speed
+  ansible.builtin.command:
+    cmd: gsettings set org.gnome.desktop.peripherals.mouse speed {{ mouse.speed | default(0.0) }}
+  become: yes
+  become_user: "{{ workstation_user }}"
+  environment:
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+  when:
+    - mouse.enabled | default(false)
+    - gsettings_check.rc == 0
+  ignore_errors: yes
+  register: mouse_speed_result
+  tags: ['configs', 'mouse', 'peripherals']
+
+- name: Configure mouse natural scrolling
+  ansible.builtin.command:
+    cmd: gsettings set org.gnome.desktop.peripherals.mouse natural-scroll {{ 'true' if mouse.natural_scrolling | default(false) else 'false' }}
+  become: yes
+  become_user: "{{ workstation_user }}"
+  environment:
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+  when:
+    - mouse.enabled | default(false)
+    - gsettings_check.rc == 0
+  ignore_errors: yes
+  tags: ['configs', 'mouse', 'peripherals']
+
+- name: Configure mouse acceleration profile
+  ansible.builtin.command:
+    cmd: gsettings set org.gnome.desktop.peripherals.mouse accel-profile '{{ mouse.accel_profile | default("default") }}'
+  become: yes
+  become_user: "{{ workstation_user }}"
+  environment:
+    DBUS_SESSION_BUS_ADDRESS: "unix:path=/run/user/{{ workstation_uid }}/bus"
+  when:
+    - mouse.enabled | default(false)
+    - gsettings_check.rc == 0
+  ignore_errors: yes
+  tags: ['configs', 'mouse', 'peripherals']
+
+- name: "{{ user_experience.emoji_success | default('✅') }} MOUSE | Configuration complete"
+  ansible.builtin.debug:
+    msg: |
+      Mouse settings configured:
+        - Speed: {{ mouse.speed | default(0.0) }}
+        - Natural scrolling: {{ mouse.natural_scrolling | default(false) }}
+        - Acceleration profile: {{ mouse.accel_profile | default("default") }}
+  when:
+    - mouse.enabled | default(false)
+    - gsettings_check.rc == 0
+  tags: ['configs', 'mouse', 'peripherals']

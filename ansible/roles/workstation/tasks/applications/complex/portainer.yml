@@ -1,0 +1,111 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/tasks/applications/complex/portainer.yml
+# Purpose: Portainer container deployment
+#
+# Complexity: MEDIUM
+# Why Complex: Docker container deployment with volume and port configuration
+#
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} PORTAINER | Deploying Portainer container..."
+  ansible.builtin.debug:
+    msg: "Deploying Portainer {{ portainer.edition }} edition..."
+  tags: ['applications', 'portainer', 'docker', 'complex']
+
+- name: Portainer deployment
+  block:
+    ############################################################################
+    # STEP 1: Create Portainer Data Volume
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} PORTAINER | Step 1/3 - Creating data volume..."
+      community.docker.docker_volume:
+        name: "{{ portainer.volume_name }}"
+        state: present
+
+    ############################################################################
+    # STEP 2: Deploy Portainer Container
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} PORTAINER | Step 2/3 - Deploying container..."
+      community.docker.docker_container:
+        name: portainer
+        image: "{{ portainer.image }}"
+        state: started
+        restart_policy: "{{ portainer.restart_policy }}"
+        ports:
+          - "{{ portainer.port_http }}:8000"
+          - "{{ portainer.port_https }}:9443"
+        volumes:
+          - "/var/run/docker.sock:/var/run/docker.sock"
+          - "{{ portainer.volume_name }}:/data"
+        healthcheck:
+          test: ["CMD-SHELL", "wget --spider --quiet http://localhost:9443 || exit 1"]
+          interval: "{{ portainer.healthcheck.interval }}"
+          timeout: "{{ portainer.healthcheck.timeout }}"
+          retries: "{{ portainer.healthcheck.retries }}"
+        env:
+          TZ: "{{ ansible_date_time.tz }}"
+
+    ############################################################################
+    # STEP 3: Verify Deployment
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} PORTAINER | Step 3/3 - Verifying deployment..."
+      community.docker.docker_container_info:
+        name: portainer
+      register: portainer_info
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} PORTAINER | Deployment successful!"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_success | default('✅') }} Portainer deployed successfully!
+
+          Access URLs:
+            HTTP:  http://localhost:{{ portainer.port_http }}
+            HTTPS: https://localhost:{{ portainer.port_https }}
+
+          {% if portainer_info.container is not none %}
+          Status: {{ portainer_info.container.State.Status }}
+          {% else %}
+          Status: pending (check mode - container will be created on actual run)
+          {% endif %}
+
+          {{ user_experience.emoji_info | default('ℹ️') }} Next steps:
+            1. Open https://localhost:{{ portainer.port_https }} in your browser
+            2. Create your admin account on first access
+            3. Start managing your Docker containers!
+
+    - name: Log Portainer deployment success
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] PORTAINER: Successfully deployed on ports {{ portainer.port_http }}/{{ portainer.port_https }}"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} PORTAINER | Deployment failed"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_failure | default('❌') }} Portainer deployment failed
+
+          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+
+          {{ user_experience.emoji_info | default('ℹ️') }} Make sure Docker is installed and running
+
+    - name: Log Portainer deployment failure
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] PORTAINER: Deployment FAILED - {{ ansible_failed_result.msg | default('Unknown error') }}"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+    - name: Add to failures list
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Portainer: ' + (ansible_failed_result.msg | default('Deployment failed'))] }}"
+
+  tags: ['applications', 'portainer', 'docker', 'complex']

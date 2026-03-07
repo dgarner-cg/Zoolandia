@@ -1,0 +1,3 @@
+vault_postgres_password: "CHANGE_ME"
+vault_gitea_admin_password: "CHANGE_ME"
+vault_grafana_admin_password: "CHANGE_ME"

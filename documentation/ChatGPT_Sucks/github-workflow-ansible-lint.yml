@@ -1,0 +1,15 @@
+name: Ansible syntax check
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ansible
+        run: sudo apt-get install -y ansible
+      - name: Syntax check
+        run: ansible-playbook site.yml --syntax-check

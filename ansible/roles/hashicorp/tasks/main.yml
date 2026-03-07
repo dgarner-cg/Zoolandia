@@ -1,0 +1,209 @@
+---
+################################################################################
+# HashiCorp Role - HashiCorp Stack Installation
+# Purpose: Install Boundary, Consul, Nomad, Packer, Terraform, Vault, Vault Radar, Waypoint
+################################################################################
+
+# Add HashiCorp repository with Ubuntu 24.04+ compatibility
+
+- name: Determine HashiCorp repository codename
+  ansible.builtin.set_fact:
+    hashicorp_release: "{{ 'jammy' if ansible_distribution_release == 'noble' else ansible_distribution_release }}"
+  tags: ['hashicorp', 'boundary', 'consul', 'nomad', 'packer', 'terraform', 'vault', 'vault-radar', 'waypoint']
+
+- name: Create keyrings directory
+  ansible.builtin.file:
+    path: /usr/share/keyrings
+    state: directory
+    mode: '0755'
+  tags: ['hashicorp', 'boundary', 'consul', 'nomad', 'packer', 'terraform', 'vault', 'vault-radar', 'waypoint']
+
+- name: Download HashiCorp GPG key
+  ansible.builtin.get_url:
+    url: https://apt.releases.hashicorp.com/gpg
+    dest: /usr/share/keyrings/hashicorp-archive-keyring.asc
+    mode: '0644'
+  ignore_errors: yes
+  register: hashicorp_gpg_result
+  tags: ['hashicorp', 'boundary', 'consul', 'nomad', 'packer', 'terraform', 'vault', 'vault-radar', 'waypoint']
+
+- name: Add HashiCorp repository
+  ansible.builtin.apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.asc arch=amd64] https://apt.releases.hashicorp.com {{ hashicorp_release }} main"
+    state: present
+    filename: hashicorp
+  when: hashicorp_gpg_result is succeeded
+  ignore_errors: yes
+  tags: ['hashicorp', 'boundary', 'consul', 'nomad', 'packer', 'terraform', 'vault', 'vault-radar', 'waypoint']
+
+################################################################################
+# Install HashiCorp Tools (Alphabetically Sorted)
+################################################################################
+
+# Install Boundary
+- name: Install HashiCorp Boundary
+  ansible.builtin.apt:
+    name:
+      - boundary
+    state: present
+    update_cache: yes
+  register: boundary_result
+  ignore_errors: yes
+  tags: ['hashicorp', 'boundary']
+
+- name: Track Boundary installation failures
+  ansible.builtin.set_fact:
+    hashicorp_failures: "{{ hashicorp_failures | default([]) + ['Boundary installation failed'] }}"
+  when: boundary_result is failed
+  tags: ['hashicorp', 'boundary']
+
+# Install Consul
+- name: Install HashiCorp Consul
+  ansible.builtin.apt:
+    name:
+      - consul
+    state: present
+  register: consul_result
+  ignore_errors: yes
+  tags: ['hashicorp', 'consul']
+
+- name: Track Consul installation failures
+  ansible.builtin.set_fact:
+    hashicorp_failures: "{{ hashicorp_failures | default([]) + ['Consul installation failed'] }}"
+  when: consul_result is failed
+  tags: ['hashicorp', 'consul']
+
+# Install Nomad
+- name: Install HashiCorp Nomad
+  ansible.builtin.apt:
+    name:
+      - nomad
+    state: present
+  register: nomad_result
+  ignore_errors: yes
+  tags: ['hashicorp', 'nomad']
+
+- name: Track Nomad installation failures
+  ansible.builtin.set_fact:
+    hashicorp_failures: "{{ hashicorp_failures | default([]) + ['Nomad installation failed'] }}"
+  when: nomad_result is failed
+  tags: ['hashicorp', 'nomad']
+
+# Install Packer
+- name: Install HashiCorp Packer
+  ansible.builtin.apt:
+    name:
+      - packer
+    state: present
+  register: packer_result
+  ignore_errors: yes
+  tags: ['hashicorp', 'packer']
+
+- name: Track Packer installation failures
+  ansible.builtin.set_fact:
+    hashicorp_failures: "{{ hashicorp_failures | default([]) + ['Packer installation failed'] }}"
+  when: packer_result is failed
+  tags: ['hashicorp', 'packer']
+
+# Install Terraform
+- name: Install HashiCorp Terraform
+  ansible.builtin.apt:
+    name:
+      - terraform
+    state: present
+  register: terraform_result
+  ignore_errors: yes
+  tags: ['hashicorp', 'terraform']
+
+- name: Track Terraform installation failures
+  ansible.builtin.set_fact:
+    hashicorp_failures: "{{ hashicorp_failures | default([]) + ['Terraform installation failed'] }}"
+  when: terraform_result is failed
+  tags: ['hashicorp', 'terraform']
+
+- name: Enable Terraform autocomplete
+  ansible.builtin.shell: terraform -install-autocomplete
+  when: terraform_result is succeeded
+  ignore_errors: yes
+  tags: ['hashicorp', 'terraform']
+
+# Install Vault
+- name: Install HashiCorp Vault
+  ansible.builtin.apt:
+    name:
+      - vault
+    state: present
+  register: vault_result
+  ignore_errors: yes
+  tags: ['hashicorp', 'vault']
+
+- name: Track Vault installation failures
+  ansible.builtin.set_fact:
+    hashicorp_failures: "{{ hashicorp_failures | default([]) + ['Vault installation failed'] }}"
+  when: vault_result is failed
+  tags: ['hashicorp', 'vault']
+
+- name: Enable Vault autocomplete
+  ansible.builtin.shell: vault -autocomplete-install
+  when: vault_result is succeeded
+  ignore_errors: yes
+  tags: ['hashicorp', 'vault']
+
+# Install Vault Radar
+- name: Install HashiCorp Vault Radar
+  ansible.builtin.apt:
+    name:
+      - vault-radar
+    state: present
+  register: vault_radar_result
+  ignore_errors: yes
+  tags: ['hashicorp', 'vault-radar']
+
+- name: Track Vault Radar installation failures
+  ansible.builtin.set_fact:
+    hashicorp_failures: "{{ hashicorp_failures | default([]) + ['Vault Radar installation failed'] }}"
+  when: vault_radar_result is failed
+  tags: ['hashicorp', 'vault-radar']
+
+# Install Waypoint
+- name: Install HashiCorp Waypoint
+  ansible.builtin.apt:
+    name:
+      - waypoint
+    state: present
+  register: waypoint_result
+  ignore_errors: yes
+  tags: ['hashicorp', 'waypoint']
+
+- name: Track Waypoint installation failures
+  ansible.builtin.set_fact:
+    hashicorp_failures: "{{ hashicorp_failures | default([]) + ['Waypoint installation failed'] }}"
+  when: waypoint_result is failed
+  tags: ['hashicorp', 'waypoint']
+
+################################################################################
+# Summary
+################################################################################
+
+- name: Display HashiCorp stack installation summary
+  ansible.builtin.debug:
+    msg: |
+      HashiCorp Stack Installation Complete!
+
+      Installed tools (alphabetically):
+      - Boundary: {{ 'SUCCESS' if boundary_result is succeeded else 'FAILED' }}
+      - Consul: {{ 'SUCCESS' if consul_result is succeeded else 'FAILED' }}
+      - Nomad: {{ 'SUCCESS' if nomad_result is succeeded else 'FAILED' }}
+      - Packer: {{ 'SUCCESS' if packer_result is succeeded else 'FAILED' }}
+      - Terraform: {{ 'SUCCESS' if terraform_result is succeeded else 'FAILED' }}
+      - Vault: {{ 'SUCCESS' if vault_result is succeeded else 'FAILED' }}
+      - Vault Radar: {{ 'SUCCESS' if vault_radar_result is succeeded else 'FAILED' }}
+      - Waypoint: {{ 'SUCCESS' if waypoint_result is succeeded else 'FAILED' }}
+
+      {% if hashicorp_failures | default([]) | length > 0 %}
+      Failures: {{ hashicorp_failures | length }}
+      {% for failure in hashicorp_failures %}
+        - {{ failure }}
+      {% endfor %}
+      {% endif %}
+  tags: ['always']

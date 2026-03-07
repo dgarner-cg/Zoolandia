@@ -1,0 +1,102 @@
+---
+################################################################################
+# Configs Role - Default Variables
+# Purpose: System configuration settings
+################################################################################
+
+# User configuration (inherited from parent or auto-detected)
+workstation_user: "{{ lookup('env', 'USER') | default(ansible_user_id, true) }}"
+workstation_uid: "{{ ansible_user_uid | default(1000) }}"
+
+################################################################################
+# POWER MANAGEMENT
+################################################################################
+
+power_management:
+  enabled: true
+  lid_close_ac_action: "hibernate"      # hibernate, suspend, nothing
+  lid_close_battery_action: "hibernate"
+  sleep_timeout_ac: 0                   # 0 = never
+  sleep_timeout_battery: 0
+
+################################################################################
+# TOUCHPAD SETTINGS
+################################################################################
+
+touchpad:
+  enabled: true
+  tap_to_click: true
+  natural_scrolling: true
+  two_finger_scrolling: true
+  speed: 0.5                           # Range: -1.0 to 1.0
+  click_method: "fingers"              # fingers, areas
+
+################################################################################
+# MOUSE SETTINGS
+################################################################################
+
+mouse:
+  enabled: true
+  speed: 0.0                           # Range: -1.0 to 1.0
+  natural_scrolling: false
+  accel_profile: "default"             # default, flat, adaptive
+
+################################################################################
+# NTFS/EXFAT SUPPORT
+################################################################################
+
+ntfs_support:
+  enabled: true
+  blacklist_ntfs3: true               # Force use of ntfs-3g instead of kernel ntfs3
+  install_exfat: true
+
+################################################################################
+# NAUTILUS FILE MANAGER
+################################################################################
+
+nautilus:
+  enabled: true
+  sort_order: "type"                   # name, size, type, mtime
+  show_hidden_files: false
+  default_view: "list-view"            # icon-view, list-view
+
+################################################################################
+# RAZER LAPTOP CONFIGURATION
+################################################################################
+
+razer_grub:
+  enabled: false                       # Only enable for Razer laptops (hardware-specific)
+  kernel_params:
+    - "quiet splash"
+    - "intel_iommu=off"
+    - "iommu=pt"
+    - "i915.enable_psr=0"
+    - "i915.enable_dc=0"
+    - "i915.enable_fbc=0"
+    - "i915.fastboot=1"
+
+################################################################################
+# USER EXPERIENCE
+################################################################################
+
+user_experience:
+  emoji_success: "✅"
+  emoji_failure: "❌"
+  emoji_warning: "⚠️"
+  emoji_target: "🎯"
+  emoji_config: "⚙️"
+
+################################################################################
+# LOGGING
+################################################################################
+
+logging:
+  enabled: true
+  audit_trail: "{{ lookup('env', 'HOME') | default(ansible_env.HOME, true) }}/.zoolandia/logs/configs.log"
+
+################################################################################
+# VERSION INFO
+################################################################################
+
+configs_role_version: "1.0.0"
+configs_role_date: "2026-01-25"

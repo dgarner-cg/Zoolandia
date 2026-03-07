@@ -1,0 +1,92 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/handlers/main.yml
+# Purpose: Handlers for service management and cleanup
+#
+# Handlers are triggered by 'notify' keyword in tasks
+# They run at the end of the play, only once even if notified multiple times
+#
+################################################################################
+
+################################################################################
+# CLEANUP HANDLERS
+################################################################################
+
+- name: cleanup temp downloads
+  ansible.builtin.file:
+    path: "{{ temp_download_dir }}"
+    state: absent
+  when: cleanup.enabled | default(true)
+  listen: "cleanup all"
+
+- name: remove apt cache
+  ansible.builtin.apt:
+    autoclean: yes
+    autoremove: yes
+  become: yes
+  when: cleanup.remove_apt_cache | default(false)
+  listen: "cleanup all"
+
+################################################################################
+# SERVICE HANDLERS
+################################################################################
+
+- name: restart docker
+  ansible.builtin.service:
+    name: docker
+    state: restarted
+  become: yes
+  when: install_docker | default(false)
+
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+  become: yes
+
+- name: update grub
+  ansible.builtin.command: update-grub
+  become: yes
+  when: razer_grub.enabled | default(false)
+
+################################################################################
+# USER SESSION HANDLERS
+################################################################################
+
+- name: reload user session
+  ansible.builtin.debug:
+    msg: |
+      {{ user_experience.emoji_warning | default('⚠️') }} USER ACTION REQUIRED:
+
+      To apply Docker group membership, you must:
+      1. Log out of your current session
+      2. Log back in
+
+      Alternatively, run: newgrp docker
+  when: docker.add_user_to_group | default(false)
+
+################################################################################
+# NOTIFICATION HANDLERS
+################################################################################
+
+- name: notify setup complete
+  ansible.builtin.debug:
+    msg: |
+
+      {{ user_experience.emoji_rocket | default('🚀') }} SETUP COMPLETE!
+
+      Log files:
+        - Audit trail: {{ logging.audit_trail }}
+        - Manifest: {{ logging.manifest_file }}
+        - Statistics: {{ logging.statistics_file }}
+
+      Next steps documented in manifest file.
+  listen: "setup complete"
+
+- name: create installation summary
+  ansible.builtin.template:
+    src: summary.j2
+    dest: "{{ zoolandia_logs_dir }}/installation_summary_{{ ansible_date_time.date }}.txt"
+    mode: '0644'
+  when: logging.enabled | default(true)
+  listen: "setup complete"

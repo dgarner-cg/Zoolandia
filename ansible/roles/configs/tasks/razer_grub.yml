@@ -1,0 +1,57 @@
+---
+################################################################################
+# Razer GRUB Configuration
+# Purpose: Configure GRUB kernel parameters for Razer laptops (12.5" and similar)
+# Fixes Intel GPU issues: PSR, DC states, FBC
+################################################################################
+
+- name: "{{ user_experience.emoji_config | default('⚙️') }} RAZER GRUB | Configuring kernel parameters"
+  ansible.builtin.debug:
+    msg: "Configuring GRUB for Razer laptop compatibility"
+  when: razer_grub.enabled | default(false)
+  tags: ['configs', 'razer', 'grub']
+
+- name: Backup original GRUB configuration
+  ansible.builtin.copy:
+    src: /etc/default/grub
+    dest: /etc/default/grub.backup.{{ ansible_date_time.date }}
+    remote_src: yes
+    force: no
+  become: yes
+  when: razer_grub.enabled | default(false)
+  ignore_errors: yes
+  tags: ['configs', 'razer', 'grub']
+
+- name: Configure GRUB_CMDLINE_LINUX_DEFAULT for Razer
+  ansible.builtin.lineinfile:
+    path: /etc/default/grub
+    regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+    line: 'GRUB_CMDLINE_LINUX_DEFAULT="{{ razer_grub.kernel_params | default(["quiet splash", "intel_iommu=off", "iommu=pt", "i915.enable_psr=0", "i915.enable_dc=0", "i915.enable_fbc=0", "i915.fastboot=1"]) | join(" ") }}"'
+    backup: yes
+  become: yes
+  when: razer_grub.enabled | default(false)
+  register: grub_config_result
+  tags: ['configs', 'razer', 'grub']
+
+- name: Update GRUB configuration
+  ansible.builtin.command: update-grub
+  become: yes
+  when:
+    - razer_grub.enabled | default(false)
+    - grub_config_result.changed | default(false)
+  register: grub_update_result
+  tags: ['configs', 'razer', 'grub']
+
+- name: "{{ user_experience.emoji_warning | default('⚠️') }} RAZER GRUB | Reboot required"
+  ansible.builtin.debug:
+    msg: |
+      GRUB configuration updated for Razer laptop.
+
+      ⚠️  REBOOT REQUIRED for changes to take effect!
+
+      Kernel parameters configured:
+      {{ razer_grub.kernel_params | default(["quiet splash", "intel_iommu=off", "iommu=pt", "i915.enable_psr=0", "i915.enable_dc=0", "i915.enable_fbc=0", "i915.fastboot=1"]) | join(" ") }}
+  when:
+    - razer_grub.enabled | default(false)
+    - grub_config_result.changed | default(false)
+  tags: ['configs', 'razer', 'grub']

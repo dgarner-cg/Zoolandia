@@ -1,0 +1,25 @@
+---
+- name: Install Twingate
+  block:
+    - name: Check if Twingate is installed
+      shell: command -v twingate
+      register: twingate_check
+      ignore_errors: true
+      failed_when: false
+
+    - name: Install Twingate client
+      shell: curl -s https://binaries.twingate.com/client/linux/install.sh | sudo bash
+      when: twingate_check.rc != 0
+      register: twingate_install
+      ignore_errors: true
+  when: ansible_distribution == "Ubuntu"
+
+- name: Add to failures list - Twingate install
+  set_fact:
+    failures: "{{ failures + ['Twingate installation failed'] }}"
+  when: twingate_install is defined and twingate_install is mapping and twingate_install.failed | default(false)
+
+- name: Print reminder for Twingate setup
+  debug:
+    msg: "Twingate installed. Please run `sudo twingate setup` to complete the configuration."
+  when: twingate_check.rc != 0  # Only remind if Twingate was installed

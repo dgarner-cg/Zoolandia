@@ -1,0 +1,19 @@
+services:
+  # Jenkins - CI/CD Automation Server
+  jenkins:
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped
+    profiles: ["apps", "all"]
+    networks:
+      - default
+    ports:
+      - "$JENKINS_PORT:8080"
+      - "$JENKINS_AGENT_PORT:50000"
+    volumes:
+      - $DOCKERDIR/appdata/jenkins:/var/jenkins_home
+    environment:
+      - JAVA_OPTS=-Djava.awt.headless=true
+    # DOCKER-LABELS-PLACEHOLDER

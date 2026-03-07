@@ -1,0 +1,80 @@
+---
+################################################################################
+# Configs Role - System Configuration Tasks
+# Purpose: Configure system settings (power, touchpad, mouse, NTFS, etc.)
+################################################################################
+
+- name: "{{ user_experience.emoji_target | default('🎯') }} CONFIGS | System Configuration"
+  ansible.builtin.debug:
+    msg: "Applying system configurations..."
+  tags: ['configs']
+
+################################################################################
+# POWER MANAGEMENT
+################################################################################
+
+- name: Include Power Management configuration
+  ansible.builtin.include_tasks: power_management.yml
+  when: power_management.enabled | default(false)
+  tags: ['configs', 'power']
+
+################################################################################
+# TOUCHPAD SETTINGS
+################################################################################
+
+- name: Include Touchpad configuration
+  ansible.builtin.include_tasks: touchpad_settings.yml
+  when: touchpad.enabled | default(false)
+  tags: ['configs', 'touchpad', 'peripherals']
+
+################################################################################
+# MOUSE SETTINGS
+################################################################################
+
+- name: Include Mouse configuration
+  ansible.builtin.include_tasks: mouse_settings.yml
+  when: mouse.enabled | default(false)
+  tags: ['configs', 'mouse', 'peripherals']
+
+################################################################################
+# NTFS/EXFAT SUPPORT
+################################################################################
+
+- name: Include NTFS automount configuration
+  ansible.builtin.include_tasks: ntfs_automount.yml
+  when: ntfs_support.enabled | default(false)
+  tags: ['configs', 'ntfs', 'filesystem']
+
+################################################################################
+# NAUTILUS FILE MANAGER
+################################################################################
+
+- name: Include Nautilus configuration
+  ansible.builtin.include_tasks: nautilus_sort.yml
+  when: nautilus.enabled | default(false)
+  tags: ['configs', 'nautilus', 'filemanager']
+
+################################################################################
+# RAZER LAPTOP CONFIGURATION
+################################################################################
+
+- name: Include Razer GRUB configuration
+  ansible.builtin.include_tasks: razer_grub.yml
+  when: razer_grub.enabled | default(false)
+  tags: ['configs', 'razer', 'grub']
+
+################################################################################
+# SUMMARY
+################################################################################
+
+- name: "{{ user_experience.emoji_success | default('✅') }} CONFIGS | Configuration complete"
+  ansible.builtin.debug:
+    msg: |
+      System configurations applied:
+        - Power Management: {{ 'enabled' if power_management.enabled | default(false) else 'disabled' }}
+        - Touchpad: {{ 'enabled' if touchpad.enabled | default(false) else 'disabled' }}
+        - Mouse: {{ 'enabled' if mouse.enabled | default(false) else 'disabled' }}
+        - NTFS Support: {{ 'enabled' if ntfs_support.enabled | default(false) else 'disabled' }}
+        - Nautilus: {{ 'enabled' if nautilus.enabled | default(false) else 'disabled' }}
+        - Razer GRUB: {{ 'enabled' if razer_grub.enabled | default(false) else 'disabled' }}
+  tags: ['configs']

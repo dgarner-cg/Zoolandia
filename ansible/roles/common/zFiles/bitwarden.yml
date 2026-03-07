@@ -1,0 +1,20 @@
+---
+- name: Install Bitwarden using Snap
+  block:
+    - name: Check if Bitwarden is installed
+      shell: "snap list | grep bitwarden"
+      register: bitwarden_check
+      ignore_errors: true
+
+    - name: Install Bitwarden
+      snap:
+        name: bitwarden
+        state: present
+      when: bitwarden_check.rc != 0
+      ignore_errors: true
+      register: bitwarden_install
+
+- name: Add to failures list - Bitwarden install
+  set_fact:
+    failures: "{{ failures + ['Bitwarden installation failed'] }}"
+  when: bitwarden_install is defined and bitwarden_install is mapping and bitwarden_install.failed | default(false)

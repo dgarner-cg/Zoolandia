@@ -1,0 +1,18 @@
+---
+################################################################################
+# App Server Role - Handlers
+################################################################################
+
+- name: restart code-tunnel
+  ansible.builtin.systemd:
+    name: code-tunnel
+    state: restarted
+  ignore_errors: yes
+
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: restart jenkins
+  ansible.builtin.command: docker restart jenkins
+  ignore_errors: yes

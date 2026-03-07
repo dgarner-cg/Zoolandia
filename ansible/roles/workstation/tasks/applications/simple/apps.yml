@@ -1,0 +1,301 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/tasks/applications/simple/apps.yml
+# Purpose: Loop-based installation for simple applications
+#
+# This file replaces 16+ individual app files with a single loop-based approach
+# Code Reduction: ~87% (from ~800 lines to ~100 lines)
+#
+# Handles:
+#   - APT packages (tmux, fzf, ripgrep, bat - workstation tools)
+#   - Snap applications (vivaldi, bitwarden, notion, etc.)
+#   - DEB package downloads (discord, zoom, etc.)
+#
+################################################################################
+
+################################################################################
+# APT PACKAGES - Workstation Development Tools
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} APT | Installing workstation development tools..."
+  ansible.builtin.debug:
+    msg: "Installing workstation tools: tmux, fzf, ripgrep, bat"
+  when: install_workstation_tools | default(false)
+  tags: ['applications', 'apt', 'tools']
+
+- name: Install workstation development tools
+  ansible.builtin.apt:
+    name:
+      - tmux
+      - fzf
+      - ripgrep
+      - bat
+    state: present
+    update_cache: yes
+  become: yes
+  register: workstation_tools_result
+  ignore_errors: yes
+  when: install_workstation_tools | default(false)
+  tags: ['applications', 'apt', 'tools']
+
+- name: Track workstation tools installation failures
+  ansible.builtin.set_fact:
+    workstation_failures: "{{ workstation_failures | default([]) + ['Workstation tools (tmux, fzf, ripgrep, bat) installation failed'] }}"
+  when:
+    - install_workstation_tools | default(false)
+    - workstation_tools_result is failed
+  tags: ['applications', 'apt', 'tools']
+
+- name: Log workstation tools installation
+  ansible.builtin.lineinfile:
+    path: "{{ logging.audit_trail }}"
+    line: "[{{ ansible_date_time.iso8601 }}] APT: Workstation tools (tmux, fzf, ripgrep, bat) - {{ 'SUCCESS' if workstation_tools_result is succeeded else 'FAILED' }}"
+    create: yes
+    mode: '0644'
+  when:
+    - install_workstation_tools | default(false)
+    - logging.enabled | default(true)
+  tags: ['applications', 'apt', 'tools']
+
+################################################################################
+# SNAP APPLICATIONS
+# Loop-based installation eliminates code duplication
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} SNAP APPS | Installing Snap applications..."
+  ansible.builtin.debug:
+    msg: "Installing {{ snap_apps | selectattr('enabled', 'equalto', true) | list | length }} Snap applications..."
+  when: features.install_snap_apps | default(true)
+  tags: ['applications', 'snap']
+
+- name: Ensure snapd is installed
+  ansible.builtin.apt:
+    name: snapd
+    state: present
+    update_cache: yes
+  become: yes
+  when: features.install_snap_apps | default(true)
+  tags: ['applications', 'snap']
+
+- name: Ensure snapd service is running
+  ansible.builtin.service:
+    name: snapd
+    state: started
+    enabled: yes
+  become: yes
+  when: features.install_snap_apps | default(true)
+  tags: ['applications', 'snap']
+
+- name: "{{ user_experience.emoji_working | default('🔄') }} SNAP APPS | Installing applications via loop..."
+  block:
+    - name: Install snap applications
+      community.general.snap:
+        name: "{{ item.name }}"
+        state: present
+      loop: "{{ snap_apps }}"
+      loop_control:
+        label: "{{ item.name }} ({{ item.category }})"
+      when:
+        - item.enabled | default(false)
+        - features.install_snap_apps | default(true)
+      become: yes
+      register: snap_install_results
+      failed_when: false
+
+    - name: Log snap installation results
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] SNAP: {{ item.item.name }} - {{ 'SUCCESS' if not (item.failed | default(false)) else 'FAILED: ' + (item.msg | default('Unknown error')) }}"
+        create: yes
+        mode: '0644'
+      loop: "{{ snap_install_results.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when:
+        - logging.enabled | default(true)
+        - item.item.enabled | default(false)
+      failed_when: false
+
+    - name: Collect snap failures
+      ansible.builtin.set_fact:
+        snap_failures: "{{ snap_install_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | map(attribute='item') | list }}"
+      when: snap_install_results.results is defined
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} SNAP APPS | Successfully installed"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_success | default('✅') }} Installed {{ ((snap_install_results.results | length) - (snap_install_results.results | selectattr('skipped', 'defined') | selectattr('skipped', 'equalto', true) | list | length) - (snap_install_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length)) }} snap applications:
+          {% for result in snap_install_results.results %}
+          {% if not (result.failed | default(false)) and not (result.skipped | default(false)) %}  - {{ result.item.name }} ({{ result.item.description }})
+          {% endif %}
+          {% endfor %}
+      when:
+        - snap_install_results.results is defined
+        - ((snap_install_results.results | length) - (snap_install_results.results | selectattr('skipped', 'defined') | selectattr('skipped', 'equalto', true) | list | length) - (snap_install_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length)) > 0
+
+    - name: "{{ user_experience.emoji_failure | default('❌') }} SNAP APPS | Failed installations"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_failure | default('❌') }} Failed to install {{ snap_failures | length }} snap applications:
+          {% for app in snap_failures %}  - {{ app.name }}
+          {% endfor %}
+      when:
+        - snap_failures is defined
+        - snap_failures | length > 0
+
+  rescue:
+    - name: Log snap installation block failure
+      ansible.builtin.debug:
+        msg: "{{ user_experience.emoji_failure | default('❌') }} Snap installation block encountered an error"
+
+  tags: ['applications', 'snap']
+
+################################################################################
+# DEB PACKAGE APPLICATIONS
+# Download and install .deb packages with retry logic
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} DEB APPS | Installing DEB package applications..."
+  ansible.builtin.debug:
+    msg: "Installing {{ deb_apps | selectattr('enabled', 'equalto', true) | list | length }} DEB package applications..."
+  when: features.install_deb_apps | default(true)
+  tags: ['applications', 'deb']
+
+- name: Create temporary download directory
+  ansible.builtin.file:
+    path: "{{ temp_download_dir }}"
+    state: directory
+    mode: '0755'
+  when: features.install_deb_apps | default(true)
+  tags: ['applications', 'deb']
+
+- name: "{{ user_experience.emoji_working | default('🔄') }} DEB APPS | Downloading packages..."
+  block:
+    - name: Download .deb packages
+      ansible.builtin.get_url:
+        url: "{{ item.url }}"
+        dest: "{{ item.dest }}"
+        mode: '0644'
+        timeout: "{{ item.timeout | default(error_handling.download_timeout) }}"
+      loop: "{{ deb_apps }}"
+      loop_control:
+        label: "{{ item.name }} ({{ item.category }})"
+      when:
+        - item.enabled | default(false)
+        - features.install_deb_apps | default(true)
+      register: deb_download_results
+      retries: "{{ item.retries | default(error_handling.download_retries) }}"
+      delay: "{{ error_handling.download_delay }}"
+      until: deb_download_results is succeeded
+      failed_when: false
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} DEB APPS | Downloads complete"
+      ansible.builtin.debug:
+        msg: "Downloaded {{ ((deb_download_results.results | length) - (deb_download_results.results | selectattr('skipped', 'defined') | selectattr('skipped', 'equalto', true) | list | length) - (deb_download_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length)) }} packages"
+      when: deb_download_results.results is defined
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DEB APPS | Installing packages..."
+      ansible.builtin.apt:
+        deb: "{{ item.dest }}"
+        state: present
+      loop: "{{ deb_apps }}"
+      loop_control:
+        label: "{{ item.name }}"
+      when:
+        - item.enabled | default(false)
+        - features.install_deb_apps | default(true)
+      become: yes
+      register: deb_install_results
+      failed_when: false
+
+    - name: Fix missing dependencies for DEB packages
+      ansible.builtin.apt:
+        name: '*'
+        state: present
+        update_cache: yes
+      become: yes
+      when:
+        - deb_install_results.results is defined
+        - deb_install_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length > 0
+      failed_when: false
+
+    - name: Log DEB installation results
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] DEB: {{ item.item.name }} - {{ 'SUCCESS' if not (item.failed | default(false)) else 'FAILED: ' + (item.msg | default('Unknown error')) }}"
+        create: yes
+        mode: '0644'
+      loop: "{{ deb_install_results.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+      when:
+        - logging.enabled | default(true)
+        - item.item.enabled | default(false)
+      failed_when: false
+
+    - name: Collect DEB failures
+      ansible.builtin.set_fact:
+        deb_failures: "{{ deb_install_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | map(attribute='item') | list }}"
+      when: deb_install_results.results is defined
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} DEB APPS | Successfully installed"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_success | default('✅') }} Installed {{ ((deb_install_results.results | length) - (deb_install_results.results | selectattr('skipped', 'defined') | selectattr('skipped', 'equalto', true) | list | length) - (deb_install_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length)) }} DEB applications:
+          {% for result in deb_install_results.results %}
+          {% if not (result.failed | default(false)) and not (result.skipped | default(false)) %}  - {{ result.item.name }} ({{ result.item.description }})
+          {% endif %}
+          {% endfor %}
+      when:
+        - deb_install_results.results is defined
+        - ((deb_install_results.results | length) - (deb_install_results.results | selectattr('skipped', 'defined') | selectattr('skipped', 'equalto', true) | list | length) - (deb_install_results.results | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length)) > 0
+
+    - name: "{{ user_experience.emoji_failure | default('❌') }} DEB APPS | Failed installations"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_failure | default('❌') }} Failed to install {{ deb_failures | length }} DEB applications:
+          {% for app in deb_failures %}  - {{ app.name }}
+          {% endfor %}
+      when:
+        - deb_failures is defined
+        - deb_failures | length > 0
+
+  rescue:
+    - name: Log DEB installation block failure
+      ansible.builtin.debug:
+        msg: "{{ user_experience.emoji_failure | default('❌') }} DEB installation block encountered an error"
+
+  always:
+    - name: Clean up downloaded DEB packages
+      ansible.builtin.file:
+        path: "{{ item.dest }}"
+        state: absent
+      loop: "{{ deb_apps }}"
+      when:
+        - cleanup.remove_temp_downloads | default(true)
+        - item.enabled | default(false)
+      failed_when: false
+
+  tags: ['applications', 'deb']
+
+################################################################################
+# SUMMARY
+################################################################################
+
+- name: "{{ user_experience.emoji_success | default('✅') }} SIMPLE APPS | Installation summary"
+  ansible.builtin.debug:
+    msg: |
+
+      ═══════════════════════════════════════════════════════════════════
+      {{ user_experience.emoji_success | default('✅') }} SIMPLE APPLICATIONS INSTALLATION COMPLETE
+      ═══════════════════════════════════════════════════════════════════
+
+      Snap Apps: {{ ((snap_install_results.results | default([]) | length) - (snap_install_results.results | default([]) | selectattr('skipped', 'defined') | selectattr('skipped', 'equalto', true) | list | length) - (snap_install_results.results | default([]) | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length)) }} installed
+      DEB Apps: {{ ((deb_install_results.results | default([]) | length) - (deb_install_results.results | default([]) | selectattr('skipped', 'defined') | selectattr('skipped', 'equalto', true) | list | length) - (deb_install_results.results | default([]) | selectattr('failed', 'defined') | selectattr('failed', 'equalto', true) | list | length)) }} installed
+
+      {% if (snap_failures | default([]) | length + deb_failures | default([]) | length) > 0 %}
+      {{ user_experience.emoji_warning | default('⚠️') }} Failures: {{ snap_failures | default([]) | length + deb_failures | default([]) | length }}
+      {% endif %}
+
+  tags: ['applications', 'snap', 'deb']

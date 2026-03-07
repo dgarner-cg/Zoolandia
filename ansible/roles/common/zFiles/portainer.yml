@@ -1,0 +1,37 @@
+---
+- name: Install Portainer Business Edition
+  block:
+    - name: Check if Portainer is already running
+      shell: "docker ps -a | grep portainer"
+      register: portainer_check
+      ignore_errors: true
+      failed_when: false
+
+    - name: Create Portainer volume
+      shell: "docker volume create portainer_data"
+      when: portainer_check.rc != 0
+      ignore_errors: true
+
+    - name: Deploy Portainer Business Edition
+      shell: |
+        docker run -d \
+          -p 8000:8000 \
+          -p 9443:9443 \
+          --name portainer \
+          --restart=always \
+          -v /var/run/docker.sock:/var/run/docker.sock \
+          -v portainer_data:/data \
+          portainer/portainer-ee:latest
+      when: portainer_check.rc != 0
+      ignore_errors: true
+      register: portainer_install
+
+- name: Add to failures list - Portainer install
+  set_fact:
+    failures: "{{ failures + ['Portainer Business Edition installation failed'] }}"
+  when: portainer_install is defined and portainer_install is mapping and portainer_install.failed | default(false)
+
+- name: Print reminder for Portainer setup
+  debug:
+    msg: "Portainer Business Edition installed. Access it at https://localhost:9443 - You'll need to create an admin account on first access."
+  when: portainer_check.rc != 0

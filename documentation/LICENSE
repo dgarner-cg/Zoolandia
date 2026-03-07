@@ -1,0 +1,50 @@
+# DeployIQ License
+
+Copyright (c) 2025 SimpleHomelab. All rights reserved.
+
+TERMS AND CONDITIONS FOR USE OF DEPLOYIQ BINARY
+
+1. Definitions
+   - "Software" refers to the compiled DeployIQ application and its associated files
+   - "License" refers to this document
+   - "You" refers to the individual or entity exercising permissions under this License
+
+2. Grant of License
+   This License grants you the following rights:
+   a) To install and use the Software
+   b) To make backup copies of the Software for your own use
+   c) To use the Software for both personal and commercial purposes within the terms of your subscription
+
+3. Restrictions
+   You may not:
+   a) Modify, reverse engineer, decompile, or disassemble the Software
+   b) Distribute, sell, lease, rent, or sublicense the Software
+   c) Remove or alter any proprietary notices on the Software
+   d) Use the Software in violation of applicable laws
+
+4. Open Source Components
+   All non-compiled resources available in the repository (including but not limited to):
+   - Docker Compose files
+   - Example configurations
+   - Documentation
+   - Scripts
+   Are provided under the MIT License and can be freely used, modified, and distributed without restrictions.
+
+5. Subscription and Updates
+   - Access to the Software is governed by your subscription status
+   - Updates and support are provided according to your subscription tier
+
+6. Termination
+   This License automatically terminates if you fail to comply with its terms and conditions
+
+7. Disclaimer of Warranty
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED
+
+8. Limitation of Liability
+   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY
+
+9. Support and Documentation
+   - Documentation and community resources may be provided under separate licenses
+   - Support is provided according to your subscription tier
+
+For questions about this license, contact: [legal@simplehomelab.com](mailto:legal@simplehomelab.com)

@@ -1,0 +1,20 @@
+---
+# For configuration options and examples, please see:
+# https://gethomepage.dev/widgets/
+
+- logo:
+    icon: /images/zoolandia_icon.png
+
+- greeting:
+    text_size: xl
+    text: Zoolandia Dashboard
+
+- resources:
+    cpu: true
+    memory: true
+    disk: /
+
+- search:
+    provider: duckduckgo
+    target: _blank
+

@@ -1,0 +1,162 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/tasks/applications/complex/docker.yml
+# Purpose: Docker installation with repository setup
+#
+# Complexity: HIGH
+# Why Complex: Requires repository setup, GPG key, user group membership
+#
+################################################################################
+
+- name: "{{ user_experience.emoji_package | default('📦') }} DOCKER | Installing Docker..."
+  ansible.builtin.debug:
+    msg: "Installing Docker CE with repository setup..."
+  tags: ['applications', 'docker', 'complex']
+
+- name: Docker installation
+  block:
+    ############################################################################
+    # STEP 1: Install Prerequisites
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DOCKER | Step 1/6 - Installing prerequisites..."
+      ansible.builtin.apt:
+        name: "{{ docker.prerequisites }}"
+        state: present
+        update_cache: yes
+      become: yes
+
+    ############################################################################
+    # STEP 2: Add Docker GPG Key (modern signed-by approach)
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DOCKER | Step 2/6 - Creating keyrings directory..."
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      become: yes
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DOCKER | Step 2/6 - Adding Docker GPG key..."
+      ansible.builtin.get_url:
+        url: "{{ docker.gpg_url }}"
+        dest: /etc/apt/keyrings/docker.asc
+        mode: '0644'
+      become: yes
+
+    ############################################################################
+    # STEP 3: Add Docker Repository (with signed-by)
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DOCKER | Step 3/6 - Removing legacy Docker apt source entries..."
+      ansible.builtin.shell: |
+        for f in /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+          [ -f "$f" ] || continue
+          if grep -q "download.docker.com" "$f"; then
+            sed -i '/download.docker.com/{/signed-by/!d}' "$f"
+          fi
+        done
+        exit 0
+      become: yes
+      changed_when: false
+      failed_when: false
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DOCKER | Step 3/6 - Adding Docker repository..."
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        filename: docker
+      become: yes
+
+    ############################################################################
+    # STEP 4: Install Docker
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DOCKER | Step 4/6 - Installing Docker packages..."
+      ansible.builtin.apt:
+        name: "{{ docker.packages }}"
+        state: present
+        update_cache: yes
+      become: yes
+
+    ############################################################################
+    # STEP 5: Add User to Docker Group
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DOCKER | Step 5/6 - Adding user to docker group..."
+      ansible.builtin.user:
+        name: "{{ workstation_user }}"
+        groups: docker
+        append: yes
+      become: yes
+      when: docker.add_user_to_group | default(true)
+      notify: reload user session
+
+    ############################################################################
+    # STEP 6: Start Docker Service
+    ############################################################################
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} DOCKER | Step 6/6 - Starting Docker service..."
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+      become: yes
+      when: docker.enable_service | default(true)
+
+    ############################################################################
+    # VERIFICATION
+    ############################################################################
+
+    - name: Verify Docker installation
+      ansible.builtin.command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} DOCKER | Installation successful!"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_success | default('✅') }} Docker installed successfully!
+
+          Version: {{ docker_version.stdout or 'OK (check mode - version will be available after actual installation)' }}
+          User added to docker group: {{ workstation_user }}
+
+          {{ user_experience.emoji_warning | default('⚠️') }} Log out and back in to use docker without sudo
+
+    - name: Log Docker installation success
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] DOCKER: Successfully installed - {{ docker_version.stdout }}"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} DOCKER | Installation failed"
+      ansible.builtin.debug:
+        msg: |
+          {{ user_experience.emoji_failure | default('❌') }} Docker installation failed
+
+          Error: {{ ansible_failed_result.msg | default('Unknown error') }}
+
+    - name: Log Docker installation failure
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] DOCKER: Installation FAILED - {{ ansible_failed_result.msg | default('Unknown error') }}"
+        create: yes
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+    - name: Add to failures list
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['Docker: ' + (ansible_failed_result.msg | default('Installation failed'))] }}"
+
+    - name: Fail if Docker is critical
+      ansible.builtin.fail:
+        msg: "Critical package Docker failed to install"
+      when:
+        - not (error_handling.continue_on_failure | default(true))
+        - "'docker' in error_handling.critical_packages | default([])"
+
+  tags: ['applications', 'docker', 'complex']

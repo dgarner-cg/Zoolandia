@@ -1,0 +1,498 @@
+---
+################################################################################
+# Zoolandia Workstation Setup - Production Edition
+# File: roles/workstation/defaults/main.yml
+# Purpose: Centralized variable configuration
+#
+# Variable Precedence (lowest to highest):
+#   1. This file (defaults/main.yml) ← You are here
+#   2. vars/main.yml
+#   3. Inventory variables
+#   4. Playbook variables
+#   5. Command-line extra vars (-e) ← Highest (from Zoolandia)
+#
+# Dual Compatibility:
+#   - Zoolandia: Variables passed via -e flag from modules/41_ansible.sh
+#   - CLI: Auto-detects using Ansible facts
+#
+# Usage:
+#   # From Zoolandia (variables auto-passed)
+#   Called automatically with CURRENT_USER, DOCKER_DIR, etc.
+#
+#   # From CLI (auto-detects)
+#   ansible-playbook setup.yml
+#
+#   # From CLI with overrides
+#   ansible-playbook setup.yml -e "workstation_user=alice"
+#
+################################################################################
+
+################################################################################
+# USER CONFIGURATION
+# Auto-detects current user, can be overridden by Zoolandia
+################################################################################
+
+# Target user for setup (Zoolandia passes CURRENT_USER, CLI auto-detects)
+workstation_user: "{{ lookup('env', 'CURRENT_USER') | default(ansible_user_id, true) }}"
+workstation_home: "{{ lookup('env', 'HOME') | default(ansible_env.HOME, true) }}"
+workstation_uid: "{{ ansible_user_uid | default(1000) }}"
+workstation_gid: "{{ ansible_user_gid | default(1000) }}"
+
+################################################################################
+# DIRECTORY CONFIGURATION
+# Zoolandia passes DOCKER_DIR, BACKUP_DIR; CLI uses smart defaults
+################################################################################
+
+# Docker directory (Zoolandia: $DOCKER_DIR, CLI: ~/docker)
+docker_dir: "{{ lookup('env', 'DOCKER_DIR') | default(workstation_home + '/docker', true) }}"
+
+# Backup directory (Zoolandia: $BACKUP_DIR, CLI: ~/backups)
+backup_dir: "{{ lookup('env', 'BACKUP_DIR') | default(workstation_home + '/backups', true) }}"
+
+# Zoolandia directories
+zoolandia_base_dir: "{{ workstation_home }}/.zoolandia"
+zoolandia_logs_dir: "{{ zoolandia_base_dir }}/logs"
+zoolandia_config_dir: "{{ zoolandia_base_dir }}/config"
+
+# Temporary download directory
+temp_download_dir: "/tmp/zoolandia_ansible_downloads"
+
+################################################################################
+# APPLICATION SELECTION - SIMPLE APPS (Loop-based installation)
+# Enable/disable individual applications
+################################################################################
+
+# Snap Applications (installed via loop)
+snap_apps:
+  - name: vivaldi
+    enabled: true
+    category: browser
+    description: "Modern Chromium-based browser"
+
+  - name: bitwarden
+    enabled: true
+    category: security
+    description: "Password manager"
+
+  - name: notepad-plus-plus
+    enabled: true
+    category: development
+    description: "Advanced text editor"
+
+  - name: notion-snap-reborn
+    enabled: true
+    category: productivity
+    description: "Note-taking and collaboration"
+
+  - name: mailspring
+    enabled: true
+    category: communication
+    description: "Email client"
+
+  - name: icloud-for-linux
+    enabled: false
+    category: cloud
+    description: "iCloud integration (experimental)"
+
+  - name: claude-code
+    enabled: true
+    category: development
+    description: "Claude AI code assistant CLI"
+
+  - name: chatgpt-desktop-client
+    enabled: true
+    category: productivity
+    description: "ChatGPT desktop application"
+
+# DEB Package Applications (downloaded and installed via loop)
+deb_apps:
+  - name: discord
+    url: "https://discord.com/api/download?platform=linux&format=deb"
+    dest: "{{ temp_download_dir }}/discord.deb"
+    enabled: true
+    category: communication
+    description: "Voice and text chat"
+    retries: 3
+    timeout: 1200
+
+  - name: zoom
+    url: "https://zoom.us/client/latest/zoom_amd64.deb"
+    dest: "{{ temp_download_dir }}/zoom_amd64.deb"
+    enabled: true
+    category: communication
+    description: "Video conferencing"
+    retries: 3
+    timeout: 1200
+
+  - name: termius
+    url: "https://www.termius.com/download/linux/Termius.deb"
+    dest: "{{ temp_download_dir }}/termius.deb"
+    enabled: false
+    category: development
+    description: "SSH client"
+    retries: 3
+    timeout: 1200
+
+  - name: onlyoffice
+    url: "https://download.onlyoffice.com/install/desktop/editors/linux/onlyoffice-desktopeditors_amd64.deb"
+    dest: "{{ temp_download_dir }}/onlyoffice_amd64.deb"
+    enabled: true
+    category: productivity
+    description: "Office suite"
+    retries: 3
+    timeout: 1200
+
+################################################################################
+# APPLICATION SELECTION - COMPLEX APPS (Individual file installation)
+# These require special handling (repos, PPAs, scripts, containers)
+################################################################################
+
+# Repository-based applications
+install_docker: true
+install_protonvpn: false
+install_ulauncher: true
+install_twingate: false
+
+# Editor applications
+install_sublime_text: false
+
+# AI CLI tools (npm global)
+install_codex: false
+install_gemini: false
+
+# Note-taking
+install_obsidian: false
+
+# Docker container applications
+install_portainer: true
+install_n8n: false
+
+################################################################################
+# DOCKER CONFIGURATION
+################################################################################
+
+docker:
+  # Installation options
+  add_user_to_group: true
+  enable_service: true
+  install_compose: true
+  install_buildx: true
+
+  # Repository configuration
+  gpg_url: "https://download.docker.com/linux/ubuntu/gpg"
+  repo_url: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+
+  # Packages to install
+  packages:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
+
+  # Prerequisites
+  prerequisites:
+    - apt-transport-https
+    - ca-certificates
+    - gnupg
+    - lsb-release
+    - curl
+
+# Portainer configuration
+portainer:
+  edition: "ee"  # ce or ee
+  port_http: 8000
+  port_https: 9443
+  volume_name: "portainer_data"
+  restart_policy: "always"
+  image: "portainer/portainer-ee:latest"
+  healthcheck:
+    enabled: true
+    interval: "30s"
+    timeout: "10s"
+    retries: 3
+
+# Twingate configuration
+twingate:
+  install_script_url: "https://binaries.twingate.com/client/linux/install.sh"
+  verify_checksum: false  # TODO: Add checksum verification
+
+# ProtonVPN configuration
+protonvpn:
+  repo_deb_url: "https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb"
+  package_name: "proton-vpn-gnome-desktop"
+
+# Ulauncher configuration
+ulauncher:
+  ppa: "ppa:agornostal/ulauncher"
+  install_wmctrl: true  # Required for Wayland support
+
+# n8n configuration
+n8n:
+  port: 5678
+  data_dir: "{{ workstation_home }}/.n8n"
+  protocol: "http"
+  host: "localhost"
+  image: "n8nio/n8n:latest"
+  restart_policy: "unless-stopped"
+  timezone: "{{ ansible_date_time.tz }}"
+
+################################################################################
+# CHROME EXTENSIONS CONFIGURATION
+################################################################################
+
+# Chrome/Chromium Extensions (installed as unpacked extensions)
+install_chrome_extensions: true
+
+chrome_extensions:
+  install_dir: "{{ workstation_home }}/.local/share/chrome-extensions"
+  extensions:
+    - name: "ai-chat-exporter"
+      src: "gpt-xptr (v0.8b-f-hipo)/"
+      enabled: true
+      category: productivity
+      description: "Export AI chat conversations (ChatGPT, Claude, Gemini) to PDF, HTML, Markdown"
+      version: "1.2.2"
+
+    - name: "gpt-saves"
+      src: "gpt-saves (v0.8b-f-hipo)/"
+      enabled: true
+      category: productivity
+      description: "Save and organize GPT conversations"
+      version: "0.8b"
+
+################################################################################
+# SYSTEM CONFIGURATION
+################################################################################
+
+# Power Management
+power_management:
+  enabled: true
+  lid_close_ac_action: "hibernate"  # Options: hibernate, suspend, nothing
+  lid_close_battery_action: "hibernate"
+  sleep_timeout_ac: 0  # 0 = never sleep
+  sleep_timeout_battery: 0
+
+# Touchpad Settings
+touchpad:
+  enabled: true
+  tap_to_click: true
+  natural_scrolling: true
+  two_finger_scrolling: true
+  speed: 0.5  # Range: -1.0 to 1.0 (GNOME uses this range)
+  click_method: "fingers"  # Options: fingers, areas
+
+# NTFS/exFAT Support
+ntfs_support:
+  enabled: true
+  blacklist_ntfs3: true  # Force use of ntfs-3g instead of kernel ntfs3
+  install_exfat: true
+
+# Razer GRUB Configuration (Razer 12.5 specific)
+razer_grub:
+  enabled: false  # Only enable if you have Razer hardware
+  kernel_params:
+    - "quiet splash"
+    - "intel_iommu=off"
+    - "iommu=pt"
+    - "i915.enable_psr=0"
+    - "i915.enable_dc=0"
+    - "i915.enable_fbc=0"
+    - "i915.fastboot=1"
+
+# Nautilus File Manager
+nautilus:
+  enabled: true
+  sort_order: "type"  # Options: name, size, type, mtime
+  show_hidden_files: false
+  default_view: "list-view"  # Options: icon-view, list-view
+
+################################################################################
+# PREFLIGHT CHECKS
+# Validation before installation begins
+################################################################################
+
+preflight_checks:
+  enabled: true
+
+  # Disk space check
+  min_disk_space_gb: 10
+  check_path: "{{ workstation_home }}"
+
+  # Internet connectivity
+  check_internet: true
+  connectivity_urls:
+    - "https://www.google.com"
+    - "https://github.com"
+
+  # System requirements
+  min_ram_gb: 4
+  check_python: true
+  check_snap: true
+  check_apt: true
+
+  # Desktop environment detection
+  detect_desktop: true
+  supported_desktops:
+    - GNOME
+    - ubuntu:GNOME
+    - KDE
+    - XFCE
+    - MATE
+    - Cinnamon
+
+################################################################################
+# POST-INSTALLATION VERIFICATION
+# Verify installations completed successfully
+################################################################################
+
+post_install_verification:
+  enabled: true
+  verify_snap_packages: true
+  verify_apt_packages: true
+  verify_docker_containers: true
+  verify_services: true
+  verify_system_settings: true
+
+################################################################################
+# ERROR HANDLING
+################################################################################
+
+error_handling:
+  # Continue on non-critical failures
+  continue_on_failure: true
+
+  # Collect all failures for reporting
+  collect_failures: true
+  failures_list_var: "workstation_failures"
+
+  # Critical packages (fail entire playbook if these fail)
+  critical_packages:
+    - docker
+    - python3
+
+  # Retry configuration
+  download_retries: 3
+  download_delay: 5  # seconds between retries
+  download_timeout: 1200  # seconds (20 minutes)
+
+################################################################################
+# LOGGING & AUDIT TRAIL
+################################################################################
+
+logging:
+  enabled: true
+
+  # Log files
+  log_directory: "{{ zoolandia_logs_dir }}"
+  audit_trail: "{{ zoolandia_logs_dir }}/setup_{{ ansible_date_time.date }}.log"
+  manifest_file: "{{ zoolandia_base_dir }}/manifest.yml"
+
+  # Log levels
+  verbose: true
+  timestamp_format: "iso8601"  # iso8601 or unix
+
+  # Statistics tracking
+  track_statistics: true
+  statistics_file: "{{ zoolandia_logs_dir }}/statistics_{{ ansible_date_time.date }}.yml"
+
+################################################################################
+# USER EXPERIENCE
+################################################################################
+
+user_experience:
+  # Emoji indicators (fun homelab aesthetic)
+  use_emojis: true
+  emoji_success: "✅"
+  emoji_failure: "❌"
+  emoji_warning: "⚠️"
+  emoji_info: "ℹ️"
+  emoji_working: "🔄"
+  emoji_target: "🎯"
+  emoji_rocket: "🚀"
+  emoji_package: "📦"
+  emoji_config: "⚙️"
+  emoji_check: "🔍"
+  emoji_cleanup: "🧹"
+
+  # Progress indicators
+  show_progress: true
+  show_step_numbers: true
+  show_estimated_time: false  # TODO: Implement time estimation
+
+  # Verbosity
+  show_detailed_output: true
+  show_task_names: true
+  show_skipped_tasks: false
+
+################################################################################
+# PERFORMANCE TUNING
+################################################################################
+
+performance:
+  # Parallel execution
+  parallel_snap_installs: false  # Snap doesn't support parallel installs well
+  parallel_downloads: true
+  max_concurrent_downloads: 3
+
+  # Async execution
+  async_timeout: 600  # 10 minutes
+  async_poll_interval: 5  # seconds
+
+  # APT cache
+  apt_cache_valid_time: 3600  # 1 hour
+
+################################################################################
+# FEATURE FLAGS
+# Enable/disable entire feature sets
+################################################################################
+
+features:
+  install_snap_apps: true
+  install_deb_apps: true
+  install_complex_apps: true
+  configure_system: true
+  configure_power: true
+  configure_touchpad: true
+  configure_ntfs: true
+  configure_nautilus: true
+  run_preflight_checks: true
+  run_post_verification: true
+  generate_manifest: true
+  create_backups: false  # TODO: Implement backup functionality
+
+################################################################################
+# CLEANUP
+################################################################################
+
+cleanup:
+  enabled: true
+  remove_temp_downloads: true
+  remove_apt_cache: false
+  remove_old_logs: false
+  logs_retention_days: 30
+
+################################################################################
+# TAGS MAPPING
+# Internal use - maps apps to tags
+################################################################################
+
+tag_categories:
+  browser: ["vivaldi"]
+  security: ["bitwarden", "protonvpn"]
+  development: ["notepad-plus-plus", "termius", "docker"]
+  productivity: ["notion-snap-reborn", "onlyoffice", "chrome_extensions"]
+  communication: ["mailspring", "discord", "zoom"]
+  cloud: ["icloud-for-linux"]
+  containers: ["docker", "portainer", "n8n"]
+  extensions: ["chrome_extensions"]
+  system: ["power_management", "touchpad_settings", "nautilus", "ntfs_support"]
+
+################################################################################
+# VERSION INFORMATION
+################################################################################
+
+workstation_role_version: "1.0.0"
+workstation_role_date: "2026-01-06"
+workstation_role_author: "Zoolandia Production"
+workstation_role_description: "Enterprise-grade workstation setup with homelab-friendly UX"

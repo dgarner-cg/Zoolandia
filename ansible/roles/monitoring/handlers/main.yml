@@ -1,0 +1,36 @@
+---
+################################################################################
+# Monitoring Role - Handlers
+################################################################################
+
+- name: restart grafana
+  ansible.builtin.command: docker restart grafana
+  ignore_errors: yes
+
+- name: restart prometheus
+  ansible.builtin.command: docker restart prometheus
+  ignore_errors: yes
+
+- name: restart influxdb
+  ansible.builtin.command: docker restart influxdb
+  ignore_errors: yes
+
+- name: restart telegraf
+  ansible.builtin.command: docker restart telegraf
+  ignore_errors: yes
+
+- name: restart node-exporter
+  ansible.builtin.command: docker restart node-exporter
+  ignore_errors: yes
+
+- name: restart cadvisor
+  ansible.builtin.command: docker restart cadvisor
+  ignore_errors: yes
+
+- name: restart elasticsearch
+  ansible.builtin.command: docker restart elasticsearch
+  ignore_errors: yes
+
+- name: restart kibana
+  ansible.builtin.command: docker restart kibana
+  ignore_errors: yes

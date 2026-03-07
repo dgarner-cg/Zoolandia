@@ -1,0 +1,6 @@
+---
+# Playbook for webserver tier
+- hosts: webservers
+  roles:
+    - common
+    - webtier
