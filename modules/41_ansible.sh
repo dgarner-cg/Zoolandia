@@ -171,9 +171,6 @@ detect_installed_web() {
     systemctl is-active --quiet redis-server && installed+="redis-server "
     systemctl is-active --quiet memcached && installed+="memcached "
 
-    # Custom apps
-    [ -d "/opt/govdeals" ] && installed+="govdeals "
-
     echo "$installed"
 }
 
@@ -1322,7 +1319,6 @@ show_web_menu() {
             "php-fpm" "PHP FastCGI Process Manager" $(is_installed_web "php-fpm") \
             "redis-server" "Redis caching server" $(is_installed_web "redis-server") \
             "memcached" "Memcached caching" $(is_installed_web "memcached") \
-            "govdeals" "GovDeals monitoring system" $(is_installed_web "govdeals") \
             3>&1 1>&2 2>&3 3>&-) || return
 
         if [ -z "$selections" ]; then
@@ -1714,7 +1710,6 @@ show_ansible_menu() {
             "php-fpm" "[Web] PHP FastCGI" $(is_installed_all "php-fpm") \
             "redis-server" "[Web] Redis caching" $(is_installed_all "redis-server") \
             "memcached" "[Web] Memcached caching" $(is_installed_all "memcached") \
-            "govdeals" "[Web] GovDeals Monitoring System" $(is_installed_all "govdeals") \
             "─────────" "── APP SERVER ──" OFF \
             "vscode-tunnel" "[AppServer] VS Code Tunnel (remote dev)" $(is_installed_all "vscode-tunnel") \
             "jenkins" "[AppServer] Jenkins CI/CD (Docker)" $(is_installed_all "jenkins") \
@@ -1815,7 +1810,7 @@ show_ansible_menu() {
         local configs_list="power touchpad mouse nautilus ntfs razer"
         local common_list="git curl wget tmux tree htop gotop jq fzf ripgrep ncdu neofetch bat rclone openssh-server net-tools dnsutils glances nodejs yarn"
         local db_list="postgresql mysql mariadb redis mongodb pgadmin phpmyadmin adminer pgbackrest"
-        local web_list="nginx apache2 traefik haproxy certbot php-fpm redis-server memcached govdeals"
+        local web_list="nginx apache2 traefik haproxy certbot php-fpm redis-server memcached"
         local appserver_list="vscode-tunnel jenkins kubernetes"
         local hashicorp_list="boundary consul nomad packer terraform vault vault-radar waypoint"
         local monitoring_list="grafana prometheus influxdb telegraf node-exporter cadvisor elasticsearch kibana"

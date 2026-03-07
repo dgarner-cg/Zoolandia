@@ -169,7 +169,6 @@ spotlight_search() {
         "php-fpm|Web|PHP FastCGI"
         "redis-server|Web|Redis caching"
         "memcached|Web|Memcached caching"
-        "govdeals|Web|GovDeals Monitoring System"
         "vscode-tunnel|AppServer|VS Code Tunnel"
         "jenkins|AppServer|Jenkins CI/CD"
         "kubernetes|AppServer|Kubernetes CLI tools"

@@ -66,7 +66,11 @@ show_secret_menu() {
                 [[ -f "$project_dir/site.yml" ]] && playbook="site.yml"
                 [[ -f "$project_dir/main.yml" ]] && playbook="main.yml"
                 if [[ -n "$playbook" ]]; then
-                    menu_items+=("$project_name" "Run ansible/roles/secret/$project_name/$playbook")
+                    local desc
+                    desc=$(grep -m1 '^# Purpose:' "$project_dir/$playbook" 2>/dev/null | sed 's/^# Purpose: *//')
+                    [[ -z "$desc" ]] && desc=$(grep -m1 '^- name:' "$project_dir/$playbook" 2>/dev/null | sed 's/^- name: *//')
+                    [[ -z "$desc" ]] && desc="Run ansible/roles/secret/$project_name/$playbook"
+                    menu_items+=("$project_name" "$desc")
                     ((project_count++))
                 fi
             done < <(find "$SECRET_PLAYBOOKS_DIR" -mindepth 1 -maxdepth 1 -type d | sort)
@@ -75,7 +79,11 @@ show_secret_menu() {
             while IFS= read -r playbook_file; do
                 local playbook_name
                 playbook_name=$(basename "$playbook_file" .yml)
-                menu_items+=("$playbook_name" "Run ansible/roles/secret/$playbook_name.yml")
+                local desc
+                desc=$(grep -m1 '^# Purpose:' "$playbook_file" 2>/dev/null | sed 's/^# Purpose: *//')
+                [[ -z "$desc" ]] && desc=$(grep -m1 '^- name:' "$playbook_file" 2>/dev/null | sed 's/^- name: *//')
+                [[ -z "$desc" ]] && desc="Run ansible/roles/secret/$playbook_name.yml"
+                menu_items+=("$playbook_name" "$desc")
                 ((project_count++))
             done < <(find "$SECRET_PLAYBOOKS_DIR" -maxdepth 1 -name "*.yml" -type f | sort)
         fi
