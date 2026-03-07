@@ -76,12 +76,12 @@ Whether you're a homelab enthusiast, professional sysadmin, or developer, Zoolan
 
 Run the installation script:
 ```bash
-bash -c "$(curl -fsSL https://www.github.com/hack3rgg/Zoolandia/install.sh)"
+bash -c "$(curl -fsSL https://www.github.com/dgarner-cg/Zoolandia/install.sh)"
 ```
 
 Or clone and run directly:
 ```bash
-git clone https://www.github.com/hack3rgg/Zoolandia.git
+git clone https://www.github.com/dgarner-cg/Zoolandia.git
 cd Zoolandia
 ./Zoolandia.sh
 ```
