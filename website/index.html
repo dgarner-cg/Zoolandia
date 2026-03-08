@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>hack3r.gg - Information Security Blog</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <span class="logo-bracket">[</span>hack3r<span class="logo-dot">.</span>gg<span class="logo-bracket">]</span>
+            </a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link active">Blog</a>
+                <a href="research.html" class="nav-link">Research</a>
+                <a href="about.html" class="nav-link">About</a>
+                <a href="contact.html" class="nav-link">Contact</a>
+            </div>
+            <div class="nav-actions">
+                <button class="search-btn" aria-label="Search">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <path d="M21 21l-4.35-4.35"></path>
+                    </svg>
+                </button>
+                <button class="theme-toggle" aria-label="Toggle theme">
+                    <svg class="sun-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+                    </svg>
+                    <svg class="moon-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+                <a href="#" class="btn-subscribe">Subscribe</a>
+            </div>
+            <button class="mobile-menu-btn" aria-label="Menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu">
+        <a href="index.html" class="nav-link active">Blog</a>
+        <a href="research.html" class="nav-link">Research</a>
+        <a href="about.html" class="nav-link">About</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+        <a href="#" class="btn-subscribe">Subscribe</a>
+    </div>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 class="hero-title">Security Research & Insights</h1>
+                <p class="hero-subtitle">Exploring vulnerabilities, defensive strategies, and the evolving landscape of cybersecurity.</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Category Filter -->
+    <section class="categories">
+        <div class="container">
+            <div class="category-tabs">
+                <button class="category-tab active" data-category="all">All Posts</button>
+                <button class="category-tab" data-category="vulnerabilities">Vulnerabilities</button>
+                <button class="category-tab" data-category="research">Research</button>
+                <button class="category-tab" data-category="tutorials">Tutorials</button>
+                <button class="category-tab" data-category="news">News</button>
+                <button class="category-tab" data-category="ctf">CTF</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Featured Post -->
+    <section class="featured">
+        <div class="container">
+            <article class="featured-post" data-category="research">
+                <div class="featured-image">
+                    <div class="image-placeholder">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <path d="M12 8v4M12 16h.01"></path>
+                        </svg>
+                    </div>
+                </div>
+                <div class="featured-content">
+                    <div class="post-meta">
+                        <span class="post-category">Research</span>
+                        <span class="post-date">January 24, 2026</span>
+                    </div>
+                    <h2 class="featured-title">
+                        <a href="#">Critical Analysis: Supply Chain Attacks in Modern CI/CD Pipelines</a>
+                    </h2>
+                    <p class="featured-excerpt">
+                        An in-depth examination of attack vectors targeting build systems and dependency management, with practical mitigation strategies for development teams.
+                    </p>
+                    <div class="post-author">
+                        <div class="author-avatar">SK</div>
+                        <div class="author-info">
+                            <span class="author-name">Sarah Kim</span>
+                            <span class="read-time">12 min read</span>
+                        </div>
+                    </div>
+                </div>
+            </article>
+        </div>
+    </section>
+
+    <!-- Blog Posts Grid -->
+    <main class="blog-section">
+        <div class="container">
+            <div class="posts-grid">
+                <!-- Post 1 -->
+                <article class="post-card" data-category="vulnerabilities">
+                    <div class="post-card-image">
+                        <div class="image-placeholder small">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="post-card-content">
+                        <div class="post-meta">
+                            <span class="post-category">Vulnerabilities</span>
+                            <span class="post-date">Jan 22, 2026</span>
+                        </div>
+                        <h3 class="post-card-title">
+                            <a href="#">Understanding Memory Safety: Buffer Overflow Prevention in Rust</a>
+                        </h3>
+                        <p class="post-card-excerpt">
+                            How Rust's ownership model and borrow checker eliminate entire classes of memory vulnerabilities at compile time.
+                        </p>
+                        <span class="read-time">8 min read</span>
+                    </div>
+                </article>
+
+                <!-- Post 2 -->
+                <article class="post-card" data-category="tutorials">
+                    <div class="post-card-image">
+                        <div class="image-placeholder small">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <polyline points="16 18 22 12 16 6"></polyline>
+                                <polyline points="8 6 2 12 8 18"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="post-card-content">
+                        <div class="post-meta">
+                            <span class="post-category">Tutorials</span>
+                            <span class="post-date">Jan 20, 2026</span>
+                        </div>
+                        <h3 class="post-card-title">
+                            <a href="#">Setting Up a Secure Home Lab for Penetration Testing</a>
+                        </h3>
+                        <p class="post-card-excerpt">
+                            A complete guide to building an isolated environment for safely practicing offensive security techniques.
+                        </p>
+                        <span class="read-time">15 min read</span>
+                    </div>
+                </article>
+
+                <!-- Post 3 -->
+                <article class="post-card" data-category="news">
+                    <div class="post-card-image">
+                        <div class="image-placeholder small">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="post-card-content">
+                        <div class="post-meta">
+                            <span class="post-category">News</span>
+                            <span class="post-date">Jan 18, 2026</span>
+                        </div>
+                        <h3 class="post-card-title">
+                            <a href="#">New NIST Guidelines for Post-Quantum Cryptography Implementation</a>
+                        </h3>
+                        <p class="post-card-excerpt">
+                            Breaking down the latest recommendations for organizations preparing for the quantum computing era.
+                        </p>
+                        <span class="read-time">6 min read</span>
+                    </div>
+                </article>
+
+                <!-- Post 4 -->
+                <article class="post-card" data-category="ctf">
+                    <div class="post-card-image">
+                        <div class="image-placeholder small">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+                                <line x1="4" y1="22" x2="4" y2="15"></line>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="post-card-content">
+                        <div class="post-meta">
+                            <span class="post-category">CTF</span>
+                            <span class="post-date">Jan 15, 2026</span>
+                        </div>
+                        <h3 class="post-card-title">
+                            <a href="#">Writeup: Binary Exploitation Challenge from DefCon CTF Quals</a>
+                        </h3>
+                        <p class="post-card-excerpt">
+                            A detailed walkthrough of solving "heap_heaven" - a complex heap exploitation challenge.
+                        </p>
+                        <span class="read-time">20 min read</span>
+                    </div>
+                </article>
+
+                <!-- Post 5 -->
+                <article class="post-card" data-category="research">
+                    <div class="post-card-image">
+                        <div class="image-placeholder small">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="post-card-content">
+                        <div class="post-meta">
+                            <span class="post-category">Research</span>
+                            <span class="post-date">Jan 12, 2026</span>
+                        </div>
+                        <h3 class="post-card-title">
+                            <a href="#">API Security: GraphQL Introspection Attacks and Defense</a>
+                        </h3>
+                        <p class="post-card-excerpt">
+                            Examining how attackers exploit GraphQL introspection and implementing robust access controls.
+                        </p>
+                        <span class="read-time">10 min read</span>
+                    </div>
+                </article>
+
+                <!-- Post 6 -->
+                <article class="post-card" data-category="vulnerabilities">
+                    <div class="post-card-image">
+                        <div class="image-placeholder small">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="post-card-content">
+                        <div class="post-meta">
+                            <span class="post-category">Vulnerabilities</span>
+                            <span class="post-date">Jan 10, 2026</span>
+                        </div>
+                        <h3 class="post-card-title">
+                            <a href="#">OAuth 2.0 Misconfigurations: Common Pitfalls and Exploits</a>
+                        </h3>
+                        <p class="post-card-excerpt">
+                            Real-world examples of OAuth implementation flaws that lead to account takeover vulnerabilities.
+                        </p>
+                        <span class="read-time">11 min read</span>
+                    </div>
+                </article>
+            </div>
+
+            <!-- Load More -->
+            <div class="load-more">
+                <button class="btn-load-more">Load more posts</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Newsletter Section -->
+    <section class="newsletter">
+        <div class="container">
+            <div class="newsletter-content">
+                <h2 class="newsletter-title">Stay ahead of threats</h2>
+                <p class="newsletter-text">Get the latest security research, vulnerability disclosures, and defensive strategies delivered to your inbox.</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="Enter your email" required>
+                    <button type="submit">Subscribe</button>
+                </form>
+                <p class="newsletter-disclaimer">No spam. Unsubscribe anytime.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <span class="logo-bracket">[</span>hack3r<span class="logo-dot">.</span>gg<span class="logo-bracket">]</span>
+                    </a>
+                    <p class="footer-tagline">Advancing security through knowledge sharing and community collaboration.</p>
+                    <div class="social-links">
+                        <a href="#" aria-label="Twitter">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" aria-label="GitHub">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" aria-label="Discord">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.317 4.3698a19.7913 19.7913 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561c2.0528 1.5076 4.0413 2.4228 5.9929 3.0294a.0777.0777 0 00.0842-.0276c.4616-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057c-.6528-.2476-1.2743-.5495-1.8722-.8923a.077.077 0 01-.0076-.1277c.1258-.0943.2517-.1923.3718-.2914a.0743.0743 0 01.0776-.0105c3.9278 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0785.0095c.1202.099.246.1981.3728.2924a.077.077 0 01-.0066.1276 12.2986 12.2986 0 01-1.873.8914.0766.0766 0 00-.0407.1067c.3604.698.7719 1.3628 1.225 1.9932a.076.076 0 00.0842.0286c1.961-.6067 3.9495-1.5219 6.0023-3.0294a.077.077 0 00.0313-.0552c.5004-5.177-.8382-9.6739-3.5485-13.6604a.061.061 0 00-.0312-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9555 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189Z"></path>
+                            </svg>
+                        </a>
+                        <a href="#" aria-label="RSS">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M4 11a9 9 0 0 1 9 9"></path>
+                                <path d="M4 4a16 16 0 0 1 16 16"></path>
+                                <circle cx="5" cy="19" r="1"></circle>
+                            </svg>
+                        </a>
+                    </div>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Content</h4>
+                        <ul>
+                            <li><a href="index.html">Blog</a></li>
+                            <li><a href="research.html">Research</a></li>
+                            <li><a href="index.html">Tutorials</a></li>
+                            <li><a href="index.html">CTF Writeups</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Resources</h4>
+                        <ul>
+                            <li><a href="#">Tools</a></li>
+                            <li><a href="#">Cheatsheets</a></li>
+                            <li><a href="#">Wordlists</a></li>
+                            <li><a href="#">Labs</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Company</h4>
+                        <ul>
+                            <li><a href="about.html">About</a></li>
+                            <li><a href="contact.html">Contact</a></li>
+                            <li><a href="#">Contribute</a></li>
+                            <li><a href="#">Responsible Disclosure</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 hack3r.gg. All rights reserved.</p>
+                <div class="footer-legal">
+                    <a href="#">Privacy Policy</a>
+                    <a href="#">Terms of Service</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Search Modal -->
+    <div class="search-modal" id="searchModal">
+        <div class="search-modal-content">
+            <div class="search-input-wrapper">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="M21 21l-4.35-4.35"></path>
+                </svg>
+                <input type="text" placeholder="Search articles..." id="searchInput" autocomplete="off">
+                <kbd>ESC</kbd>
+            </div>
+            <div class="search-results" id="searchResults">
+                <p class="search-hint">Start typing to search...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

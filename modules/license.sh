@@ -30,11 +30,22 @@ _zl_b64url_decode() {
     printf '%s' "$padded" | base64 -d 2>/dev/null
 }
 
-# Extract a field from the license JSON payload (no jq dependency)
+# Extract a string field from the license JSON payload (no jq dependency)
 _zl_json_field() {
     local json="$1" field="$2"
-    # Extract string value
     echo "$json" | grep -oP "\"${field}\":\"[^\"]*\"" | cut -d'"' -f4
+}
+
+# Return 0 if a boolean field is true, 1 otherwise
+_zl_json_bool() {
+    local json="$1" field="$2"
+    echo "$json" | grep -qP "\"${field}\":true"
+}
+
+# Extract a numeric field (integer, may be negative)
+_zl_json_number() {
+    local json="$1" field="$2"
+    echo "$json" | grep -oP "\"${field}\":-?[0-9]+" | grep -oP -- '-?[0-9]+$'
 }
 
 # Check if features array contains a given feature
@@ -81,11 +92,22 @@ zl_validate_key() {
         -in "${tmpdir}/payload.bin" \
         -sigfile "${tmpdir}/sig.bin" &>/dev/null || return 1
 
-    # Check expiry
-    local expires
-    expires=$(_zl_json_field "$payload" "expires")
-    [[ -z "$expires" ]] && return 1
-    [[ "$(date +%Y-%m-%d)" > "$expires" ]] && return 2  # expired (distinct code)
+    # Check perpetual flag — if true, skip expiry check entirely
+    if ! _zl_json_bool "$payload" "perpetual"; then
+        local expires
+        expires=$(_zl_json_field "$payload" "expires")
+        [[ -z "$expires" ]] && return 1
+        [[ "$(date +%Y-%m-%d)" > "$expires" ]] && return 2  # expired (distinct code)
+    fi
+
+    # Check machine binding — if machine_id in payload, verify against local machine
+    local machine_id
+    machine_id=$(_zl_json_field "$payload" "machine_id")
+    if [[ -n "$machine_id" ]]; then
+        local local_id
+        local_id=$(cat /etc/machine-id 2>/dev/null | tr -d '[:space:]')
+        [[ "$machine_id" != "$local_id" ]] && return 3  # machine mismatch (distinct code)
+    fi
 
     echo "$payload"
     return 0
@@ -131,6 +153,8 @@ zl_require_license() {
         zl_validate_key "$key"; rc=$?
         if [[ $rc -eq 2 ]]; then
             msg="Your license has expired.\n\nRenew at: https://zoolandia.dev/pricing"
+        elif [[ $rc -eq 3 ]]; then
+            msg="This license is bound to a different machine.\n\nContact support to transfer your license."
         elif [[ $rc -ne 0 ]]; then
             msg="Invalid license key.\n\nContact support or re-activate:\n  ./zoolandia.sh --activate"
         else
@@ -184,13 +208,25 @@ zl_activate_license() {
             tier=$(_zl_json_field "$payload" "tier")
             expires=$(_zl_json_field "$payload" "expires")
 
+            # Build extra info lines for new fields
+            local extra=""
+            _zl_json_bool "$payload" "perpetual" && extra="${extra}\n  Perpetual: yes (never expires)"
+            _zl_json_bool "$payload" "offline"   && extra="${extra}\n  Offline:   yes (no activation call)"
+            local mid; mid=$(_zl_json_field "$payload" "machine_id")
+            [[ -n "$mid" ]] && extra="${extra}\n  Machine:   ${mid}"
+            local mn;  mn=$(_zl_json_number "$payload" "max_nodes")
+            if [[ -n "$mn" ]]; then
+                [[ "$mn" == "-1" ]] && extra="${extra}\n  Nodes:     unlimited" \
+                                    || extra="${extra}\n  Max nodes: ${mn}"
+            fi
+
             mkdir -p "$LICENSE_DIR"
             echo "$key" > "$LICENSE_FILE"
             chmod 600 "$LICENSE_FILE"
 
-            local msg="License activated!\n\n  Email:   ${email}\n  Tier:    ${tier}\n  Expires: ${expires}"
+            local msg="License activated!\n\n  Email:   ${email}\n  Tier:    ${tier}\n  Expires: ${expires}${extra}"
             if command -v dialog &>/dev/null; then
-                dialog --title " Activated " --msgbox "\n${msg}\n" 10 50
+                dialog --title " Activated " --msgbox "\n${msg}\n" 14 58
             else
                 echo -e "\n${msg}\n"
             fi
@@ -200,6 +236,15 @@ zl_activate_license() {
             local errmsg="This license key has expired.\n\nRenew at: https://zoolandia.dev/pricing"
             if command -v dialog &>/dev/null; then
                 dialog --title " Expired " --msgbox "\n${errmsg}\n" 8 55
+            else
+                echo -e "\n${errmsg}\n" >&2
+            fi
+            return 1
+            ;;
+        3)
+            local errmsg="This license is bound to a different machine.\n\nContact support to transfer your license."
+            if command -v dialog &>/dev/null; then
+                dialog --title " Wrong Machine " --msgbox "\n${errmsg}\n" 8 60
             else
                 echo -e "\n${errmsg}\n" >&2
             fi
@@ -231,13 +276,22 @@ zl_license_status() {
 
     case $rc in
         0)
-            local email tier expires
+            local email tier expires flags=""
             email=$(_zl_json_field "$payload" "email")
             tier=$(_zl_json_field "$payload" "tier")
             expires=$(_zl_json_field "$payload" "expires")
-            echo "Licensed — ${tier} | ${email} | expires ${expires}"
+            _zl_json_bool "$payload" "perpetual"  && flags="${flags}perpetual "
+            _zl_json_bool "$payload" "offline"    && flags="${flags}offline "
+            local mid; mid=$(_zl_json_field "$payload" "machine_id")
+            [[ -n "$mid" ]] && flags="${flags}machine-bound "
+            local mn; mn=$(_zl_json_number "$payload" "max_nodes")
+            [[ "$mn" == "-1" ]] && flags="${flags}unlimited-nodes "
+            local status="Licensed — ${tier} | ${email} | expires ${expires}"
+            [[ -n "$flags" ]] && status="${status} | ${flags% }"
+            echo "$status"
             ;;
         2) echo "License EXPIRED — renew at https://zoolandia.dev/pricing" ;;
+        3) echo "License WRONG MACHINE — contact support to transfer" ;;
         *) echo "License INVALID — re-activate with ./zoolandia.sh --activate" ;;
     esac
 }
