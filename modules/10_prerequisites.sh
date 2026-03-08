@@ -101,6 +101,15 @@ show_prerequisites_menu() {
             local github_status="\Z3NOT SET\Zn"
         fi
 
+        # Domain Checks status
+        if [[ $DOMAIN_CHECKS_DONE == true ]]; then
+            local domain_checks_status="\Z2DONE\Zn"
+        elif [[ -n "$DOMAIN_1" ]]; then
+            local domain_checks_status="\Z1NOT DONE\Zn"
+        else
+            local domain_checks_status="\Z3NOT REQUIRED\Zn"
+        fi
+
         local menu_items=(
             "Disclaimer" "Read and Acknowledge - $disclaimer_status"
             "Username" "Primary Username - $username_status"
@@ -113,7 +122,7 @@ show_prerequisites_menu() {
             "Domain 1" "Primary Domain Name - $domain_status"
             "GitHub Username" "For VS Code Tunnel, etc. - $github_status"
             "System Checks" "System and Docker Checks - $sys_checks_status"
-            "Domain Checks" "IP and Domain Checks - \Z3NOT REQUIRED\Zn"
+            "Domain Checks" "IP and Domain Checks - $domain_checks_status"
             "Back" "Return to main menu"
         )
 
@@ -1037,19 +1046,27 @@ run_system_checks() {
         checks_passed=false
     fi
 
-    # Check ports 80 and 443
-    if ! ss -tuln | grep -q ":80 "; then
-        check_results+="Port 80: Available\n"
+    # Check ports 80 and 443 — only relevant in Hybrid mode (Traefik needs them)
+    if [[ "$SETUP_MODE" == "Local" ]]; then
+        check_results+="Port 80: Not needed (Local mode)\n"
+        check_results+="Port 443: Not needed (Local mode)\n"
     else
-        check_results+="Port 80: In Use\n"
-        checks_passed=false
-    fi
-
-    if ! ss -tuln | grep -q ":443 "; then
-        check_results+="Port 443: Available\n"
-    else
-        check_results+="Port 443: In Use\n"
-        checks_passed=false
+        # Hybrid mode — Traefik needs ports 80/443
+        for port in 80 443; do
+            if ! ss -tuln | grep -q ":${port} "; then
+                check_results+="Port ${port}: Available\n"
+            else
+                # Detect who owns the port
+                local port_owner
+                port_owner=$(ss -tulnp | grep ":${port} " | grep -oP 'users:\(\("[^"]*"' | grep -oP '"[^"]*"$' | tr -d '"' | head -1)
+                if echo "$port_owner" | grep -qiE "docker|traefik"; then
+                    check_results+="Port ${port}: In Use by Docker/Traefik (OK)\n"
+                else
+                    check_results+="Port ${port}: In Use by ${port_owner:-unknown} — will conflict with Traefik\n"
+                    checks_passed=false
+                fi
+            fi
+        done
     fi
 
     if [[ $checks_passed == true ]]; then

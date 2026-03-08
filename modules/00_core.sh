@@ -76,6 +76,7 @@ PREREQUISITES_DONE=false
 DOCKER_SETUP_DONE=false
 SOCKET_PROXY_DONE=false
 TRAEFIK_DONE=false
+DOMAIN_CHECKS_DONE=false
 
 # Setup configuration
 SETUP_MODE="Local"

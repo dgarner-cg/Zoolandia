@@ -726,6 +726,11 @@ run_domain_checks() {
     fi
 
     dialog --title "Domain Checks" --msgbox "$results" 14 70
+
+    # Mark domain checks as completed (checks were run — informational)
+    mkdir -p "$ZOOLANDIA_CONFIG_DIR"
+    touch "$ZOOLANDIA_CONFIG_DIR/domain_checks_done"
+    DOMAIN_CHECKS_DONE=true
 }
 
 verify_license() {

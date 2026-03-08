@@ -107,6 +107,9 @@ load_config() {
     if [[ -f "$ZOOLANDIA_CONFIG_DIR/traefik_done" ]]; then
         TRAEFIK_DONE=true
     fi
+    if [[ -f "$ZOOLANDIA_CONFIG_DIR/domain_checks_done" ]]; then
+        DOMAIN_CHECKS_DONE=true
+    fi
 
     return 0
 }
