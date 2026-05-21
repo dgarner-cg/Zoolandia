@@ -1,0 +1,107 @@
+---
+# AnyDesk Installation
+# Configures the official AnyDesk apt repository (signed-by) and installs the client.
+# Tags: anydesk, complex, applications, remote-access
+
+- name: "{{ user_experience.emoji_package | default('📦') }} ANYDESK | Installing AnyDesk..."
+  block:
+    - name: Check if AnyDesk is already installed
+      ansible.builtin.command:
+        cmd: dpkg -l {{ anydesk.package_name }}
+      register: anydesk_check
+      failed_when: false
+      changed_when: false
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} ANYDESK | Ensuring /etc/apt/keyrings exists..."
+      ansible.builtin.file:
+        path: /etc/apt/keyrings
+        state: directory
+        mode: '0755'
+      become: yes
+      when: anydesk_check.rc != 0
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} ANYDESK | Downloading GPG key..."
+      ansible.builtin.get_url:
+        url: "{{ anydesk.gpg_url }}"
+        dest: "{{ temp_download_dir }}/anydesk.asc"
+        mode: '0644'
+        timeout: "{{ error_handling.download_timeout | default(300) }}"
+      register: anydesk_key_download
+      retries: "{{ error_handling.download_retries | default(3) }}"
+      delay: "{{ error_handling.download_delay | default(5) }}"
+      when: anydesk_check.rc != 0
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} ANYDESK | Installing GPG key (dearmored)..."
+      ansible.builtin.shell:
+        cmd: "gpg --dearmor < {{ temp_download_dir }}/anydesk.asc > {{ anydesk.keyring_path }}"
+        creates: "{{ anydesk.keyring_path }}"
+      become: yes
+      when: anydesk_check.rc != 0
+
+    - name: "{{ user_experience.emoji_config | default('⚙️') }} ANYDESK | Adding apt repository..."
+      ansible.builtin.apt_repository:
+        repo: "{{ anydesk.repo_line }}"
+        filename: anydesk
+        state: present
+        update_cache: false
+      become: yes
+      when: anydesk_check.rc != 0
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} ANYDESK | Updating package cache..."
+      ansible.builtin.apt:
+        update_cache: true
+      become: yes
+      when: anydesk_check.rc != 0
+
+    - name: "{{ user_experience.emoji_package | default('📦') }} ANYDESK | Installing AnyDesk package..."
+      ansible.builtin.apt:
+        name: "{{ anydesk.package_name }}"
+        state: present
+      become: yes
+      when: anydesk_check.rc != 0
+      register: anydesk_install
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} ANYDESK | Successfully installed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] ANYDESK: {{ anydesk.package_name }} - SUCCESS"
+        create: true
+        mode: '0644'
+      when:
+        - anydesk_check.rc != 0
+        - logging.enabled | default(true)
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }} ANYDESK | Installation skipped (already installed)"
+      ansible.builtin.debug:
+        msg: "AnyDesk is already installed - skipping installation"
+      when: anydesk_check.rc == 0
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} ANYDESK | Installation failed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] ANYDESK: {{ anydesk.package_name }} - FAILED - {{ ansible_failed_result.msg | default('Unknown error') }}"
+        create: true
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+    - name: Collect failure information
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['AnyDesk: ' + (ansible_failed_result.msg | default('Installation failed'))] }}"
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} ANYDESK | Error details"
+      ansible.builtin.debug:
+        msg: "AnyDesk installation failed. Check {{ logging.audit_trail }} for details."
+
+  always:
+    - name: "{{ user_experience.emoji_cleanup | default('🧹') }} ANYDESK | Cleanup temporary files"
+      ansible.builtin.file:
+        path: "{{ temp_download_dir }}/anydesk.asc"
+        state: absent
+      when: cleanup.remove_temp_downloads | default(true)
+
+  tags:
+    - anydesk
+    - complex
+    - applications
+    - remote-access

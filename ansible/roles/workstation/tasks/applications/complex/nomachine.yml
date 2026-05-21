@@ -1,0 +1,92 @@
+---
+# NoMachine Installation
+# Downloads the official .deb from download.nomachine.com and installs it.
+# Tags: nomachine, complex, applications, remote-access
+
+- name: "{{ user_experience.emoji_package | default('📦') }} NOMACHINE | Installing NoMachine..."
+  block:
+    - name: Check if NoMachine is already installed
+      ansible.builtin.command:
+        cmd: dpkg -l {{ nomachine.package_name }}
+      register: nomachine_check
+      failed_when: false
+      changed_when: false
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} NOMACHINE | Ensuring temp directory exists..."
+      ansible.builtin.file:
+        path: "{{ temp_download_dir }}"
+        state: directory
+        mode: '0755'
+      when: nomachine_check.rc != 0
+
+    - name: "{{ user_experience.emoji_working | default('🔄') }} NOMACHINE | Downloading .deb package..."
+      ansible.builtin.get_url:
+        url: "{{ nomachine.deb_url }}"
+        dest: "{{ temp_download_dir }}/nomachine.deb"
+        mode: '0644'
+        timeout: "{{ error_handling.download_timeout | default(300) }}"
+      register: nomachine_download
+      retries: "{{ error_handling.download_retries | default(3) }}"
+      delay: "{{ error_handling.download_delay | default(5) }}"
+      when: nomachine_check.rc != 0
+
+    - name: "{{ user_experience.emoji_package | default('📦') }} NOMACHINE | Installing .deb package..."
+      ansible.builtin.apt:
+        deb: "{{ temp_download_dir }}/nomachine.deb"
+        state: present
+      become: yes
+      when: nomachine_check.rc != 0
+      register: nomachine_install
+
+    - name: "{{ user_experience.emoji_check | default('🔍') }} NOMACHINE | Verifying installation..."
+      ansible.builtin.command:
+        cmd: dpkg -l {{ nomachine.package_name }}
+      register: nomachine_verify
+      changed_when: false
+      failed_when: nomachine_verify.rc != 0
+      when: nomachine_check.rc != 0
+
+    - name: "{{ user_experience.emoji_success | default('✅') }} NOMACHINE | Successfully installed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] NOMACHINE: {{ nomachine.package_name }} - SUCCESS"
+        create: true
+        mode: '0644'
+      when:
+        - nomachine_check.rc != 0
+        - logging.enabled | default(true)
+
+    - name: "{{ user_experience.emoji_info | default('ℹ️') }} NOMACHINE | Installation skipped (already installed)"
+      ansible.builtin.debug:
+        msg: "NoMachine is already installed - skipping installation"
+      when: nomachine_check.rc == 0
+
+  rescue:
+    - name: "{{ user_experience.emoji_failure | default('❌') }} NOMACHINE | Installation failed"
+      ansible.builtin.lineinfile:
+        path: "{{ logging.audit_trail }}"
+        line: "[{{ ansible_date_time.iso8601 }}] NOMACHINE: {{ nomachine.package_name }} - FAILED - {{ ansible_failed_result.msg | default('Unknown error') }}"
+        create: true
+        mode: '0644'
+      when: logging.enabled | default(true)
+
+    - name: Collect failure information
+      ansible.builtin.set_fact:
+        workstation_failures: "{{ workstation_failures | default([]) + ['NoMachine: ' + (ansible_failed_result.msg | default('Installation failed'))] }}"
+
+    - name: "{{ user_experience.emoji_warning | default('⚠️') }} NOMACHINE | Error details"
+      ansible.builtin.debug:
+        msg: "NoMachine installation failed. Check {{ logging.audit_trail }} for details."
+
+  always:
+    - name: "{{ user_experience.emoji_cleanup | default('🧹') }} NOMACHINE | Cleanup temporary files"
+      ansible.builtin.file:
+        path: "{{ temp_download_dir }}/nomachine.deb"
+        state: absent
+      when: cleanup.remove_temp_downloads | default(true)
+
+  tags:
+    - nomachine
+    - complex
+    - applications
+    - remote-access

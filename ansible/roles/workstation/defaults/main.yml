@@ -153,6 +153,10 @@ install_protonvpn: false
 install_ulauncher: true
 install_twingate: false
 
+# Remote-access applications
+install_nomachine: false
+install_anydesk: false
+
 # Editor applications
 install_sublime_text: false
 
@@ -221,6 +225,19 @@ twingate:
 protonvpn:
   repo_deb_url: "https://repo.protonvpn.com/debian/dists/stable/main/binary-all/protonvpn-stable-release_1.0.4_all.deb"
   package_name: "proton-vpn-gnome-desktop"
+
+# NoMachine configuration (remote-desktop client)
+# Note: URL is version-stamped; bump when a new NoMachine release ships.
+nomachine:
+  deb_url: "https://download.nomachine.com/download/8.16/Linux/nomachine_8.16.1_1_amd64.deb"
+  package_name: "nomachine"
+
+# AnyDesk configuration (remote-desktop client)
+anydesk:
+  gpg_url: "https://keys.anydesk.com/repos/DEB-GPG-KEY"
+  keyring_path: "/etc/apt/keyrings/anydesk.gpg"
+  repo_line: "deb [signed-by=/etc/apt/keyrings/anydesk.gpg] http://deb.anydesk.com/ all main"
+  package_name: "anydesk"
 
 # Ulauncher configuration
 ulauncher:

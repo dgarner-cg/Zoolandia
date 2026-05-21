@@ -69,6 +69,8 @@ detect_installed_apps() {
     command -v portainer &> /dev/null && docker ps -a 2>/dev/null | grep -q portainer && installed_apps+="portainer "
     command -v twingate &> /dev/null && installed_apps+="twingate "
     command -v protonvpn &> /dev/null && installed_apps+="protonvpn "
+    dpkg -l nomachine 2>/dev/null | grep -q "^ii" && installed_apps+="nomachine "
+    dpkg -l anydesk 2>/dev/null | grep -q "^ii" && installed_apps+="anydesk "
     command -v ulauncher &> /dev/null && installed_apps+="ulauncher "
     systemctl --user list-units --all 2>/dev/null | grep -q "n8n" && installed_apps+="n8n "
 
@@ -298,6 +300,18 @@ EOF
         echo "install_n8n: false" >> "$CONFIG_FILE"
     fi
 
+    if [[ "$selections" == *"nomachine"* ]]; then
+        echo "install_nomachine: true" >> "$CONFIG_FILE"
+    else
+        echo "install_nomachine: false" >> "$CONFIG_FILE"
+    fi
+
+    if [[ "$selections" == *"anydesk"* ]]; then
+        echo "install_anydesk: true" >> "$CONFIG_FILE"
+    else
+        echo "install_anydesk: false" >> "$CONFIG_FILE"
+    fi
+
     if [[ "$selections" == *"chrome-ext"* ]]; then
         echo "install_chrome_extensions: true" >> "$CONFIG_FILE"
     else
@@ -427,7 +441,7 @@ show_selection_menu() {
     local selections
     selections=$(dialog --clear --backtitle "Nexus Workstation Setup" \
         --title "Select Applications and Configurations" \
-        --checklist "Use SPACE to select/deselect, ENTER to confirm.\n\n─── APPLICATIONS ───" 45 80 38 \
+        --checklist "Use SPACE to select/deselect, ENTER to confirm.\n\n─── APPLICATIONS ───" 45 80 40 \
         "vivaldi" "Vivaldi Browser" $(is_installed "vivaldi") \
         "bitwarden" "Bitwarden Password Manager" $(is_installed "bitwarden") \
         "notepad" "Notepad++ Text Editor" $(is_installed "notepad") \
@@ -445,6 +459,8 @@ show_selection_menu() {
         "portainer" "Portainer Docker Management" $(is_installed "portainer") \
         "twingate" "Twingate VPN Client" $(is_installed "twingate") \
         "protonvpn" "ProtonVPN Client" $(is_installed "protonvpn") \
+        "nomachine" "NoMachine Remote Desktop" $(is_installed "nomachine") \
+        "anydesk" "AnyDesk Remote Desktop" $(is_installed "anydesk") \
         "ulauncher" "Ulauncher App Launcher" $(is_installed "ulauncher") \
         "n8n" "n8n Workflow Automation" $(is_installed "n8n") \
         "---" "─── SYSTEM CONFIGS ───────────────────────────" "OFF" \

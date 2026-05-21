@@ -120,6 +120,16 @@
   when: install_protonvpn | default(false)
   tags: ['applications', 'protonvpn', 'vpn', 'complex']
 
+- name: Include NoMachine installation
+  ansible.builtin.include_tasks: applications/complex/nomachine.yml
+  when: install_nomachine | default(false)
+  tags: ['applications', 'nomachine', 'remote-access', 'complex']
+
+- name: Include AnyDesk installation
+  ansible.builtin.include_tasks: applications/complex/anydesk.yml
+  when: install_anydesk | default(false)
+  tags: ['applications', 'anydesk', 'remote-access', 'complex']
+
 - name: Include Ulauncher installation
   ansible.builtin.include_tasks: applications/complex/ulauncher.yml
   when: install_ulauncher | default(false)
