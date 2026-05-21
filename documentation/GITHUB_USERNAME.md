@@ -1,6 +1,6 @@
 # GitHub Username Configuration
 
-Zoolandia stores your GitHub username for integration with various tools and services that require GitHub authentication.
+Nexus stores your GitHub username for integration with various tools and services that require GitHub authentication.
 
 ## Overview
 
@@ -22,7 +22,7 @@ The GitHub username is used for:
 
 Your GitHub username is stored in:
 ```
-~/.config/zoolandia/github_username
+~/.config/nexus/github_username
 ```
 
 This file contains only your username (no sensitive data).
@@ -49,7 +49,7 @@ GitHub usernames must:
 
 ## Usage in Ansible
 
-When running Ansible playbooks through Zoolandia, your GitHub username is automatically passed as a variable:
+When running Ansible playbooks through Nexus, your GitHub username is automatically passed as a variable:
 
 ```bash
 ansible-playbook playbooks/appserver.yml -e "github_username=your-username"
@@ -82,27 +82,27 @@ Use in Jinja2 templates:
 
 ```bash
 # Create config directory
-mkdir -p ~/.config/zoolandia
+mkdir -p ~/.config/nexus
 
 # Set username
-echo "your-github-username" > ~/.config/zoolandia/github_username
+echo "your-github-username" > ~/.config/nexus/github_username
 ```
 
 ### Clear Username
 
 ```bash
-rm ~/.config/zoolandia/github_username
+rm ~/.config/nexus/github_username
 ```
 
 ### View Current Username
 
 ```bash
-cat ~/.config/zoolandia/github_username
+cat ~/.config/nexus/github_username
 ```
 
 ## Environment Variable
 
-The username is also available as a shell variable after Zoolandia loads:
+The username is also available as a shell variable after Nexus loads:
 
 ```bash
 echo $GITHUB_USERNAME
@@ -132,21 +132,21 @@ VS CODE TUNNEL SETUP:
 
 ### Username Not Detected
 
-If Zoolandia doesn't detect your saved username:
+If Nexus doesn't detect your saved username:
 
 1. Check the file exists:
    ```bash
-   ls -la ~/.config/zoolandia/github_username
+   ls -la ~/.config/nexus/github_username
    ```
 
 2. Verify file contents:
    ```bash
-   cat ~/.config/zoolandia/github_username
+   cat ~/.config/nexus/github_username
    ```
 
 3. Check file permissions:
    ```bash
-   chmod 644 ~/.config/zoolandia/github_username
+   chmod 644 ~/.config/nexus/github_username
    ```
 
 ### Invalid Username Error

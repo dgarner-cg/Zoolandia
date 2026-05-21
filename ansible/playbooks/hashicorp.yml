@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia HashiCorp Stack Installation
+# Nexus HashiCorp Stack Installation
 # File: playbooks/hashicorp.yml
 # Purpose: Install HashiCorp tools (Vault, Consul, Nomad, Terraform, Packer, Waypoint)
 #

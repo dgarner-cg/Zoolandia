@@ -1,11 +1,48 @@
 # Changelog
 
-All notable changes to Zoolandia will be documented in this file.
+All notable changes to Nexus will be documented in this file.
 
 ## Current Release
 
 **Total Supported Apps:** 176 (160 Docker + 16 System)
-**Version:** 6.1.3
+**Version:** 6.1.4
+
+---
+
+## [v6.1.4] - April 5, 2026
+
+### Traefik Bootstrap Bugfixes & Path Documentation
+
+**`compose/traefik.yml` — duplicate `labels:` key removed**
+
+The `# DOCKER-LABELS-PLACEHOLDER` comment was present after Traefik's existing hardcoded
+`labels:` block. When `install_app "traefik"` ran, it used `sed` to inject a second `labels:`
+block from the template — producing a YAML unmarshal error (`mapping key "labels" already
+defined`). The placeholder has been removed from the source template; Traefik's labels are
+special (`api@internal` + `chain-basic-auth`) and must not be auto-generated.
+
+**`docker-compose.yml` — subnet and network corrections**
+
+- `socket_proxy` subnet corrected from `10.0.10.0/24` → `192.168.91.0/24` (was diverged from
+  `compose/starter.yml` source; existing Docker network used `192.168.91.0/24`)
+- `t3_proxy` network (`192.168.90.0/24`) added — was never inserted at the
+  `# NETWORKS-PLACEHOLDER-DO-NOT-DELETE` marker, causing Traefik startup to fail
+- Stale unclaimed `socket_proxy` Docker network (no labels, no containers) removed so
+  Docker Compose can recreate it with proper `com.docker.compose.network` ownership labels
+
+**Traefik configuration paths documented in README**
+
+All runtime paths now recorded under "Traefik Configuration Paths":
+
+| What | Path |
+|---|---|
+| Compose file | `~/docker/compose/traefik.yml` |
+| Dynamic rules (live-reloaded) | `~/docker/appdata/traefik3/rules/$HOSTNAME/` |
+| SSL certificates (ACME) | `~/docker/appdata/traefik3/acme/acme.json` |
+| Traefik daemon log | `~/docker/logs/$HOSTNAME/traefik/traefik.log` |
+| HTTP access log | `~/docker/logs/$HOSTNAME/traefik/access.log` |
+| Environment & secrets | `~/docker/.env` |
+| Main compose (networks) | `~/docker/docker-compose.yml` |
 
 ---
 
@@ -29,9 +66,9 @@ all license-related tooling now lives there rather than splitting across `.signi
 **`.signing/` now contains the complete signing suite:**
 ```
 .signing/
-├── zoolandia_license_priv.pem    — Ed25519 private key (operator only)
-├── zoolandia_public.pem          — Ed25519 public key
-├── zl-sign.sh                    — CLI signing tool
+├── nexus_private.pem    — Ed25519 private key (operator only)
+├── nexus_public.pem          — Ed25519 public key
+├── nx-sign.sh                    — CLI signing tool
 ├── license-server.py             — debug/test web server
 └── license-server.sh             — server start/stop wrapper
 ```
@@ -46,7 +83,7 @@ All files in `.signing/` remain gitignored via the existing `.signing/` entry in
 
 **`.signing/` cleanup — only operational files remain:**
 - `license-server.py` (debug/test web server) moved from `.signing/` to `.admin/`
-- `.signing/` now contains only: private key, public key, `zl-sign.sh` (signing tool)
+- `.signing/` now contains only: private key, public key, `nx-sign.sh` (signing tool)
 - Clear separation: `.signing/` = key material + signing tool; `.admin/` = operator workspace
 
 **New: `.admin/license-server.sh`** — bash wrapper around `license-server.py`:
@@ -68,12 +105,12 @@ All files in `.signing/` remain gitignored via the existing `.signing/` entry in
 ### GitHub Username Storage Relocation & Documentation Consolidation
 
 **Config Path Change — `modules/00_core.sh` / `modules/10_prerequisites.sh`:**
-- GitHub username moved from `~/.config/zoolandia/github_username` (system-wide config dir)
+- GitHub username moved from `~/.config/nexus/github_username` (system-wide config dir)
   to `${SCRIPT_DIR}/.config/github` (project-local, alongside `.license/`)
-- Introduced `ZL_PROJECT_CONFIG_DIR="${SCRIPT_DIR}/.config"` variable in `00_core.sh`
+- Introduced `NX_PROJECT_CONFIG_DIR="${SCRIPT_DIR}/.config"` variable in `00_core.sh`
   for consistency with future project-local runtime config files
-- `set_github_username()` now writes to `${ZL_PROJECT_CONFIG_DIR}/github` and uses
-  `mkdir -p "$ZL_PROJECT_CONFIG_DIR"` instead of `$ZOOLANDIA_CONFIG_DIR`
+- `set_github_username()` now writes to `${NX_PROJECT_CONFIG_DIR}/github` and uses
+  `mkdir -p "$NX_PROJECT_CONFIG_DIR"` instead of `$NEXUS_CONFIG_DIR`
 - On-startup load in `00_core.sh` updated to match new path
 - `.config/` directory created at project root (chmod 700); added to `.gitignore`
 
@@ -97,7 +134,7 @@ requiring a payment processor.
 #### License Key Format
 
 ```
-ZOOL-<base64url(json_payload)>.<base64url(ed25519_signature)>
+NEXUS-<base64url(json_payload)>.<base64url(ed25519_signature)>
 ```
 
 Payload fields: schema version (`v`), email, tier, features list, issued date, expires date.
@@ -118,14 +155,14 @@ embedded directly in `modules/license.sh`.
 
 #### New Module: `modules/license.sh`
 
-- `zl_validate_key KEY` — decodes payload, verifies Ed25519 signature with embedded public key,
+- `nx_validate_key KEY` — decodes payload, verifies Ed25519 signature with embedded public key,
   checks expiry; returns 0 (valid), 1 (invalid/missing), or 2 (expired, distinct code)
-- `zl_check_license FEATURE` — reads active license file, validates, and checks feature presence
-- `zl_require_license FEATURE [LABEL]` — gates any function with a contextual dialog prompt:
+- `nx_check_license FEATURE` — reads active license file, validates, and checks feature presence
+- `nx_require_license FEATURE [LABEL]` — gates any function with a contextual dialog prompt:
   distinguishes no-license, expired, and wrong-tier with specific messages and upgrade URLs
-- `zl_activate_license [KEY]` — prompts via dialog inputbox (or accepts argument), validates
+- `nx_activate_license [KEY]` — prompts via dialog inputbox (or accepts argument), validates
   signature before saving; shows decoded email/tier/expiry on success
-- `zl_license_status` — one-line summary used in Settings menu label
+- `nx_license_status` — one-line summary used in Settings menu label
 
 #### License Storage: `.license/` Directory
 
@@ -137,7 +174,7 @@ embedded directly in `modules/license.sh`.
 
 `.signing/` is gitignored and holds the private key and tooling for the operator only.
 
-**`.signing/zl-sign.sh`** — CLI license signing tool:
+**`.signing/nx-sign.sh`** — CLI license signing tool:
 - `--email`, `--tier`, `--features`, `--days`, `--key`, `--out`
 - Tier defaults: starter → `traefik,authelia`; pro → `+authentik,security,vpn`;
   enterprise → `+ansible,multi-node`
@@ -150,14 +187,14 @@ embedded directly in `modules/license.sh`.
 - **Issue tab**: email / tier / features / days presets → Generate → copy key or send to validator
 - **Validate tab**: paste any key → shows signature pass/fail, decoded payload, expiry status
 - **REST API**: `POST /api/sign`, `POST /api/validate`
-- Identical signing logic to `zl-sign.sh` — same keys work in both; ready to wrap with a
+- Identical signing logic to `nx-sign.sh` — same keys work in both; ready to wrap with a
   payment processor webhook when moving to production
 
 #### Feature Gate: `modules/13_reverse_proxy.sh`
 
 - `configure_dns_provider()` now opens with:
   ```bash
-  zl_require_license "traefik" "Reverse Proxy / DNS Provider" || return 0
+  nx_require_license "traefik" "Reverse Proxy / DNS Provider" || return 0
   ```
 - Unlicensed users see the upgrade prompt; the function exits cleanly without entering the menu
 
@@ -175,8 +212,8 @@ Replaced the previous stub `show_license_info()` with a full interactive `show_l
 
 #### Application Wiring
 
-- `zoolandia.sh` — `modules/license.sh` sourced immediately after `00_core.sh` so all subsequent
-  modules have access to `zl_require_license` and `zl_check_license`
+- `nexus.sh` — `modules/license.sh` sourced immediately after `00_core.sh` so all subsequent
+  modules have access to `nx_require_license` and `nx_check_license`
 
 #### Local Test Flow (no payment processor required)
 
@@ -186,13 +223,13 @@ python3 .signing/license-server.py
 # open http://localhost:8765 — fill form, generate key, copy
 
 # 2. Activate from the key file directly
-echo "ZOOL-..." > .license/license.key
+echo "NEXUS-..." > .license/license.key
 
 # 3. Validate without launching the full TUI
-source modules/license.sh && zl_license_status
+source modules/license.sh && nx_license_status
 
 # 4. Test the feature gate
-source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS Provider"
+source modules/license.sh && nx_require_license "traefik" "Reverse Proxy / DNS Provider"
 
 # 5. Or test interactively: Settings > License > Validate
 ```
@@ -204,8 +241,8 @@ source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS P
 | `modules/license.sh` | New — full license validation and activation module |
 | `modules/40_settings.sh` | Updated — replaced stub with full `show_license_menu()` |
 | `modules/13_reverse_proxy.sh` | Updated — `configure_dns_provider()` gated |
-| `zoolandia.sh` | Updated — sources `license.sh` after `00_core.sh` |
-| `.signing/zl-sign.sh` | New — CLI signing tool (gitignored directory) |
+| `nexus.sh` | Updated — sources `license.sh` after `00_core.sh` |
+| `.signing/nx-sign.sh` | New — CLI signing tool (gitignored directory) |
 | `.signing/license-server.py` | New — local test web server (gitignored directory) |
 | `.license/` | New directory — runtime license key storage (gitignored) |
 | `.gitignore` | Updated — added `.license/` entry |
@@ -216,8 +253,8 @@ source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS P
 
 ### Fixed — Secret Backend & CloudDNS Credential Bugfixes
 
-- **GNOME Keyring hidden from backend menu**: `_zl_keyring_available()` previously required `secret-tool` to be installed before detecting GNOME Keyring availability. Since `libsecret-tools` is not installed by default, the keyring option was silently suppressed even on a live GNOME desktop with a D-Bus session. Fixed by splitting the check: `_zl_keyring_available()` now tests only for a D-Bus session (`$DBUS_SESSION_BUS_ADDRESS` or `/run/user/<uid>/bus`); a new `_zl_ensure_secret_tool()` helper installs `libsecret-tools` on first use and falls back to file backend on refusal.
-- **`_zl_secret_read` unconditional `;&` fall-through removed**: the original implementation used bash `;&` to fall from `keyring` to `file`; this cannot be conditional, so when `secret-tool` is absent `_zl_secret_read` now uses an explicit `if command -v secret-tool` guard and falls back to file silently rather than crashing.
+- **GNOME Keyring hidden from backend menu**: `_nx_keyring_available()` previously required `secret-tool` to be installed before detecting GNOME Keyring availability. Since `libsecret-tools` is not installed by default, the keyring option was silently suppressed even on a live GNOME desktop with a D-Bus session. Fixed by splitting the check: `_nx_keyring_available()` now tests only for a D-Bus session (`$DBUS_SESSION_BUS_ADDRESS` or `/run/user/<uid>/bus`); a new `_nx_ensure_secret_tool()` helper installs `libsecret-tools` on first use and falls back to file backend on refusal.
+- **`_nx_secret_read` unconditional `;&` fall-through removed**: the original implementation used bash `;&` to fall from `keyring` to `file`; this cannot be conditional, so when `secret-tool` is absent `_nx_secret_read` now uses an explicit `if command -v secret-tool` guard and falls back to file silently rather than crashing.
 - **Client Secret dialog always empty on edit**: `configure_clouddns` used `--passwordbox` without passing the existing value as the init argument, so pressing OK without typing returned an empty string and blocked saving. Fixed by passing `"$current_secret"` to `--passwordbox`; the field still appears blank (by design — password boxes never display init text) but pressing OK without changes now preserves the existing secret.
 
 ---
@@ -230,12 +267,12 @@ source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS P
 - GNOME Keyring (libsecret) — encrypted at rest, no plaintext file; auto-detected on GNOME desktops
 - HashiCorp Vault — centralized secret server; auto-installs Vault CLI via Ansible if not present
 - File fallback — `chmod 600` in `~/docker/secrets/` (always available; used on headless/server installs)
-- Backend selection persisted to `~/.config/zoolandia/secret_backend`; survives session restarts
+- Backend selection persisted to `~/.config/nexus/secret_backend`; survives session restarts
 
 **New Helper Functions:**
-- `_zl_keyring_available()` — detects usable GNOME Keyring session (D-Bus only, no tool required)
-- `_zl_secret_write()` / `_zl_secret_read()` / `_zl_secret_delete()` — backend-agnostic secret I/O
-- `_zl_vault_write()` / `_zl_vault_read()` / `_zl_vault_delete()` — Vault KV helpers
+- `_nx_keyring_available()` — detects usable GNOME Keyring session (D-Bus only, no tool required)
+- `_nx_secret_write()` / `_nx_secret_read()` / `_nx_secret_delete()` — backend-agnostic secret I/O
+- `_nx_vault_write()` / `_nx_vault_read()` / `_nx_vault_delete()` — Vault KV helpers
 - `ensure_vault()` — installs Vault CLI via Ansible and authenticates if needed
 - `show_secret_backend_menu()` — user-facing backend selection dialog
 
@@ -245,7 +282,7 @@ source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS P
 - Pre-filled edit dialog retains existing value for quick correction
 
 **Security Fix** (`modules/11_system.sh`):
-- `set_docker_folder()` now validates that `DOCKER_DIR` cannot be set to a path inside the Zoolandia installation directory, preventing secrets files from landing inside the git working tree
+- `set_docker_folder()` now validates that `DOCKER_DIR` cannot be set to a path inside the Nexus installation directory, preventing secrets files from landing inside the git working tree
 
 ---
 
@@ -275,7 +312,7 @@ source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS P
 **Files Changed:**
 - `modules/60_personal.sh` — New module
 - `modules/02_main_menu.sh` — Added "Secret" menu item; bumped dialog item count to 13
-- `zoolandia.sh` — Added source for `modules/60_personal.sh`
+- `nexus.sh` — Added source for `modules/60_personal.sh`
 - `ansible/roles/secret/` — New directory for personal/secret Ansible projects
 
 ---
@@ -402,7 +439,7 @@ source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS P
 - Status shows "(set)" or "Not set" per credential
 
 **Configuration Storage:**
-- DNS provider saved to `$ZOOLANDIA_CONFIG_DIR/dns_provider`
+- DNS provider saved to `$NEXUS_CONFIG_DIR/dns_provider`
 - Cloudflare: `cf_dns_api_token`, `cf_email`
 - CloudDNS: `clouddns_client_id`, `clouddns_client_secret`
 - Route53: `aws_access_key_id`, `aws_secret_access_key`, `aws_region`
@@ -455,7 +492,7 @@ source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS P
 - Enhanced Docker Prune: granular cleanup — containers, images, volumes, networks, build cache
 
 **Variable Renaming:**
-- `DEPLOYIQDASHBOARD_PORT` → `ZOOLANDIA_DASHBOARD_PORT`
+- `DEPLOYIQDASHBOARD_PORT` → `NEXUS_DASHBOARD_PORT`
 
 #### Reverse Proxy Menu Overhaul
 
@@ -477,7 +514,7 @@ source modules/license.sh && zl_require_license "traefik" "Reverse Proxy / DNS P
 #### Prerequisites — GitHub Username
 
 - GitHub username input with format validation (alphanumeric + hyphens, 1–39 chars)
-- Persisted to `~/.config/zoolandia/github_username`
+- Persisted to `~/.config/nexus/github_username`
 - Passed to Ansible playbooks via `-e github_username=<value>`
 - `set_github_username()` function; `GITHUB_USERNAME` global variable
 
@@ -1278,10 +1315,10 @@ ansible-playbook -i inventories/production/localhost.yml \
 ## [v6.0.7] - December 30, 2025
 
 ### ASCII Art Branding Fix
-- **Fixed Old DeployIQ ASCII Art**: Replaced remaining old branding with Zoolandia
+- **Fixed Old DeployIQ ASCII Art**: Replaced remaining old branding with Nexus
   - Updated display_splash() and display_banner() functions in modules/00_core.sh
   - Functions were being called but contained old DeployIQ ASCII art
-  - New Zoolandia ASCII art now displays correctly in all locations
+  - New Nexus ASCII art now displays correctly in all locations
   - Maintains attribution: "by D.Garner - http://hack3r.gg"
 
 **New ASCII Art**:
@@ -1303,12 +1340,12 @@ ansible-playbook -i inventories/production/localhost.yml \
 ## [v6.0.6] - December 30, 2025
 
 ### Complete Project Rebranding
-- **Project Name Change**: Complete rebranding from "DeployIQ" to "Zoolandia"
-  - Script Name: DeployIQ → Zoolandia
-  - Variable Prefix: DEPLOYIQ_* → ZOOLANDIA_*
-  - Configuration Directory: ~/.config/deployiq → ~/.config/zoolandia
-  - Cache Directory: /var/tmp/deployiq → /var/tmp/zoolandia
-  - Script Mode Variable: DEPLOYIQ_MODE → ZOOLANDIA_MODE
+- **Project Name Change**: Complete rebranding from "DeployIQ" to "Nexus"
+  - Script Name: DeployIQ → Nexus
+  - Variable Prefix: DEPLOYIQ_* → NEXUS_*
+  - Configuration Directory: ~/.config/deployiq → ~/.config/nexus
+  - Cache Directory: /var/tmp/deployiq → /var/tmp/nexus
+  - Script Mode Variable: DEPLOYIQ_MODE → NEXUS_MODE
 
 **Files Updated** (comprehensive rebrand):
 - All 16 module files (modules/*.sh)
@@ -1320,18 +1357,18 @@ ansible-playbook -i inventories/production/localhost.yml \
 - Welcome screen and all menu titles
 
 **Variables Updated**:
-- ZOOLANDIA_VERSION (formerly DEPLOYIQ_VERSION)
-- ZOOLANDIA_CONFIG_DIR (formerly DEPLOYIQ_CONFIG_DIR)
-- ZOOLANDIA_CACHE_DIR (formerly DEPLOYIQ_CACHE_DIR)
-- ZOOLANDIA_MODE (formerly DEPLOYIQ_MODE)
-- SCRIPT_NAME="Zoolandia" (formerly "DeployIQ")
+- NEXUS_VERSION (formerly DEPLOYIQ_VERSION)
+- NEXUS_CONFIG_DIR (formerly DEPLOYIQ_CONFIG_DIR)
+- NEXUS_CACHE_DIR (formerly DEPLOYIQ_CACHE_DIR)
+- NEXUS_MODE (formerly DEPLOYIQ_MODE)
+- SCRIPT_NAME="Nexus" (formerly "DeployIQ")
 
 **File Paths Updated**:
-- Configuration: ~/.config/zoolandia/
-- Cache: /var/tmp/zoolandia/
-- Logs: .zoolandia/logs/
-- State files: .zoolandia/setup_complete
-- Temp files: /tmp/zoolandia_*
+- Configuration: ~/.config/nexus/
+- Cache: /var/tmp/nexus/
+- Logs: .nexus/logs/
+- State files: .nexus/setup_complete
+- Temp files: /tmp/nexus_*
 
 **Website Updates**:
 - Changed from deployiq.app to simplehomelab.com
@@ -1340,7 +1377,7 @@ ansible-playbook -i inventories/production/localhost.yml \
 **Validation**:
 - All 16 modules tested with `bash -n` - PASSED
 - 100+ files affected
-- 200+ occurrences of DeployIQ replaced with Zoolandia
+- 200+ occurrences of DeployIQ replaced with Nexus
 
 ---
 
@@ -1355,7 +1392,7 @@ ansible-playbook -i inventories/production/localhost.yml \
 
 1. **Core Packages (Pre-installed - View Only)**:
    - View-only mode with no installation option
-   - Clearly states "These packages are installed before Zoolandia runs"
+   - Clearly states "These packages are installed before Nexus runs"
    - Shows installation status with checkmarks (✓)
    - Packages: dialog, curl, wget, git, jq (5 total)
    - Status indicator: PRE-INSTALLED / MISSING
@@ -1393,7 +1430,7 @@ ansible-playbook -i inventories/production/localhost.yml \
 - Install/Cancel buttons for user confirmation
 - Live installation progress with `dialog --programbox`
 - Success messages with tier-specific completion notes
-- Users remain in Zoolandia menu system throughout (no terminal drops)
+- Users remain in Nexus menu system throughout (no terminal drops)
 
 **Files Modified**:
 - modules/10_prerequisites.sh (complete package system rewrite)
@@ -3121,7 +3158,7 @@ See previous changelog archives or visit the official documentation.
 ⚠️ **Configuration Directory Change** (v6.0.6):
 - Users upgrading from DeployIQ 5.x will need to migrate their configuration
 - Old location: `~/.config/deployiq/`
-- New location: `~/.config/zoolandia/`
+- New location: `~/.config/nexus/`
 - Manual migration required for existing configurations
 
 ⚠️ **Package Structure Change** (v6.0.5):
@@ -3133,7 +3170,7 @@ See previous changelog archives or visit the official documentation.
 
 ## Upgrade Notes
 
-For users upgrading from DeployIQ 5.x to Zoolandia 6.x:
+For users upgrading from DeployIQ 5.x to Nexus 6.x:
 
 1. **Backup Configuration**:
    ```bash
@@ -3142,12 +3179,12 @@ For users upgrading from DeployIQ 5.x to Zoolandia 6.x:
 
 2. **Rename Configuration Directory**:
    ```bash
-   mv ~/.config/deployiq ~/.config/zoolandia
+   mv ~/.config/deployiq ~/.config/nexus
    ```
 
 3. **Update Environment Variables** (if any):
-   - DEPLOYIQ_MODE → ZOOLANDIA_MODE
-   - DEPLOYIQ_CONFIG_DIR → ZOOLANDIA_CONFIG_DIR
+   - DEPLOYIQ_MODE → NEXUS_MODE
+   - DEPLOYIQ_CONFIG_DIR → NEXUS_CONFIG_DIR
 
 4. **Review Package Installation**:
    - Navigate to Prerequisites → Additional Packages

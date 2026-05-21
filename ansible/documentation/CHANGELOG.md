@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the Zoolandia Workstation Setup - Production Edition.
+All notable changes to the Nexus Workstation Setup - Production Edition.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -19,7 +19,7 @@ First production-ready release of the completely refactored Ansible workstation 
 - **Loop-based simple app installer** - Reduces code by 87% (800 lines → 100 lines)
 - **Individual complex app files** - Proper handling for Docker, Twingate, Portainer, etc.
 - **Hybrid approach** - Best of both loop-based and individual-file patterns
-- **Dual compatibility** - Works with Zoolandia platform AND ansible-playbook CLI
+- **Dual compatibility** - Works with Nexus platform AND ansible-playbook CLI
 
 #### Application Support
 - Snap applications (6 apps): Vivaldi, Bitwarden, Notepad++, Notion, Mailspring, iCloud
@@ -47,7 +47,7 @@ First production-ready release of the completely refactored Ansible workstation 
 #### Configuration
 - **100+ variables** - Comprehensive configuration system
 - **Smart defaults** - Auto-detects user, home, paths
-- **Zoolandia integration** - Accepts CURRENT_USER, DOCKER_DIR, BACKUP_DIR
+- **Nexus integration** - Accepts CURRENT_USER, DOCKER_DIR, BACKUP_DIR
 - **Feature flags** - Enable/disable entire feature sets
 - **Per-app toggles** - Enable/disable individual applications
 
@@ -124,7 +124,7 @@ First production-ready release of the completely refactored Ansible workstation 
 
 4. **Variables:**
    - Smart defaults with auto-detection
-   - Zoolandia variable passthrough
+   - Nexus variable passthrough
    - CLI override capability
 
 5. **User Experience:**
@@ -153,7 +153,7 @@ This release represents a complete ground-up refactor based on:
 
 ### 🙏 Credits
 
-- Original Zoolandia ansible/ structure
+- Original Nexus ansible/ structure
 - Analysis: honest_review.md
 - Loop-based approach: ansible_resume
 - Documentation inspiration: 5star_ansible_proposed

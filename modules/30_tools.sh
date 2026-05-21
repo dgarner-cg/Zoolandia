@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - Tools Module
+# Nexus v5.10 - Tools Module
 #
 # Description: Tools menu and utilities including Stack Manager, database creation,
 #              configuration editors, and system diagnostics
@@ -20,8 +20,8 @@ show_tools_menu() {
             ".env Editor" "Edit Docker Environment Variables"
             "Secrets Editor" "Edit Docker Secrets"
             "Version Pins" "Edit Version Pins"
-            "Change Hostname" "Adapt Zoolandia to a new hostname"
-            "Change Server IP" "Adapt Zoolandia to a new server IP"
+            "Change Hostname" "Adapt Nexus to a new hostname"
+            "Change Server IP" "Adapt Nexus to a new server IP"
             "Back" "Return to main menu"
         )
 
@@ -613,10 +613,10 @@ change_server_ip() {
 health_diagnostics() {
     dialog --infobox "Running system health checks..." 5 40
 
-    local report="/tmp/zoolandia_health.txt"
+    local report="/tmp/nexus_health.txt"
 
     {
-        echo "=== Zoolandia Health Diagnostics ==="
+        echo "=== Nexus Health Diagnostics ==="
         echo "Generated: $(date)"
         echo ""
         echo "=== System Information ==="

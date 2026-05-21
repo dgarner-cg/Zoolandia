@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - About Module
+# Nexus v5.10 - About Module
 #
 # Description: About menu with documentation, changelog, support logs, and
 #              cache management
@@ -42,18 +42,18 @@ show_about_menu() {
 
 # Feedback
 show_feedback() {
-    dialog --msgbox "Thank you for using Zoolandia!\n\nTo submit feedback, please visit:\nhttps://www.simplehomelab.com/zoolandia/feedback/" 12 60
+    dialog --msgbox "Thank you for using Nexus!\n\nTo submit feedback, please visit:\nhttps://www.simplehomelab.com/nexus/feedback/" 12 60
 }
 
 # Show documentation
 show_documentation() {
-    dialog --msgbox "Documentation:\n\nhttps://docs.zoolandia.app\nhttps://www.simplehomelab.com/zoolandia/" 12 60
+    dialog --msgbox "Documentation:\n\nhttps://docs.nexus.app\nhttps://www.simplehomelab.com/nexus/" 12 60
 }
 
 # Generate sanitized log for support
 generate_sanitized_log() {
-    local log_file="${HOME}/zoolandia-support-$(date +%Y%m%d-%H%M%S).log"
-    local temp_file="/tmp/zoolandia_log_temp.txt"
+    local log_file="${HOME}/nexus-support-$(date +%Y%m%d-%H%M%S).log"
+    local temp_file="/tmp/nexus_log_temp.txt"
 
     # Show info dialog
     dialog --infobox "Generating sanitized support log...\n\nPlease wait..." 5 50
@@ -61,7 +61,7 @@ generate_sanitized_log() {
     # Start log file
     {
         echo "========================================="
-        echo "Zoolandia Support Log"
+        echo "Nexus Support Log"
         echo "Generated: $(date)"
         echo "========================================="
         echo ""
@@ -73,14 +73,14 @@ generate_sanitized_log() {
         echo "Hostname: [REDACTED]"
         echo ""
 
-        echo "=== Zoolandia Configuration ==="
-        echo "Version: ${ZOOLANDIA_VERSION}"
+        echo "=== Nexus Configuration ==="
+        echo "Version: ${NEXUS_VERSION}"
         echo "System Type: ${SYSTEM_TYPE:-Not Set}"
         echo "Setup Mode: ${SETUP_MODE:-Not Set}"
         echo "Docker Directory: ${DOCKER_DIR}"
         echo "Telemetry: ${TELEMETRY_ENABLED}"
         echo "Intro Messages: ${SHOW_INTRO_MESSAGES}"
-        echo "Mode: ${ZOOLANDIA_MODE}"
+        echo "Mode: ${NEXUS_MODE}"
         echo ""
 
         echo "=== Docker Information ==="
@@ -100,16 +100,16 @@ generate_sanitized_log() {
         echo ""
 
         echo "=== Recent Errors (Last 50 lines) ==="
-        if [ -f "${DOCKER_DIR}/logs/zoolandia.log" ]; then
-            tail -n 50 "${DOCKER_DIR}/logs/zoolandia.log" 2>/dev/null | sed 's/[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/[IP-REDACTED]/g' || echo "No log file found"
+        if [ -f "${DOCKER_DIR}/logs/nexus.log" ]; then
+            tail -n 50 "${DOCKER_DIR}/logs/nexus.log" 2>/dev/null | sed 's/[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}\.[0-9]\{1,3\}/[IP-REDACTED]/g' || echo "No log file found"
         else
             echo "No log file found"
         fi
         echo ""
 
         echo "=== Configuration Summary ==="
-        if [ -f "$ZOOLANDIA_CONFIG_DIR/zoolandia.conf" ]; then
-            cat "$ZOOLANDIA_CONFIG_DIR/zoolandia.conf" | \
+        if [ -f "$NEXUS_CONFIG_DIR/nexus.conf" ]; then
+            cat "$NEXUS_CONFIG_DIR/nexus.conf" | \
                 sed 's/SMTP_PASS=.*/SMTP_PASS="[REDACTED]"/' | \
                 sed 's/SMTP_USER=.*/SMTP_USER="[REDACTED]"/' | \
                 sed 's/SERVER_IP=.*/SERVER_IP="[REDACTED]"/' | \
@@ -134,24 +134,24 @@ generate_sanitized_log() {
     dialog --msgbox "Support log generated successfully!\n\nLocation:\n$log_file\n\nThis log contains sanitized system information.\nSensitive data (passwords, IPs, domains) has been removed.\n\nYou can safely share this file with support." 14 70
 }
 
-# Clear Zoolandia cache
-clear_zoolandia_cache() {
+# Clear Nexus cache
+clear_nexus_cache() {
     local cache_size
     local cache_files
 
     # Check cache directory
-    if [ ! -d "$ZOOLANDIA_CACHE_DIR" ]; then
+    if [ ! -d "$NEXUS_CACHE_DIR" ]; then
         dialog --msgbox "Cache directory does not exist.\n\nNothing to clear." 8 50
         return
     fi
 
     # Get cache info
-    cache_files=$(find "$ZOOLANDIA_CACHE_DIR" -type f 2>/dev/null | wc -l)
-    cache_size=$(du -sh "$ZOOLANDIA_CACHE_DIR" 2>/dev/null | cut -f1 || echo "Unknown")
+    cache_files=$(find "$NEXUS_CACHE_DIR" -type f 2>/dev/null | wc -l)
+    cache_size=$(du -sh "$NEXUS_CACHE_DIR" 2>/dev/null | cut -f1 || echo "Unknown")
 
     # Confirm deletion
-    local msg="Zoolandia Cache Information:\n\n"
-    msg+="Location: $ZOOLANDIA_CACHE_DIR\n"
+    local msg="Nexus Cache Information:\n\n"
+    msg+="Location: $NEXUS_CACHE_DIR\n"
     msg+="Files: $cache_files\n"
     msg+="Size: $cache_size\n\n"
     msg+="The cache contains:\n"
@@ -164,7 +164,7 @@ clear_zoolandia_cache() {
     msg+="• Force fresh data on next run\n\n"
     msg+="Cache will be rebuilt automatically as needed."
 
-    if ! dialog --title "Clear Zoolandia Cache" \
+    if ! dialog --title "Clear Nexus Cache" \
         --yes-label "Clear Cache" \
         --no-label "Cancel" \
         --yesno "$msg" 22 70; then
@@ -174,7 +174,7 @@ clear_zoolandia_cache() {
     # Clear cache
     dialog --infobox "Clearing cache...\n\nPlease wait..." 5 40
 
-    if sudo rm -rf "${ZOOLANDIA_CACHE_DIR:?}"/* 2>/dev/null; then
+    if sudo rm -rf "${NEXUS_CACHE_DIR:?}"/* 2>/dev/null; then
         dialog --msgbox "Cache cleared successfully!\n\nFreed: $cache_size\nRemoved: $cache_files files\n\nCache will be rebuilt as needed." 10 50
     else
         dialog --msgbox "Error clearing cache.\n\nSome files may require manual deletion." 8 50

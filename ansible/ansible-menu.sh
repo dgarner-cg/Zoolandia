@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia Workstation Setup - Interactive Menu
+# Nexus Workstation Setup - Interactive Menu
 # File: ansible-menu.sh
 # Purpose: Interactive checkbox menu for selective installation
 #
@@ -38,7 +38,7 @@ show_banner() {
     clear
     echo -e "${BLUE}"
     echo "═══════════════════════════════════════════════════════════════════"
-    echo "🚀 ZOOLANDIA WORKSTATION SETUP - INTERACTIVE MENU"
+    echo "🚀 NEXUS WORKSTATION SETUP - INTERACTIVE MENU"
     echo "═══════════════════════════════════════════════════════════════════"
     echo -e "${NC}"
 }
@@ -205,7 +205,7 @@ EOF
         cat >> "$CONFIG_FILE" <<EOF
   - name: discord
     url: "https://discord.com/api/download?platform=linux&format=deb"
-    dest: "/tmp/zoolandia_ansible_downloads/discord.deb"
+    dest: "/tmp/nexus_ansible_downloads/discord.deb"
     enabled: true
     category: communication
     description: "Voice and text chat"
@@ -218,7 +218,7 @@ EOF
         cat >> "$CONFIG_FILE" <<EOF
   - name: zoom
     url: "https://zoom.us/client/latest/zoom_amd64.deb"
-    dest: "/tmp/zoolandia_ansible_downloads/zoom_amd64.deb"
+    dest: "/tmp/nexus_ansible_downloads/zoom_amd64.deb"
     enabled: true
     category: communication
     description: "Video conferencing"
@@ -231,7 +231,7 @@ EOF
         cat >> "$CONFIG_FILE" <<EOF
   - name: termius
     url: "https://www.termius.com/download/linux/Termius.deb"
-    dest: "/tmp/zoolandia_ansible_downloads/termius.deb"
+    dest: "/tmp/nexus_ansible_downloads/termius.deb"
     enabled: true
     category: development
     description: "SSH client"
@@ -244,7 +244,7 @@ EOF
         cat >> "$CONFIG_FILE" <<EOF
   - name: onlyoffice
     url: "https://download.onlyoffice.com/install/desktop/editors/linux/onlyoffice-desktopeditors_amd64.deb"
-    dest: "/tmp/zoolandia_ansible_downloads/onlyoffice_amd64.deb"
+    dest: "/tmp/nexus_ansible_downloads/onlyoffice_amd64.deb"
     enabled: true
     category: productivity
     description: "Office suite"
@@ -425,7 +425,7 @@ show_selection_menu() {
     }
 
     local selections
-    selections=$(dialog --clear --backtitle "Zoolandia Workstation Setup" \
+    selections=$(dialog --clear --backtitle "Nexus Workstation Setup" \
         --title "Select Applications and Configurations" \
         --checklist "Use SPACE to select/deselect, ENTER to confirm.\n\n─── APPLICATIONS ───" 45 80 38 \
         "vivaldi" "Vivaldi Browser" $(is_installed "vivaldi") \
@@ -516,7 +516,7 @@ main_menu() {
     while true; do
         show_banner
 
-        choice=$(dialog --clear --backtitle "Zoolandia Workstation Setup" \
+        choice=$(dialog --clear --backtitle "Nexus Workstation Setup" \
             --title "Main Menu" \
             --menu "Choose installation method:" 15 60 5 \
             1 "Install All (Default Configuration)" \
@@ -596,7 +596,7 @@ main_menu() {
                 ;;
             5)
                 clear
-                echo -e "${GREEN}Thank you for using Zoolandia Workstation Setup!${NC}"
+                echo -e "${GREEN}Thank you for using Nexus Workstation Setup!${NC}"
                 exit 0
                 ;;
             *)

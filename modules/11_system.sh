@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia - System Management Module
+# Nexus - System Management Module
 ################################################################################
 # Description: System configuration and preparation functions
 # Version: 1.0.0
@@ -99,7 +99,7 @@ configure_environment() {
     if [[ -d "$DOCKER_DIR" ]]; then
         # Docker folder exists - show menu
         local choice=$(dialog --colors \
-            --backtitle "$SCRIPT_NAME by hack3r.gg - v$ZOOLANDIA_VERSION" \
+            --backtitle "$SCRIPT_NAME by hack3r.gg - v$NEXUS_VERSION" \
             --title "Create Docker Root Folder" \
             --ok-label "Select" \
             --cancel-label "Cancel" \
@@ -149,7 +149,7 @@ setup_new_docker_environment() {
 
                 if [[ "$mode" == "reuse" ]]; then
                     # Save important files before removing
-                    local temp_save="/tmp/zoolandia_save_$$"
+                    local temp_save="/tmp/nexus_save_$$"
                     mkdir -p "$temp_save"
 
                     [[ -f "$DOCKER_DIR/.env" ]] && cp -p "$DOCKER_DIR/.env" "$temp_save/" 2>/dev/null
@@ -182,8 +182,8 @@ setup_new_docker_environment() {
     echo "Creating few more folders..."
 
     # Create appdata folder
-    if [[ "$mode" == "reuse" && -d "/tmp/zoolandia_save_$$/appdata" ]]; then
-        sudo cp -rp "/tmp/zoolandia_save_$$/appdata" "$DOCKER_DIR/"
+    if [[ "$mode" == "reuse" && -d "/tmp/nexus_save_$$/appdata" ]]; then
+        sudo cp -rp "/tmp/nexus_save_$$/appdata" "$DOCKER_DIR/"
         echo "[INFO] appdata folder restored: $DOCKER_DIR/appdata"
     else
         sudo mkdir -p "$DOCKER_DIR/appdata"
@@ -192,8 +192,8 @@ setup_new_docker_environment() {
     fi
 
     # Create secrets folder
-    if [[ "$mode" == "reuse" && -d "/tmp/zoolandia_save_$$/secrets" ]]; then
-        sudo cp -rp "/tmp/zoolandia_save_$$/secrets" "$DOCKER_DIR/"
+    if [[ "$mode" == "reuse" && -d "/tmp/nexus_save_$$/secrets" ]]; then
+        sudo cp -rp "/tmp/nexus_save_$$/secrets" "$DOCKER_DIR/"
         sudo chown -R "$PRIMARY_USERNAME":"$PRIMARY_USERNAME" "$DOCKER_DIR/secrets"
         sudo chmod 750 "$DOCKER_DIR/secrets"
         echo "[INFO] secrets folder restored: $DOCKER_DIR/secrets"
@@ -210,8 +210,8 @@ setup_new_docker_environment() {
     echo "[INFO] compose folder created: $DOCKER_DIR/compose/$HOSTNAME"
 
     # Create custom.yml in compose folder
-    if [[ "$mode" == "reuse" && -f "/tmp/zoolandia_save_$$/$HOSTNAME/custom.yml" ]]; then
-        sudo cp -p "/tmp/zoolandia_save_$$/$HOSTNAME/custom.yml" "$DOCKER_DIR/compose/$HOSTNAME/"
+    if [[ "$mode" == "reuse" && -f "/tmp/nexus_save_$$/$HOSTNAME/custom.yml" ]]; then
+        sudo cp -p "/tmp/nexus_save_$$/$HOSTNAME/custom.yml" "$DOCKER_DIR/compose/$HOSTNAME/"
         echo "[INFO] custom.yml restored"
     else
         cp "$SCRIPT_DIR/includes/docker/custom.yml" "$DOCKER_DIR/compose/$HOSTNAME/custom.yml"
@@ -222,8 +222,8 @@ setup_new_docker_environment() {
     echo "Creating .env file..."
 
     # Create or restore .env file
-    if [[ "$mode" == "reuse" && -f "/tmp/zoolandia_save_$$/.env" ]]; then
-        sudo cp -p "/tmp/zoolandia_save_$$/.env" "$DOCKER_DIR/"
+    if [[ "$mode" == "reuse" && -f "/tmp/nexus_save_$$/.env" ]]; then
+        sudo cp -p "/tmp/nexus_save_$$/.env" "$DOCKER_DIR/"
         sudo chown "$PRIMARY_USERNAME":"$PRIMARY_USERNAME" "$DOCKER_DIR/.env"
         sudo chmod 640 "$DOCKER_DIR/.env"
         echo "[INFO] .env file restored"
@@ -233,7 +233,7 @@ setup_new_docker_environment() {
         local timezone=$(timedatectl show --property=Timezone --value 2>/dev/null || echo "UTC")
 
         cat > "$DOCKER_DIR/.env" << EOF
-# Zoolandia Environment Configuration
+# Nexus Environment Configuration
 # Generated on $(date)
 
 # Domain Configuration
@@ -304,8 +304,8 @@ EOF
     save_config
 
     # Clean up temp files if reusing
-    if [[ "$mode" == "reuse" && -d "/tmp/zoolandia_save_$$" ]]; then
-        rm -rf "/tmp/zoolandia_save_$$"
+    if [[ "$mode" == "reuse" && -d "/tmp/nexus_save_$$" ]]; then
+        rm -rf "/tmp/nexus_save_$$"
     fi
 
     echo ""
@@ -360,7 +360,7 @@ show_system_type_info() {
     dialog --colors --title "System Type Information" --msgbox "\
 \Zb\Z4Understanding System Types\Zn
 
-Zoolandia adapts its behavior based on your system type. Here's what each type means and how it affects your deployment:
+Nexus adapts its behavior based on your system type. Here's what each type means and how it affects your deployment:
 
 \Zb\Z2═══ BAREBONES ═══\Zn
 \ZbWhen to use:\Zn Physical servers, bare metal installations
@@ -458,7 +458,7 @@ show_system_type() {
     menu_items+=("Info" "Learn about system types and their implications")
 
     local choice=$(dialog --colors \
-        --backtitle "$SCRIPT_NAME by http://hack3r.gg - v$ZOOLANDIA_VERSION" \
+        --backtitle "$SCRIPT_NAME by http://hack3r.gg - v$NEXUS_VERSION" \
         --title "Pick your System Type" \
         --ok-label "Select" \
         --cancel-label "Back" \
@@ -494,7 +494,7 @@ show_setup_mode_info() {
     dialog --colors --title "Setup Mode Information" --msgbox "\
 \Zb\Z4Understanding Setup Modes\Zn
 
-Zoolandia supports two deployment modes that determine how your applications are accessed and secured. Choose the mode that best fits your use case:
+Nexus supports two deployment modes that determine how your applications are accessed and secured. Choose the mode that best fits your use case:
 
 \Zb\Z2═══════════════════════════════════════════════════════════════\Zn
 \Zb\Z6LOCAL MODE\Zn - Simple, Direct Access
@@ -618,7 +618,7 @@ toggle_setup_mode() {
     local current_mode="${SETUP_MODE:-Local}"
 
     local choice=$(dialog --colors \
-        --backtitle "$SCRIPT_NAME by http://hack3r.gg - v$ZOOLANDIA_VERSION" \
+        --backtitle "$SCRIPT_NAME by http://hack3r.gg - v$NEXUS_VERSION" \
         --title "Select Setup Mode" \
         --ok-label "Select" \
         --cancel-label "Back" \
@@ -728,13 +728,13 @@ run_domain_checks() {
     dialog --title "Domain Checks" --msgbox "$results" 14 70
 
     # Mark domain checks as completed (checks were run — informational)
-    mkdir -p "$ZOOLANDIA_CONFIG_DIR"
-    touch "$ZOOLANDIA_CONFIG_DIR/domain_checks_done"
+    mkdir -p "$NEXUS_CONFIG_DIR"
+    touch "$NEXUS_CONFIG_DIR/domain_checks_done"
     DOMAIN_CHECKS_DONE=true
 }
 
 verify_license() {
-    dialog --title "Zoolandia License" --msgbox "Your Zoolandia License: Free\n\nFree tier includes:\n- Local app deployment\n- System preparation tools\n- Docker management\n- Basic features\n\nFor advanced features (Traefik, Auth providers, etc.),\nvisit: https://www.hack3r.gg/zoolandia/" 16 70
+    dialog --title "Nexus License" --msgbox "Your Nexus License: Free\n\nFree tier includes:\n- Local app deployment\n- System preparation tools\n- Docker management\n- Basic features\n\nFor advanced features (Traefik, Auth providers, etc.),\nvisit: https://www.hack3r.gg/nexus/" 16 70
 }
 
 set_docker_folder() {
@@ -746,7 +746,7 @@ set_docker_folder() {
         real_new=$(realpath -m "$new_folder" 2>/dev/null || echo "$new_folder")
         real_script=$(realpath "$SCRIPT_DIR" 2>/dev/null || echo "$SCRIPT_DIR")
         if [[ "$real_new" == "$real_script"* ]]; then
-            dialog --msgbox "Invalid path: Docker folder cannot be inside the Zoolandia directory.\n\nChoose a path outside:\n  $real_script" 10 65
+            dialog --msgbox "Invalid path: Docker folder cannot be inside the Nexus directory.\n\nChoose a path outside:\n  $real_script" 10 65
             return
         fi
         DOCKER_DIR="$new_folder"

@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - Homepage Module
+# Nexus v5.10 - Homepage Module
 #
 # Description: Welcome screen and homepage functions
 ################################################################################
@@ -8,7 +8,7 @@
 # Show homepage/welcome screen
 show_homepage() {
     # Check if user has opted to hide the welcome screen
-    local hide_welcome_file="$ZOOLANDIA_CONFIG_DIR/hide_welcome"
+    local hide_welcome_file="$NEXUS_CONFIG_DIR/hide_welcome"
 
     if [[ -f "$hide_welcome_file" ]]; then
         # User has chosen not to show this screen again
@@ -16,8 +16,8 @@ show_homepage() {
     fi
 
     # Show dialog with extra button for "Don't show again"
-    dialog --colors --backtitle "$SCRIPT_NAME by http://hack3r.gg - v$ZOOLANDIA_VERSION" \
-        --title "Welcome to Zoolandia" \
+    dialog --colors --backtitle "$SCRIPT_NAME by http://hack3r.gg - v$NEXUS_VERSION" \
+        --title "Welcome to Nexus" \
         --ok-label "Continue" \
         --extra-button \
         --extra-label "Don't show again" \
@@ -38,7 +38,7 @@ Press OK to continue to the main menu..." 24 70 || local exit_status=$?
 
     # If user pressed "Don't show again" (exit status 3 for extra button)
     if [[ ${exit_status:-0} -eq 3 ]]; then
-        mkdir -p "$ZOOLANDIA_CONFIG_DIR"
+        mkdir -p "$NEXUS_CONFIG_DIR"
         touch "$hide_welcome_file"
     fi
 
@@ -65,23 +65,23 @@ check_version() {
     local latest_version
 
     # Try to fetch latest version from the repository
-    latest_version=$(curl -fsSL "https://raw.githubusercontent.com/SimpleHomelab/Zoolandia/main/latest-version" 2>/dev/null | tr -d '[:space:]' || echo "")
+    latest_version=$(curl -fsSL "https://raw.githubusercontent.com/SimpleHomelab/Nexus/main/latest-version" 2>/dev/null | tr -d '[:space:]' || echo "")
 
     # If fetch failed or returned HTML, skip version check
     if [[ -z "$latest_version" ]] || [[ "$latest_version" == *"<"* ]] || [[ "$latest_version" == *"DOCTYPE"* ]]; then
-        log_success "You are running version: $ZOOLANDIA_VERSION"
-    elif [[ "$latest_version" == "$ZOOLANDIA_VERSION" ]]; then
-        log_success "You are running latest version of the script: $ZOOLANDIA_VERSION"
+        log_success "You are running version: $NEXUS_VERSION"
+    elif [[ "$latest_version" == "$NEXUS_VERSION" ]]; then
+        log_success "You are running latest version of the script: $NEXUS_VERSION"
     else
-        log_warning "A newer version ($latest_version) is available. You are running $ZOOLANDIA_VERSION"
+        log_warning "A newer version ($latest_version) is available. You are running $NEXUS_VERSION"
     fi
     echo ""
 }
 
 # Create necessary directories
 create_directories() {
-    mkdir -p "$ZOOLANDIA_CONFIG_DIR"
-    mkdir -p "$ZOOLANDIA_CACHE_DIR"
+    mkdir -p "$NEXUS_CONFIG_DIR"
+    mkdir -p "$NEXUS_CACHE_DIR"
     mkdir -p "$DOCKER_DIR"
     mkdir -p "$SECRETS_DIR"
     mkdir -p "$BACKUP_DIR"
@@ -89,25 +89,25 @@ create_directories() {
 
 # Load configuration
 load_config() {
-    local config_file="$ZOOLANDIA_CONFIG_DIR/zoolandia.conf"
+    local config_file="$NEXUS_CONFIG_DIR/nexus.conf"
     if [[ -f "$config_file" ]]; then
         source "$config_file"
     fi
 
     # Check state files
-    if [[ -f "$ZOOLANDIA_CONFIG_DIR/prerequisites_done" ]]; then
+    if [[ -f "$NEXUS_CONFIG_DIR/prerequisites_done" ]]; then
         PREREQUISITES_DONE=true
     fi
-    if [[ -f "$ZOOLANDIA_CONFIG_DIR/docker_setup_done" ]]; then
+    if [[ -f "$NEXUS_CONFIG_DIR/docker_setup_done" ]]; then
         DOCKER_SETUP_DONE=true
     fi
-    if [[ -f "$ZOOLANDIA_CONFIG_DIR/socket_proxy_done" ]]; then
+    if [[ -f "$NEXUS_CONFIG_DIR/socket_proxy_done" ]]; then
         SOCKET_PROXY_DONE=true
     fi
-    if [[ -f "$ZOOLANDIA_CONFIG_DIR/traefik_done" ]]; then
+    if [[ -f "$NEXUS_CONFIG_DIR/traefik_done" ]]; then
         TRAEFIK_DONE=true
     fi
-    if [[ -f "$ZOOLANDIA_CONFIG_DIR/domain_checks_done" ]]; then
+    if [[ -f "$NEXUS_CONFIG_DIR/domain_checks_done" ]]; then
         DOMAIN_CHECKS_DONE=true
     fi
 
@@ -116,7 +116,7 @@ load_config() {
 
 # Save configuration
 save_config() {
-    cat > "$ZOOLANDIA_CONFIG_DIR/zoolandia.conf" << EOF
+    cat > "$NEXUS_CONFIG_DIR/nexus.conf" << EOF
 DOCKER_DIR="$DOCKER_DIR"
 BACKUP_DIR="$BACKUP_DIR"
 CURRENT_USER="$CURRENT_USER"
@@ -135,6 +135,6 @@ SMTP_PASS="$SMTP_PASS"
 SMTP_FROM="$SMTP_FROM"
 TELEMETRY_ENABLED="$TELEMETRY_ENABLED"
 SHOW_INTRO_MESSAGES="$SHOW_INTRO_MESSAGES"
-ZOOLANDIA_MODE="$ZOOLANDIA_MODE"
+NEXUS_MODE="$NEXUS_MODE"
 EOF
 }

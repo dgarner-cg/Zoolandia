@@ -1,4 +1,4 @@
-# Quick Start Guide - Zoolandia Workstation Setup
+# Quick Start Guide - Nexus Workstation Setup
 
 **🚀 Ready to use in 2 minutes!**
 
@@ -9,7 +9,7 @@
 ### 1. Interactive Menu (Recommended for First Time)
 
 ```bash
-cd /home/cicero/Documents/Zoolandia/ansible
+cd /home/cicero/Documents/Nexus/ansible
 ./ansible-menu.sh
 ```
 
@@ -24,7 +24,7 @@ cd /home/cicero/Documents/Zoolandia/ansible
 ### 2. Command Line (Full Control)
 
 ```bash
-cd /home/cicero/Documents/Zoolandia/ansible
+cd /home/cicero/Documents/Nexus/ansible
 
 # Install everything with defaults
 ansible-playbook setup-workstation.yml
@@ -47,9 +47,9 @@ ansible-playbook setup-workstation.yml -e "install_zoom=false install_twingate=f
 
 ---
 
-### 3. Zoolandia Platform (Automatic)
+### 3. Nexus Platform (Automatic)
 
-No action needed! Zoolandia will call the playbook automatically with the correct variables.
+No action needed! Nexus will call the playbook automatically with the correct variables.
 
 ---
 
@@ -116,8 +116,8 @@ ansible-playbook setup-workstation.yml --check
 ## 🎉 After Installation
 
 **Check Logs:**
-- Audit trail: `~/.zoolandia/logs/setup_2026-01-07.log`
-- Manifest: `~/.zoolandia/manifest.yml`
+- Audit trail: `~/.nexus/logs/setup_2026-01-07.log`
+- Manifest: `~/.nexus/manifest.yml`
 
 **Installed Apps:**
 - Docker: `docker --version`

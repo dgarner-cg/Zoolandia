@@ -1,11 +1,11 @@
 ---
 ################################################################################
-# Zoolandia Workstation Setup - Production Edition
+# Nexus Workstation Setup - Production Edition
 # File: setup-workstation.yml
 # Purpose: Main playbook entry point for workstation setup
 #
 # DUAL COMPATIBILITY:
-#   - Zoolandia Platform: Called automatically with variables
+#   - Nexus Platform: Called automatically with variables
 #   - Ansible CLI: Run directly with auto-detected variables
 #
 # USAGE:
@@ -23,17 +23,17 @@
 #   # Dry run (test without changes)
 #   ansible-playbook setup-workstation.yml --check
 #
-#   # From Zoolandia (called automatically)
+#   # From Nexus (called automatically)
 #   Variables auto-passed: CURRENT_USER, DOCKER_DIR, BACKUP_DIR
 #
 ################################################################################
 
-- name: Zoolandia Workstation Setup - Production Edition
+- name: Nexus Workstation Setup - Production Edition
   hosts: localhost
   connection: local
   become: no
 
-  # Variables (can be overridden via -e or from Zoolandia)
+  # Variables (can be overridden via -e or from Nexus)
   vars:
     # Failure tracking
     workstation_failures: []
@@ -69,7 +69,7 @@
       ansible.builtin.copy:
         content: |
           ################################################################################
-          # Zoolandia Workstation Installation Manifest
+          # Nexus Workstation Installation Manifest
           # Generated: {{ ansible_date_time.iso8601 }}
           ################################################################################
 
@@ -86,7 +86,7 @@
           configuration:
             docker_dir: "{{ docker_dir }}"
             backup_dir: "{{ backup_dir }}"
-            zoolandia_dir: "{{ zoolandia_base_dir }}"
+            nexus_dir: "{{ nexus_base_dir }}"
 
           applications:
             snap_apps_enabled: {{ snap_apps | selectattr('enabled', 'equalto', true) | list | to_nice_yaml | indent(4) }}

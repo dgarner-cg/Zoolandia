@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Workstation Setup - Production Edition
+# Nexus Workstation Setup - Production Edition
 # File: roles/workstation/tasks/applications/complex/portainer.yml
 # Purpose: Portainer container deployment
 #

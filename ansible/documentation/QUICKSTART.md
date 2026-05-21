@@ -1,17 +1,17 @@
-# 🚀 Zoolandia Workstation Setup - Quick Start
+# 🚀 Nexus Workstation Setup - Quick Start
 
 **Get up and running in 2 minutes!**
 
 ---
 
-## For Zoolandia Users
+## For Nexus Users
 
 ### Automatic Mode
 
-Zoolandia calls this playbook automatically. No action required!
+Nexus calls this playbook automatically. No action required!
 
 ```bash
-# Just run Zoolandia normally
+# Just run Nexus normally
 # The playbook will be executed with all variables pre-configured
 ```
 
@@ -29,7 +29,7 @@ ansible-galaxy collection install community.docker
 ### 2. Run the Playbook
 
 ```bash
-cd /home/cicero/Documents/Zoolandia/ansible_production
+cd /home/cicero/Documents/Nexus/ansible_production
 ansible-playbook setup.yml
 ```
 
@@ -100,10 +100,10 @@ ansible-playbook setup.yml -e "workstation_user=alice"
 
 ```bash
 # Audit trail
-cat ~/.zoolandia/logs/setup_2026-01-06.log
+cat ~/.nexus/logs/setup_2026-01-06.log
 
 # Installation manifest
-cat ~/.zoolandia/manifest.yml
+cat ~/.nexus/manifest.yml
 
 # Full documentation
 cat ansible_production/README.md

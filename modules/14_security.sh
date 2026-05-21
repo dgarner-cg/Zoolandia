@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia - Security Management Module
+# Nexus - Security Management Module
 ################################################################################
 # Description: Security and authentication provider functions
 # Version: 1.0.0

@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Workstation Setup - Production Edition
+# Nexus Workstation Setup - Production Edition
 # File: roles/workstation/tasks/system/nautilus_sort.yml
 # Purpose: Configure Nautilus file manager sort order
 #

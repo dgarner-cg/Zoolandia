@@ -1,6 +1,6 @@
-# Zoolandia - Comprehensive Homelab Automation Platform
+# Nexus - Comprehensive Homelab Automation Platform
 
-> Transform your homelab from complex to automated! Zoolandia is your all-in-one solution for deploying, configuring, and managing Docker-based homelab environments with native Linux system integration.
+> Transform your homelab from complex to automated! Nexus is your all-in-one solution for deploying, configuring, and managing Docker-based homelab environments with native Linux system integration.
 
 **Version:** 6.1.3
 **Total Applications:** 176 (160 Docker + 16 System)
@@ -8,16 +8,16 @@
 
 ---
 
-## What is Zoolandia?
+## What is Nexus?
 
-Zoolandia is a comprehensive automation platform that revolutionizes homelab deployment by combining:
+Nexus is a comprehensive automation platform that revolutionizes homelab deployment by combining:
 
 - **Docker Container Management**: 151+ pre-configured containerized applications
 - **Ansible System Automation**: 16 native Linux applications and system configurations
 - **Intelligent Menu System**: Intuitive dialog-based interface for all operations
 - **Enterprise-Grade Features**: Advanced networking, security, and monitoring built-in
 
-Whether you're a homelab enthusiast, professional sysadmin, or developer, Zoolandia streamlines the entire process of setting up and managing your infrastructure through an elegant, menu-driven interface.
+Whether you're a homelab enthusiast, professional sysadmin, or developer, Nexus streamlines the entire process of setting up and managing your infrastructure through an elegant, menu-driven interface.
 
 ---
 
@@ -76,14 +76,14 @@ Whether you're a homelab enthusiast, professional sysadmin, or developer, Zoolan
 
 Run the installation script:
 ```bash
-bash -c "$(curl -fsSL https://www.github.com/dgarner-cg/Zoolandia/install.sh)"
+bash -c "$(curl -fsSL https://www.github.com/dgarner-cg/Nexus/install.sh)"
 ```
 
 Or clone and run directly:
 ```bash
-git clone https://www.github.com/dgarner-cg/Zoolandia.git
-cd Zoolandia
-./Zoolandia.sh
+git clone https://www.github.com/dgarner-cg/Nexus.git
+cd Nexus
+./Nexus.sh
 ```
 
 ### First-Time Setup
@@ -262,10 +262,10 @@ cd Zoolandia
 
 ## Package Tier System
 
-Zoolandia features a sophisticated multi-tier package management system introduced in v6.0.5:
+Nexus features a sophisticated multi-tier package management system introduced in v6.0.5:
 
 ### Required Packages (5 packages - Pre-installed)
-**View Only** - These are installed before Zoolandia runs
+**View Only** - These are installed before Nexus runs
 - dialog, curl, wget, git, jq
 
 ### Recommended Packages (11 packages)
@@ -309,11 +309,11 @@ Zoolandia features a sophisticated multi-tier package management system introduc
 
 ### Modular Design (v6.0.0+)
 
-Zoolandia uses a modular architecture with 16 independent modules:
+Nexus uses a modular architecture with 16 independent modules:
 
 ```
-Zoolandia/
-├── Zoolandia.sh (11KB)              # Main entry point (336 lines)
+Nexus/
+├── Nexus.sh (11KB)              # Main entry point (336 lines)
 ├── modules/                       # 16 modules (~220KB total)
 │   ├── 00_core.sh                # Core variables, utilities, banner
 │   ├── 01_homepage.sh            # Welcome screen, version checking
@@ -472,7 +472,7 @@ Zoolandia/
 
 ## System Type Auto-Detection
 
-Zoolandia automatically detects your environment:
+Nexus automatically detects your environment:
 
 - **Barebones**: Physical server/bare metal
 - **VM**: Virtual Machine (VMware, VirtualBox, KVM, QEMU, Xen)
@@ -487,12 +487,12 @@ Manual override available via: `Prerequisites → System Type → Change`
 
 ## Configuration Files
 
-### Created by Zoolandia
+### Created by Nexus
 
 **Configuration & State**:
-- `~/.config/zoolandia/zoolandia.conf` - Main configuration
-- `~/.config/zoolandia/*_done` - State tracking files
-- `/var/tmp/zoolandia/` - Cache directory
+- `~/.config/nexus/nexus.conf` - Main configuration
+- `~/.config/nexus/*_done` - State tracking files
+- `/var/tmp/nexus/` - Cache directory
 
 **Docker Environment**:
 - `~/docker/.env` - Environment variables
@@ -503,40 +503,66 @@ Manual override available via: `Prerequisites → System Type → Change`
 - `~/docker/logs/` - Application logs
 
 **Service Configurations**:
-- `~/docker/traefik/` - Traefik configuration files
+- `~/docker/appdata/traefik3/` - Traefik runtime data
 - `~/docker/authelia/` - Authelia configuration
 - `~/docker/authentik/` - Authentik configuration
 
 ### Directory Structure
 
 ```
-~/docker/                           # Main Docker directory
-├── docker-compose.yml              # Main compose file
-├── .env                            # Environment variables
-├── compose/                        # Individual app compose files (151)
-├── secrets/                        # Docker secrets
-├── traefik/                        # Traefik configuration
-│   ├── traefik.yml                # Static configuration
-│   ├── file-provider/             # Dynamic configuration
-│   │   ├── middlewares-*.yml     # Middleware definitions
-│   │   ├── chain-*.yml           # Middleware chains
-│   │   └── tls-opts.yml          # TLS configuration
-│   └── acme.json                  # SSL certificates
-├── authelia/                       # Authelia configuration
+~/docker/                                    # Main Docker directory ($DOCKERDIR)
+├── docker-compose.yml                       # Main compose file (networks + includes)
+├── .env                                     # Environment variables
+├── compose/                                 # Individual app compose files
+├── secrets/                                 # Docker secrets
+├── appdata/
+│   └── traefik3/
+│       ├── rules/$HOSTNAME/                 # Dynamic rules dir (live-watched)
+│       │   ├── middlewares-*.yml            # Middleware definitions
+│       │   ├── chain-*.yml                  # Middleware chains
+│       │   └── tls-opts.yml                 # TLS options
+│       └── acme/
+│           └── acme.json                    # SSL certificates (Let's Encrypt)
+├── authelia/                                # Authelia configuration
 │   ├── configuration.yml
 │   └── users.yml
-├── authentik/                      # Authentik configuration
+├── authentik/                               # Authentik configuration
 │   ├── middlewares-authentik.yml
 │   └── chain-authentik.yml
-├── appdata/                        # Application data
+├── appdata/                                 # Application data
 │   ├── plex/
 │   ├── jellyfin/
 │   ├── sonarr/
 │   └── ...
-└── logs/                           # Application logs
-    ├── traefik/
-    └── ...
+└── logs/
+    └── $HOSTNAME/
+        └── traefik/
+            ├── traefik.log                  # Traefik daemon log
+            └── access.log                   # HTTP access log
 ```
+
+### Traefik Configuration Paths
+
+Once Traefik is installed and running, all configuration lives under `~/docker/` (`$DOCKERDIR`):
+
+| What | Path |
+|---|---|
+| Compose file | `~/docker/compose/traefik.yml` |
+| Dynamic rules (live-reloaded) | `~/docker/appdata/traefik3/rules/$HOSTNAME/` |
+| SSL certificates (ACME) | `~/docker/appdata/traefik3/acme/acme.json` |
+| Traefik daemon log | `~/docker/logs/$HOSTNAME/traefik/traefik.log` |
+| HTTP access log | `~/docker/logs/$HOSTNAME/traefik/access.log` |
+| Environment & secrets | `~/docker/.env` |
+| Main compose (networks) | `~/docker/docker-compose.yml` |
+
+The **rules directory** is the most commonly edited location — drop `.yml` or `.toml` files there for middleware chains, TLS options, etc. Traefik watches it live (`--providers.file.watch=true`), so changes apply without a container restart.
+
+**Docker networks** defined in `docker-compose.yml`:
+
+| Network | Subnet | Purpose |
+|---|---|---|
+| `socket_proxy` | `192.168.91.0/24` | Traefik ↔ socket-proxy communication |
+| `t3_proxy` | `192.168.90.0/24` | Traefik ↔ app containers |
 
 ---
 
@@ -692,7 +718,7 @@ Use Settings → Reset Options to clear specific configurations or perform a ful
 
 ## Licensing
 
-Zoolandia uses a **cryptographically signed offline license system** (Ed25519). Licenses are
+Nexus uses a **cryptographically signed offline license system** (Ed25519). Licenses are
 verified entirely on-device — no internet connection required after activation.
 
 ### Tiers
@@ -711,44 +737,44 @@ verified entirely on-device — no internet connection required after activation
 
 ### Activating Your License
 
-After purchasing, you will receive a license key in the format `ZOOL-...` via email.
+After purchasing, you will receive a license key in the format `NEXUS-...` via email.
 
 **Via the Settings menu (recommended):**
 ```
-Zoolandia → Settings → License → Activate
+Nexus → Settings → License → Activate
 ```
 Enter your key in the dialog — it is validated and saved automatically.
 
 **Via the command line:**
 ```bash
-echo "ZOOL-..." > .license/license.key
+echo "NEXUS-..." > .license/license.key
 ```
 
 **Validating your license:**
 ```
-Zoolandia → Settings → License → Validate
+Nexus → Settings → License → Validate
 ```
 Shows your tier, licensed features, email, and expiry date, with full signature verification.
 
 ### License Key Details
 
 - Keys are signed with Ed25519 and verifiable offline
-- Format: `ZOOL-<base64url(payload)>.<base64url(signature)>`
-- Stored at `.license/license.key` within your Zoolandia installation (chmod 600)
+- Format: `NEXUS-<base64url(payload)>.<base64url(signature)>`
+- Stored at `.license/license.key` within your Nexus installation (chmod 600)
 - Never committed to version control (`.license/` is gitignored)
 - Removing the key file reverts all features to the Free tier
 
 ### Pricing & Purchase
 
-[View Detailed Tier Comparison & Pricing](https://www.simplehomelab.com/zoolandia/pricing/)
+[View Detailed Tier Comparison & Pricing](https://www.simplehomelab.com/nexus/pricing/)
 
-**Note**: Annual [website memberships](https://www.simplehomelab.com/membership-account/join-the-geek-army/) include full Zoolandia Pro access!
+**Note**: Annual [website memberships](https://www.simplehomelab.com/membership-account/join-the-geek-army/) include full Nexus Pro access!
 
 ---
 
 ## GitHub Username Configuration
 
-Zoolandia stores your GitHub username for integrations that require GitHub authentication.
+Nexus stores your GitHub username for integrations that require GitHub authentication.
 
 ### Uses
 
@@ -760,7 +786,7 @@ Zoolandia stores your GitHub username for integrations that require GitHub authe
 
 **Via the menu (recommended):**
 ```
-Zoolandia → Prerequisites → GitHub Username → enter username → Save
+Nexus → Prerequisites → GitHub Username → enter username → Save
 ```
 
 **Via the command line:**
@@ -772,7 +798,7 @@ echo "your-github-username" > .config/github
 ### Storage Location
 
 ```
-<zoolandia-dir>/.config/github
+<nexus-dir>/.config/github
 ```
 
 This is a project-local file (gitignored, no sensitive data). It contains only your username string.
@@ -785,7 +811,7 @@ rm .config/github
 **View current username:**
 ```bash
 cat .config/github
-# or inside Zoolandia:
+# or inside Nexus:
 echo $GITHUB_USERNAME
 ```
 
@@ -806,7 +832,7 @@ GitHub usernames must:
 ### Ansible Usage
 
 ```bash
-# Zoolandia passes this automatically:
+# Nexus passes this automatically:
 ansible-playbook playbooks/appserver.yml -e "github_username=your-username"
 ```
 
@@ -822,6 +848,14 @@ In playbooks:
 
 ## Changelog
 
+### v6.1.4 — April 5, 2026
+
+- Fixed duplicate `labels:` key in `compose/traefik.yml` — removed `# DOCKER-LABELS-PLACEHOLDER` marker that caused `install_app` to inject a second labels block on top of Traefik's existing hardcoded labels
+- Fixed `socket_proxy` subnet mismatch in `docker-compose.yml` (`10.0.10.0/24` → `192.168.91.0/24` to match source template and existing network)
+- Added missing `t3_proxy` network definition (`192.168.90.0/24`) to `docker-compose.yml`
+- Removed stale unclaimed `socket_proxy` Docker network (no labels, no containers) so Compose can recreate it with proper ownership labels
+- Documented all Traefik configuration paths in README (rules dir, ACME, logs, networks)
+
 ### v6.1.3 — March 7, 2026
 
 - All license tooling consolidated into `.signing/` (`license-server.py`, `license-server.sh`)
@@ -834,18 +868,18 @@ In playbooks:
 
 ### v6.1.1 — March 7, 2026
 
-- GitHub username storage moved from `~/.config/zoolandia/github_username` to `<install-dir>/.config/github`
-- Introduced `ZL_PROJECT_CONFIG_DIR` in `00_core.sh` for project-local runtime config
+- GitHub username storage moved from `~/.config/nexus/github_username` to `<install-dir>/.config/github`
+- Introduced `NX_PROJECT_CONFIG_DIR` in `00_core.sh` for project-local runtime config
 - `.config/` directory added to `.gitignore`
 - `GITHUB_USERNAME.md` and `CHANGELOG.md` content merged into `README.md`
 
 ### v6.1.0 — March 7, 2026
 
-- **License system** — Ed25519 cryptographic offline license keys (`ZOOL-...` format)
+- **License system** — Ed25519 cryptographic offline license keys (`NEXUS-...` format)
 - `modules/license.sh` — key validation, feature gating, activation, status reporting
 - **Settings > License menu** — activate, validate, and remove keys via dialog UI
 - **Feature gate** — Reverse Proxy > DNS Provider requires Starter+ license
-- `.signing/zl-sign.sh` — CLI tool to sign test licenses (no payment processor needed)
+- `.signing/nx-sign.sh` — CLI tool to sign test licenses (no payment processor needed)
 - `.signing/license-server.py` — local web UI for signing and validating keys
 - `.license/` directory for secure key storage (gitignored, chmod 700/600)
 
@@ -876,7 +910,7 @@ In playbooks:
 
 ### v6.0.20 — January 24, 2026
 
-- Docker menu: Zoolandia dashboard, disk usage, UFW rules, granular prune options
+- Docker menu: Nexus dashboard, disk usage, UFW rules, granular prune options
 - Reverse proxy overhaul: Traefikify, exposure management, auth bypass, domain passthrough
 - VS Code Tunnel systemd service via Ansible appserver role; GitHub username prerequisite
 
@@ -897,18 +931,18 @@ In playbooks:
 ## Support & Community
 
 ### Get Help
-- [Zoolandia Docs](https://docs.zoolandia.app) - Comprehensive documentation, fixes, and guides
+- [Nexus Docs](https://docs.nexus.app) - Comprehensive documentation, fixes, and guides
 - [Discord Community](https://www.simplehomelab.com/discord/) - Active community support
 - [YouTube Channel](https://www.youtube.com/@Simple-Homelab) - Video tutorials and walkthroughs
 - [Support Log Generator](hack3r.sh → About → Feedback) - Generate diagnostic logs for troubleshooting
 
 ### Learn More
-- [Official Documentation](https://www.simplehomelab.com/zoolandia/)
-- [Quick Start Guide (20 min)](https://www.simplehomelab.com/go/zoolandia-v5-intro/)
-- [Comprehensive Tutorial](https://www.simplehomelab.com/go/zoolandia-v5-detailed-guide/)
+- [Official Documentation](https://www.simplehomelab.com/nexus/)
+- [Quick Start Guide (20 min)](https://www.simplehomelab.com/go/nexus-v5-intro/)
+- [Comprehensive Tutorial](https://www.simplehomelab.com/go/nexus-v5-detailed-guide/)
 
 ### Contributing
-Part of Zoolandia's revenue supports open-source projects through [OpenCollective](https://opencollective.com/zoolandia).
+Part of Nexus's revenue supports open-source projects through [OpenCollective](https://opencollective.com/nexus).
 
 ---
 
@@ -916,8 +950,8 @@ Part of Zoolandia's revenue supports open-source projects through [OpenCollectiv
 
 **Current Version**: 6.1.3
 **Release Date**: March 7, 2026
-**Previous Branding**: DeployIQ (rebranded to Zoolandia in v6.0.6)
-**Original Name**: Deployrr (rebranded to DeployIQ, then Zoolandia)
+**Previous Branding**: DeployIQ (rebranded to Nexus in v6.0.6)
+**Original Name**: Deployrr (rebranded to DeployIQ, then Nexus)
 
 See [CHANGELOG.md](CHANGELOG.md) for complete version history and release notes.
 
@@ -932,7 +966,7 @@ See [CHANGELOG.md](CHANGELOG.md) for complete version history and release notes.
 
 **v6.1.1** (March 7, 2026)
 - GitHub username storage moved to project-local `.config/github` (gitignored)
-- `ZL_PROJECT_CONFIG_DIR` variable introduced for consistent project-local config
+- `NX_PROJECT_CONFIG_DIR` variable introduced for consistent project-local config
 - GITHUB_USERNAME.md and Changelog content consolidated into README.md
 
 **v6.1.0** (March 7, 2026)
@@ -993,12 +1027,12 @@ For users upgrading from DeployIQ 5.x or Deployrr:
 
 2. **Rename Configuration Directory**:
    ```bash
-   mv ~/.config/deployiq ~/.config/zoolandia
+   mv ~/.config/deployiq ~/.config/nexus
    ```
 
 3. **Update Environment Variables** (if any):
-   - `DEPLOYIQ_MODE` → `ZOOLANDIA_MODE`
-   - `DEPLOYIQ_CONFIG_DIR` → `ZOOLANDIA_CONFIG_DIR`
+   - `DEPLOYIQ_MODE` → `NEXUS_MODE`
+   - `DEPLOYIQ_CONFIG_DIR` → `NEXUS_CONFIG_DIR`
 
 4. **Review Package Installation**:
    - Navigate to Prerequisites → Additional Packages
@@ -1008,7 +1042,7 @@ For users upgrading from DeployIQ 5.x or Deployrr:
 
 ## Project Vision
 
-Zoolandia isn't just another container manager - it's your pathway to homelab mastery. Our goals:
+Nexus isn't just another container manager - it's your pathway to homelab mastery. Our goals:
 
 - **Simplify Complex Deployments**: Reduce multi-hour setups to minutes
 - **Enable Experimentation**: Easy testing of new applications
@@ -1022,16 +1056,16 @@ Zoolandia isn't just another container manager - it's your pathway to homelab ma
 
 **Created by**: D. Garner
 **Website**: [hack3r.gg](http://hack3r.gg)
-**Project Site**: [simplehomelab.com](https://www.simplehomelab.com/zoolandia/)
+**Project Site**: [simplehomelab.com](https://www.simplehomelab.com/nexus/)
 **Discord**: [Join our community](https://www.simplehomelab.com/discord/)
 
 ---
 
 <div align="center">
 
-**Transform Your Homelab Journey with Zoolandia**
+**Transform Your Homelab Journey with Nexus**
 
-[Get Started](https://www.simplehomelab.com/zoolandia/) | [Documentation](https://docs.zoolandia.app) | [Join Discord](https://www.simplehomelab.com/discord/) | [Watch Tutorial](https://www.simplehomelab.com/go/zoolandia-v5-intro/)
+[Get Started](https://www.simplehomelab.com/nexus/) | [Documentation](https://docs.nexus.app) | [Join Discord](https://www.simplehomelab.com/discord/) | [Watch Tutorial](https://www.simplehomelab.com/go/nexus-v5-intro/)
 
 **176 Applications • Modular Architecture • Enterprise Security • Active Community**
 

@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Workstation Setup - Production Edition
+# Nexus Workstation Setup - Production Edition
 # File: roles/workstation/tasks/main.yml
 # Purpose: Main task orchestrator
 #
@@ -13,12 +13,12 @@
 # INITIALIZATION
 ################################################################################
 
-- name: "{{ user_experience.emoji_rocket | default('🚀') }} ZOOLANDIA WORKSTATION SETUP"
+- name: "{{ user_experience.emoji_rocket | default('🚀') }} NEXUS WORKSTATION SETUP"
   ansible.builtin.debug:
     msg: |
 
       ═══════════════════════════════════════════════════════════════════
-      {{ user_experience.emoji_success | default('✅') }} ZOOLANDIA WORKSTATION SETUP - PRODUCTION EDITION
+      {{ user_experience.emoji_success | default('✅') }} NEXUS WORKSTATION SETUP - PRODUCTION EDITION
       ═══════════════════════════════════════════════════════════════════
 
       Version: {{ workstation_role_version }}
@@ -36,7 +36,7 @@
     workstation_start_time: "{{ ansible_date_time.iso8601 }}"
   tags: ['always']
 
-- name: Create Zoolandia directories
+- name: Create Nexus directories
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
@@ -44,9 +44,9 @@
     owner: "{{ workstation_user }}"
     group: "{{ workstation_user }}"
   loop:
-    - "{{ zoolandia_base_dir }}"
-    - "{{ zoolandia_logs_dir }}"
-    - "{{ zoolandia_config_dir }}"
+    - "{{ nexus_base_dir }}"
+    - "{{ nexus_logs_dir }}"
+    - "{{ nexus_config_dir }}"
   become: yes
   tags: ['always']
 

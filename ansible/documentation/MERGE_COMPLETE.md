@@ -158,7 +158,7 @@ Successfully merged the production-ready workstation role from `ansible_producti
 
 **Usage:**
 ```bash
-cd /home/cicero/Documents/Zoolandia/ansible
+cd /home/cicero/Documents/Nexus/ansible
 ./ansible-menu.sh
 ```
 
@@ -239,7 +239,7 @@ cd /home/cicero/Documents/Zoolandia/ansible
 ### CLI Usage (Standalone)
 
 ```bash
-cd /home/cicero/Documents/Zoolandia/ansible
+cd /home/cicero/Documents/Nexus/ansible
 
 # Complete installation with defaults
 ansible-playbook setup-workstation.yml
@@ -266,7 +266,7 @@ ansible-playbook setup-workstation.yml --list-tasks
 ### Interactive Menu Usage
 
 ```bash
-cd /home/cicero/Documents/Zoolandia/ansible
+cd /home/cicero/Documents/Nexus/ansible
 ./ansible-menu.sh
 
 # Select "Install All" for default configuration
@@ -274,12 +274,12 @@ cd /home/cicero/Documents/Zoolandia/ansible
 # Select "Custom Selection" to choose specific apps
 ```
 
-### Zoolandia Integration
+### Nexus Integration
 
-The playbook automatically accepts variables from Zoolandia:
+The playbook automatically accepts variables from Nexus:
 
 ```bash
-# Called by Zoolandia with variables
+# Called by Nexus with variables
 ansible-playbook setup-workstation.yml \
   -e "CURRENT_USER=cicero" \
   -e "DOCKER_DIR=/home/cicero/docker" \
@@ -320,7 +320,7 @@ Result: 28 tasks identified across 5 phases
 
 **Standalone Compatibility:**
 ```bash
-✅ No Zoolandia dependency
+✅ No Nexus dependency
 ✅ Smart variable auto-detection
 ✅ Graceful handling of missing environment variables
 ✅ Works with standard ansible-playbook CLI
@@ -413,8 +413,8 @@ Result: 28 tasks identified across 5 phases
 - `roles/workstation/defaults/main.yml` - All variables documented
 
 **Logs & Tracking:**
-- Audit Trail: `~/.zoolandia/logs/setup_YYYY-MM-DD.log`
-- Manifest: `~/.zoolandia/manifest.yml`
+- Audit Trail: `~/.nexus/logs/setup_YYYY-MM-DD.log`
+- Manifest: `~/.nexus/manifest.yml`
 - Changes: `CHANGES_TRACKING.csv`
 - Status: `CONVERSATION_STATUS.json`
 
@@ -436,7 +436,7 @@ All applications from the original ansible/roles/common setup have been successf
 
 The system is now:
 - ✅ Fully functional with CLI standalone execution
-- ✅ Compatible with Zoolandia platform integration
+- ✅ Compatible with Nexus platform integration
 - ✅ Comprehensively documented
 - ✅ Security-hardened
 - ✅ User-friendly with interactive menu
@@ -448,4 +448,4 @@ The system is now:
 ---
 
 *Generated: 2026-01-07*
-*Ansible Production Merge - Zoolandia Project*
+*Ansible Production Merge - Nexus Project*

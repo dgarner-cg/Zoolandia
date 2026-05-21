@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 ################################################################################
-# Zoolandia v6.0.18 - Main Entry Point
+# Nexus v6.0.18 - Main Entry Point
 #
 # Description: Automated Docker homelab deployment and management system
 # Author: D. Garner - http://hack3r.gg
@@ -281,8 +281,38 @@ EOF
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 MODULE_DIR="${SCRIPT_DIR}/modules"
 
+# ── Core integrity check ──────────────────────────────────────────────────────
+# Verify 00_core.sh and license.sh before sourcing them.
+# All other module hashes are verified inside _nx_verify_integrity() (defined
+# in 00_core.sh) which runs immediately after it is sourced.
+# Hashes are locked by: ./scripts/nx-update-hashes.sh
+_NX_CORE_HASHES=(
+    "00_core.sh|11c61a80706db7322571370358f7f3d43ebe8b65bab27e89bdfd33f4db1e4c16"
+    "license.sh|6be0afe0aed65bdda30e6c3908b38dc1ae3b3f0cff412c136568dfa9d1a3c508"
+)
+if [[ "${NX_SKIP_INTEGRITY:-0}" != "1" ]]; then
+    _nx_core_fail=0
+    for _nx_entry in "${_NX_CORE_HASHES[@]}"; do
+        _nx_file="${_nx_entry%%|*}"
+        _nx_expected="${_nx_entry##*|}"
+        if [[ -n "$_nx_expected" ]]; then
+            _nx_actual=$(sha256sum "${MODULE_DIR}/${_nx_file}" 2>/dev/null | awk '{print $1}')
+            if [[ "$_nx_actual" != "$_nx_expected" ]]; then
+                echo "Nexus: integrity check failed — modules/${_nx_file} has been modified." >&2
+                (( _nx_core_fail++ )) || true
+            fi
+        fi
+    done
+    if [[ $_nx_core_fail -gt 0 ]]; then
+        echo "Nexus: core module integrity check failed. Cannot continue." >&2
+        exit 1
+    fi
+    unset _nx_core_fail _nx_entry _nx_file _nx_expected _nx_actual
+fi
+
 # Source modules in order
 source "${MODULE_DIR}/00_core.sh"           # Core variables and utilities
+_nx_verify_integrity                        # Verify all other modules before loading
 source "${MODULE_DIR}/license.sh"          # License validation and feature gating
 source "${MODULE_DIR}/01_homepage.sh"       # Homepage and configuration
 source "${MODULE_DIR}/02_main_menu.sh"      # Main menu
@@ -344,6 +374,19 @@ main() {
     echo "Thank you for using $SCRIPT_NAME Script from hack3r.gg."
     echo ""
 }
+
+# Handle CLI flags before launching the interactive UI
+case "${1:-}" in
+    --activate)
+        # nx_activate_license accepts an optional key argument
+        nx_activate_license "${2:-}"
+        exit $?
+        ;;
+    --license-status)
+        nx_license_status
+        exit 0
+        ;;
+esac
 
 # Run main function
 main "$@"

@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Workstation Setup - Production Edition
+# Nexus Workstation Setup - Production Edition
 # File: roles/workstation/handlers/main.yml
 # Purpose: Handlers for service management and cleanup
 #
@@ -86,7 +86,7 @@
 - name: create installation summary
   ansible.builtin.template:
     src: summary.j2
-    dest: "{{ zoolandia_logs_dir }}/installation_summary_{{ ansible_date_time.date }}.txt"
+    dest: "{{ nexus_logs_dir }}/installation_summary_{{ ansible_date_time.date }}.txt"
     mode: '0644'
   when: logging.enabled | default(true)
   listen: "setup complete"

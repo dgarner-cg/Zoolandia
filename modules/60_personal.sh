@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia - Secret Projects Module
+# Nexus - Secret Projects Module
 #
 # Description: Secret Ansible projects and custom playbooks
 #              Place projects in ansible/roles/secret/<project-name>/site.yml

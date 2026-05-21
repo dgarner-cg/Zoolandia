@@ -3,11 +3,11 @@
 # https://gethomepage.dev/widgets/
 
 - logo:
-    icon: /images/zoolandia_icon.png
+    icon: /images/nexus_icon.png
 
 - greeting:
     text_size: xl
-    text: Zoolandia Dashboard
+    text: Nexus Dashboard
 
 - resources:
     cpu: true

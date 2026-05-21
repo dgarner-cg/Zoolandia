@@ -1,8 +1,8 @@
 services:
-  # Zoolandia Dashboard - Homepage based Dashboard for Zoolandia
-  zoolandia-dashboard:
+  # Nexus Dashboard - Homepage based Dashboard for Nexus
+  nexus-dashboard:
     image: ghcr.io/gethomepage/homepage:latest
-    container_name: zoolandia-dashboard
+    container_name: nexus-dashboard
     security_opt:
       - no-new-privileges:true
     restart: unless-stopped
@@ -10,16 +10,16 @@ services:
     networks:
       - default
     ports:
-      - "${ZOOLANDIA_DASHBOARD_PORT:-3010}:3000"
+      - "${NEXUS_DASHBOARD_PORT:-3010}:3000"
     volumes:
-      - $DOCKERDIR/appdata/zoolandia-dashboard/config:/app/config
-      - $DOCKERDIR/appdata/zoolandia-dashboard/images:/app/public/images
+      - $DOCKERDIR/appdata/nexus-dashboard/config:/app/config
+      - $DOCKERDIR/appdata/nexus-dashboard/images:/app/public/images
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       TZ: $TZ
       PUID: $PUID
       PGID: $PGID
-      HOMEPAGE_ALLOWED_HOSTS: "localhost:${ZOOLANDIA_DASHBOARD_PORT:-3010},127.0.0.1:${ZOOLANDIA_DASHBOARD_PORT:-3010},0.0.0.0:${ZOOLANDIA_DASHBOARD_PORT:-3010},${SERVER_IP:-localhost}:${ZOOLANDIA_DASHBOARD_PORT:-3010}"
+      HOMEPAGE_ALLOWED_HOSTS: "localhost:${NEXUS_DASHBOARD_PORT:-3010},127.0.0.1:${NEXUS_DASHBOARD_PORT:-3010},0.0.0.0:${NEXUS_DASHBOARD_PORT:-3010},${SERVER_IP:-localhost}:${NEXUS_DASHBOARD_PORT:-3010}"
     # DOCKER-LABELS-PLACEHOLDER
 
 networks:

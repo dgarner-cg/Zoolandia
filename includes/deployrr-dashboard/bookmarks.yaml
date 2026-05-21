@@ -19,23 +19,23 @@
         - icon: si-discord
           href: https://discord.gg/wtmqgd4GpX
           description: "https://www.simplehomelab.com/discord"
-- Zoolandia:
+- Nexus:
     - Website:
         - icon: mdi-application-brackets
-          href: https://www.zoolandia.app/
-          descripton: "www.zoolandia.app"
+          href: https://www.nexus.app/
+          descripton: "www.nexus.app"
     - Documentation:
         - icon: mdi-text-box-multiple-outline
-          href: https://docs.zoolandia.app/
-          descripton: "docs.zoolandia.app"
+          href: https://docs.nexus.app/
+          descripton: "docs.nexus.app"
     - Your Account:
         - icon: mdi-account-box
           href: https://www.simplehomelab.com/login/?redirect_to=https%3A%2F%2Fwww.simplehomelab.com%2Fgeek-army%2F
           description: "https://www.simplehomelab.com/login"
-    - Zoolandia GitHub:
+    - Nexus GitHub:
         - icon: si-github
-          href: https://github.com/SimpleHomelab/Zoolandia
-          description: "https://github.com/SimpleHomelab/Zoolandia"
+          href: https://github.com/SimpleHomelab/Nexus
+          description: "https://github.com/SimpleHomelab/Nexus"
 - Support My Work:
     - Join the Geek Army:
         - icon: mdi-wallet-membership

@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - Ansible Module
+# Nexus v5.10 - Ansible Module
 #
 # Description: Ansible menu for system configuration and automation tasks
 ################################################################################
@@ -17,7 +17,7 @@ ANSIBLE_PLAYBOOK="$ANSIBLE_DIR/workstations.yml"
 detect_installed_apps() {
     local installed_apps=""
 
-    # Resolve actual user's home dir (Zoolandia runs as root; user home differs)
+    # Resolve actual user's home dir (Nexus runs as root; user home differs)
     local _user_home
     _user_home=$(getent passwd "${CURRENT_USER:-$USER}" | cut -d: -f6 2>/dev/null || echo "$HOME")
 
@@ -317,7 +317,7 @@ EOF
         [[ "$selections" == *"discord"* ]] && cat >> "$ANSIBLE_CONFIG_FILE" <<EOF
   - name: discord
     url: "https://discord.com/api/download?platform=linux&format=deb"
-    dest: "/tmp/zoolandia_ansible_downloads/discord.deb"
+    dest: "/tmp/nexus_ansible_downloads/discord.deb"
     enabled: true
     category: communication
     description: "Voice and text chat"
@@ -327,7 +327,7 @@ EOF
         [[ "$selections" == *"zoom"* ]] && cat >> "$ANSIBLE_CONFIG_FILE" <<EOF
   - name: zoom
     url: "https://zoom.us/client/latest/zoom_amd64.deb"
-    dest: "/tmp/zoolandia_ansible_downloads/zoom_amd64.deb"
+    dest: "/tmp/nexus_ansible_downloads/zoom_amd64.deb"
     enabled: true
     category: communication
     description: "Video conferencing"
@@ -337,7 +337,7 @@ EOF
         [[ "$selections" == *"termius"* ]] && cat >> "$ANSIBLE_CONFIG_FILE" <<EOF
   - name: termius
     url: "https://www.termius.com/download/linux/Termius.deb"
-    dest: "/tmp/zoolandia_ansible_downloads/termius.deb"
+    dest: "/tmp/nexus_ansible_downloads/termius.deb"
     enabled: true
     category: development
     description: "SSH client"
@@ -347,7 +347,7 @@ EOF
         [[ "$selections" == *"onlyoffice"* ]] && cat >> "$ANSIBLE_CONFIG_FILE" <<EOF
   - name: onlyoffice
     url: "https://download.onlyoffice.com/install/desktop/editors/linux/onlyoffice-desktopeditors_amd64.deb"
-    dest: "/tmp/zoolandia_ansible_downloads/onlyoffice_amd64.deb"
+    dest: "/tmp/nexus_ansible_downloads/onlyoffice_amd64.deb"
     enabled: true
     category: productivity
     description: "Office suite"
@@ -705,10 +705,10 @@ save_credentials_to_file() {
     local service="$1"
     local username="$2"
     local password="$3"
-    local creds_file="$HOME/.zoolandia/credentials.txt"
+    local creds_file="$HOME/.nexus/credentials.txt"
 
     # Create directory if it doesn't exist
-    mkdir -p "$HOME/.zoolandia"
+    mkdir -p "$HOME/.nexus"
 
     # Append credential
     echo "========================================" >> "$creds_file"
@@ -741,7 +741,7 @@ store_in_bitwarden() {
     local service="$1"
     local username="$2"
     local password="$3"
-    local folder_name="Zoolandia"
+    local folder_name="Nexus"
 
     # Ensure Bitwarden CLI is installed
     ensure_bitwarden_cli || return 1
@@ -769,7 +769,7 @@ store_in_bitwarden() {
     }
     export BW_SESSION
 
-    # Get or create Zoolandia folder
+    # Get or create Nexus folder
     local folder_id
     folder_id=$(bw list folders --session "$BW_SESSION" | jq -r ".[] | select(.name==\"$folder_name\") | .id")
 
@@ -779,7 +779,7 @@ store_in_bitwarden() {
     fi
 
     # Create credential item
-    local item_name="Zoolandia $service"
+    local item_name="Nexus $service"
     echo "Storing '$item_name' in Bitwarden..."
 
     bw get template item | jq \
@@ -832,7 +832,7 @@ store_in_vault() {
     fi
 
     # Store credential
-    local vault_path="secret/zoolandia/${service,,}"
+    local vault_path="secret/nexus/${service,,}"
     vault kv put "$vault_path" username="$username" password="$password" &>/dev/null
 
     if [ $? -eq 0 ]; then
@@ -891,7 +891,7 @@ manage_credential() {
 
 # Show credentials summary at end of installation
 show_credentials_summary() {
-    local creds_file="$HOME/.zoolandia/credentials.txt"
+    local creds_file="$HOME/.nexus/credentials.txt"
 
     if [ -f "$creds_file" ]; then
         echo ""
@@ -906,7 +906,7 @@ show_credentials_summary() {
         echo ""
         if command -v bw &>/dev/null && bw login --check &>/dev/null; then
             echo "Credentials were also stored in your Bitwarden vault under the"
-            echo "'Zoolandia' folder."
+            echo "'Nexus' folder."
         fi
         echo ""
         echo "======================================================================="

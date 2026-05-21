@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia - Docker Management Module
+# Nexus - Docker Management Module
 ################################################################################
 # Description: Docker installation and management functions
 # Version: 1.1.0
@@ -40,9 +40,9 @@ show_docker_menu() {
         local dashboard_status="\Z3Not Installed\Zn"
         local dashboard_installed=false
         local dashboard_running=false
-        if docker ps -a 2>/dev/null | grep -q "zoolandia-dashboard"; then
+        if docker ps -a 2>/dev/null | grep -q "nexus-dashboard"; then
             dashboard_installed=true
-            if docker ps 2>/dev/null | grep -q "zoolandia-dashboard"; then
+            if docker ps 2>/dev/null | grep -q "nexus-dashboard"; then
                 dashboard_status="\Z2Running\Zn"
                 dashboard_running=true
             else
@@ -56,11 +56,11 @@ show_docker_menu() {
         # Dashboard section
         if [[ "$dashboard_installed" == true ]]; then
             if [[ "$dashboard_running" == true ]]; then
-                menu_items+=("View Dashboard" "Open Zoolandia Dashboard in browser")
+                menu_items+=("View Dashboard" "Open Nexus Dashboard in browser")
             fi
             menu_items+=("Manage Dashboard" "Start/Stop/Remove Dashboard - $dashboard_status")
         else
-            menu_items+=("Install Dashboard" "Zoolandia Dashboard (Homepage) - $dashboard_status")
+            menu_items+=("Install Dashboard" "Nexus Dashboard (Homepage) - $dashboard_status")
         fi
 
         menu_items+=(
@@ -85,9 +85,9 @@ show_docker_menu() {
             3>&1 1>&2 2>&3 3>&-) || return
 
         case "$choice" in
-            "Install Dashboard") install_zoolandia_dashboard ;;
-            "View Dashboard") view_zoolandia_dashboard ;;
-            "Manage Dashboard") manage_zoolandia_dashboard ;;
+            "Install Dashboard") install_nexus_dashboard ;;
+            "View Dashboard") view_nexus_dashboard ;;
+            "Manage Dashboard") manage_nexus_dashboard ;;
             "Install Socket Proxy") install_socket_proxy ;;
             "Docker Info") show_docker_info ;;
             "Disk Usage") show_docker_disk_usage ;;
@@ -104,7 +104,7 @@ install_socket_proxy() {
     if dialog --yesno "Install Docker Socket Proxy?\n\nThis is recommended for security when using Traefik." 10 60; then
         install_app "socket-proxy"
         SOCKET_PROXY_DONE=true
-        touch "$ZOOLANDIA_CONFIG_DIR/socket_proxy_done"
+        touch "$NEXUS_CONFIG_DIR/socket_proxy_done"
     fi
 }
 
@@ -405,10 +405,10 @@ remove_docker_ufw_rules() {
 }
 
 ################################################################################
-# Zoolandia Dashboard Functions
+# Nexus Dashboard Functions
 ################################################################################
 
-install_zoolandia_dashboard() {
+install_nexus_dashboard() {
     # Check prerequisites
     if ! command -v docker &>/dev/null; then
         dialog --msgbox "Docker is not installed.\n\nPlease install Docker first." 10 50
@@ -421,12 +421,12 @@ install_zoolandia_dashboard() {
     fi
 
     # Check if already installed
-    if docker ps -a 2>/dev/null | grep -q "zoolandia-dashboard"; then
-        dialog --msgbox "Zoolandia Dashboard is already installed.\n\nUse 'Manage Dashboard' to start/stop/remove it." 10 60
+    if docker ps -a 2>/dev/null | grep -q "nexus-dashboard"; then
+        dialog --msgbox "Nexus Dashboard is already installed.\n\nUse 'Manage Dashboard' to start/stop/remove it." 10 60
         return 0
     fi
 
-    local msg="Install Zoolandia Dashboard?\n\n"
+    local msg="Install Nexus Dashboard?\n\n"
     msg+="This will install a Homepage-based dashboard for managing\n"
     msg+="your Docker containers and services.\n\n"
     msg+="Features:\n"
@@ -442,10 +442,10 @@ install_zoolandia_dashboard() {
         return 0
     fi
 
-    dialog --infobox "Installing Zoolandia Dashboard...\n\nPlease wait..." 7 50
+    dialog --infobox "Installing Nexus Dashboard...\n\nPlease wait..." 7 50
 
     # Create dashboard directories
-    local dashboard_dir="$DOCKER_DIR/appdata/zoolandia-dashboard"
+    local dashboard_dir="$DOCKER_DIR/appdata/nexus-dashboard"
     local config_dir="$dashboard_dir/config"
     local images_dir="$dashboard_dir/images"
 
@@ -482,16 +482,16 @@ install_zoolandia_dashboard() {
 
         # Copy icons
         if [[ -f "$includes_dir/deployrr_icon.ico" ]]; then
-            cp "$includes_dir/deployrr_icon.ico" "$images_dir/zoolandia_icon.ico"
+            cp "$includes_dir/deployrr_icon.ico" "$images_dir/nexus_icon.ico"
         fi
         if [[ -f "$includes_dir/deployrr_icon.png" ]]; then
-            cp "$includes_dir/deployrr_icon.png" "$images_dir/zoolandia_icon.png"
+            cp "$includes_dir/deployrr_icon.png" "$images_dir/nexus_icon.png"
         fi
     else
         # Create minimal configuration if includes not found
         cat > "$config_dir/settings.yaml" << 'EOF'
 ---
-title: Zoolandia Dashboard
+title: Nexus Dashboard
 theme: dark
 color: slate
 headerStyle: boxed
@@ -502,7 +502,7 @@ EOF
 ---
 - greeting:
     text_size: xl
-    text: Zoolandia Dashboard
+    text: Nexus Dashboard
 
 - resources:
     cpu: true
@@ -534,7 +534,7 @@ EOF
     chown -R "${PUID:-1000}:${PGID:-1000}" "$dashboard_dir" 2>/dev/null
 
     # Get dashboard port (default 3010)
-    local dashboard_port="${ZOOLANDIA_DASHBOARD_PORT:-3010}"
+    local dashboard_port="${NEXUS_DASHBOARD_PORT:-3010}"
 
     # Build allowed hosts list
     local allowed_hosts="localhost:${dashboard_port},127.0.0.1:${dashboard_port},0.0.0.0:${dashboard_port}"
@@ -547,7 +547,7 @@ EOF
 
     # Create and start the container
     docker run -d \
-        --name zoolandia-dashboard \
+        --name nexus-dashboard \
         --restart unless-stopped \
         --security-opt no-new-privileges:true \
         -p "${dashboard_port}:3000" \
@@ -562,7 +562,7 @@ EOF
         2>/dev/null
 
     if [[ $? -eq 0 ]]; then
-        local success_msg="Zoolandia Dashboard installed successfully!\n\n"
+        local success_msg="Nexus Dashboard installed successfully!\n\n"
         success_msg+="Dashboard URL:\n"
         success_msg+="  http://${SERVER_IP:-localhost}:${dashboard_port}\n\n"
         success_msg+="Configuration directory:\n"
@@ -577,21 +577,21 @@ EOF
 
         # Offer to open in browser
         if dialog --yesno "Open dashboard in browser now?" 8 50; then
-            view_zoolandia_dashboard
+            view_nexus_dashboard
         fi
     else
-        dialog --msgbox "Failed to install Zoolandia Dashboard.\n\nCheck Docker logs for details:\n  docker logs zoolandia-dashboard" 12 60
+        dialog --msgbox "Failed to install Nexus Dashboard.\n\nCheck Docker logs for details:\n  docker logs nexus-dashboard" 12 60
         return 1
     fi
 }
 
-view_zoolandia_dashboard() {
-    local dashboard_port="${ZOOLANDIA_DASHBOARD_PORT:-3010}"
+view_nexus_dashboard() {
+    local dashboard_port="${NEXUS_DASHBOARD_PORT:-3010}"
     local dashboard_url="http://${SERVER_IP:-localhost}:${dashboard_port}"
 
     # Check if dashboard is running
-    if ! docker ps 2>/dev/null | grep -q "zoolandia-dashboard"; then
-        dialog --msgbox "Zoolandia Dashboard is not running.\n\nUse 'Manage Dashboard' to start it." 10 50
+    if ! docker ps 2>/dev/null | grep -q "nexus-dashboard"; then
+        dialog --msgbox "Nexus Dashboard is not running.\n\nUse 'Manage Dashboard' to start it." 10 50
         return 1
     fi
 
@@ -607,20 +607,20 @@ view_zoolandia_dashboard() {
     fi
 }
 
-manage_zoolandia_dashboard() {
+manage_nexus_dashboard() {
     while true; do
         # Get current status
         local status="Not Running"
         local status_color="\Z1"
-        if docker ps 2>/dev/null | grep -q "zoolandia-dashboard"; then
+        if docker ps 2>/dev/null | grep -q "nexus-dashboard"; then
             status="Running"
             status_color="\Z2"
-        elif docker ps -a 2>/dev/null | grep -q "zoolandia-dashboard"; then
+        elif docker ps -a 2>/dev/null | grep -q "nexus-dashboard"; then
             status="Stopped"
             status_color="\Z3"
         fi
 
-        local dashboard_port="${ZOOLANDIA_DASHBOARD_PORT:-3010}"
+        local dashboard_port="${NEXUS_DASHBOARD_PORT:-3010}"
 
         local menu_items=()
 
@@ -645,7 +645,7 @@ manage_zoolandia_dashboard() {
 
         local choice
         choice=$(dialog --clear --colors --backtitle "$SCRIPT_NAME - Dashboard Management" \
-            --title "Zoolandia Dashboard - ${status_color}${status}\Zn" \
+            --title "Nexus Dashboard - ${status_color}${status}\Zn" \
             --ok-label "Select" \
             --cancel-label "Back" \
             --menu "\nPort: ${dashboard_port} | URL: http://${SERVER_IP:-localhost}:${dashboard_port}\n\nSelect an action:" 18 70 8 \
@@ -654,39 +654,39 @@ manage_zoolandia_dashboard() {
 
         case "$choice" in
             "View")
-                view_zoolandia_dashboard
+                view_nexus_dashboard
                 ;;
             "Start")
-                dialog --infobox "Starting Zoolandia Dashboard..." 5 45
-                docker start zoolandia-dashboard 2>/dev/null
+                dialog --infobox "Starting Nexus Dashboard..." 5 45
+                docker start nexus-dashboard 2>/dev/null
                 sleep 2
-                if docker ps 2>/dev/null | grep -q "zoolandia-dashboard"; then
+                if docker ps 2>/dev/null | grep -q "nexus-dashboard"; then
                     dialog --msgbox "Dashboard started successfully!\n\nURL: http://${SERVER_IP:-localhost}:${dashboard_port}" 10 55
                 else
                     dialog --msgbox "Failed to start dashboard.\n\nCheck logs for details." 10 50
                 fi
                 ;;
             "Stop")
-                dialog --infobox "Stopping Zoolandia Dashboard..." 5 45
-                docker stop zoolandia-dashboard 2>/dev/null
+                dialog --infobox "Stopping Nexus Dashboard..." 5 45
+                docker stop nexus-dashboard 2>/dev/null
                 sleep 1
                 dialog --msgbox "Dashboard stopped." 8 40
                 ;;
             "Restart")
-                dialog --infobox "Restarting Zoolandia Dashboard..." 5 45
-                docker restart zoolandia-dashboard 2>/dev/null
+                dialog --infobox "Restarting Nexus Dashboard..." 5 45
+                docker restart nexus-dashboard 2>/dev/null
                 sleep 2
-                if docker ps 2>/dev/null | grep -q "zoolandia-dashboard"; then
+                if docker ps 2>/dev/null | grep -q "nexus-dashboard"; then
                     dialog --msgbox "Dashboard restarted successfully!" 8 45
                 else
                     dialog --msgbox "Failed to restart dashboard.\n\nCheck logs for details." 10 50
                 fi
                 ;;
             "Logs")
-                docker logs --tail 100 zoolandia-dashboard 2>&1 | dialog --title "Dashboard Logs (last 100 lines)" --programbox 30 100
+                docker logs --tail 100 nexus-dashboard 2>&1 | dialog --title "Dashboard Logs (last 100 lines)" --programbox 30 100
                 ;;
             "Config")
-                local config_dir="$DOCKER_DIR/appdata/zoolandia-dashboard/config"
+                local config_dir="$DOCKER_DIR/appdata/nexus-dashboard/config"
                 if [[ -d "$config_dir" ]]; then
                     if command -v xdg-open &>/dev/null; then
                         xdg-open "$config_dir" 2>/dev/null &
@@ -699,16 +699,16 @@ manage_zoolandia_dashboard() {
                 fi
                 ;;
             "Remove")
-                if dialog --yesno "Remove Zoolandia Dashboard?\n\nThis will:\n- Stop and remove the container\n- Keep configuration files in:\n  $DOCKER_DIR/appdata/zoolandia-dashboard\n\nContinue?" 14 60; then
-                    dialog --infobox "Removing Zoolandia Dashboard..." 5 45
-                    docker stop zoolandia-dashboard 2>/dev/null
-                    docker rm zoolandia-dashboard 2>/dev/null
+                if dialog --yesno "Remove Nexus Dashboard?\n\nThis will:\n- Stop and remove the container\n- Keep configuration files in:\n  $DOCKER_DIR/appdata/nexus-dashboard\n\nContinue?" 14 60; then
+                    dialog --infobox "Removing Nexus Dashboard..." 5 45
+                    docker stop nexus-dashboard 2>/dev/null
+                    docker rm nexus-dashboard 2>/dev/null
 
-                    if dialog --yesno "Also remove configuration files?\n\nDirectory:\n$DOCKER_DIR/appdata/zoolandia-dashboard\n\nThis cannot be undone!" 12 60; then
-                        rm -rf "$DOCKER_DIR/appdata/zoolandia-dashboard" 2>/dev/null
+                    if dialog --yesno "Also remove configuration files?\n\nDirectory:\n$DOCKER_DIR/appdata/nexus-dashboard\n\nThis cannot be undone!" 12 60; then
+                        rm -rf "$DOCKER_DIR/appdata/nexus-dashboard" 2>/dev/null
                         dialog --msgbox "Dashboard and configuration removed." 8 50
                     else
-                        dialog --msgbox "Dashboard removed.\n\nConfiguration files preserved at:\n$DOCKER_DIR/appdata/zoolandia-dashboard" 12 60
+                        dialog --msgbox "Dashboard removed.\n\nConfiguration files preserved at:\n$DOCKER_DIR/appdata/nexus-dashboard" 12 60
                     fi
                     return
                 fi

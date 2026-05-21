@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - System Apps Module
+# Nexus v5.10 - System Apps Module
 #
 # Description: System applications menu for Ansible-based desktop applications
 #              (browsers, editors, VPN clients, etc.)

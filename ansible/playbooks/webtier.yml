@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Web Server Setup
+# Nexus Web Server Setup
 # File: playbooks/webtier.yml
 # Purpose: Install and configure web servers and reverse proxies
 #

@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - Docker Apps Module
+# Nexus v5.10 - Docker Apps Module
 #
 # Description: Docker applications menu with app selection, batch installation,
 #              and container management

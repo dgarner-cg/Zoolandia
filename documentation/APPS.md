@@ -1,4 +1,4 @@
-# Zoolandia Applications - Complete Catalog
+# Nexus Applications - Complete Catalog
 
 **Total Applications:** 167
 - **Docker Apps:** 151 containerized applications
@@ -296,7 +296,7 @@
 147. **Custom** (`custom.yml`) - Custom application template for user-defined services
 148. **Starter** (`starter.yml`) - Starter template for quick Docker Compose service creation
 149. **Support** (`support.yml`) - Support container for troubleshooting and diagnostics
-150. **Deployrr Dashboard** (`deployrr-dashboard.yml`) - Dashboard for Deployrr/Zoolandia management
+150. **Deployrr Dashboard** (`deployrr-dashboard.yml`) - Dashboard for Deployrr/Nexus management
 151. **Hemmelig** (`hemmelig.yml`) - Self-hosted secret sharing service with encryption
 
 ---
@@ -338,8 +338,8 @@
 ## Installation Methods
 
 ### Docker Applications
-All Docker applications are installed through the **Apps** menu in Zoolandia:
-1. Launch Zoolandia: `./hack3r.sh`
+All Docker applications are installed through the **Apps** menu in Nexus:
+1. Launch Nexus: `./hack3r.sh`
 2. Navigate to Apps menu
 3. Select applications using checkbox interface
 4. Configure GPU and Traefik settings per app
@@ -347,7 +347,7 @@ All Docker applications are installed through the **Apps** menu in Zoolandia:
 
 ### System Applications
 System applications are installed through the **Ansible** menu (SysConfig):
-1. Launch Zoolandia: `./hack3r.sh`
+1. Launch Nexus: `./hack3r.sh`
 2. Navigate to Ansible → System Apps
 3. Select applications to install
 4. Ansible handles installation automatically
@@ -376,7 +376,7 @@ ansible-playbook setup_all.yml
 ## Adding New Applications
 
 To request new applications or contribute:
-1. Open an issue on the [GitHub repository](https://github.com/SimpleHomelab/Zoolandia)
+1. Open an issue on the [GitHub repository](https://github.com/SimpleHomelab/Nexus)
 2. Join the [Discord community](https://www.simplehomelab.com/discord/)
 3. Submit a pull request with the new app's compose file
 

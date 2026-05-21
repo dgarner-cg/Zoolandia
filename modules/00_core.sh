@@ -1,14 +1,14 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v6.1.3 - Core Module
+# Nexus v6.1.3 - Core Module
 #
 # Description: Core variables, configuration, and utility functions
 # This module is sourced first and provides foundation for all other modules
 ################################################################################
 
 # Script version
-ZOOLANDIA_VERSION="6.1.3"
-SCRIPT_NAME="Zoolandia"
+NEXUS_VERSION="6.1.3"
+SCRIPT_NAME="Nexus"
 
 # Color codes
 RED='\033[0;31m'
@@ -25,8 +25,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
 if [[ "$(basename "$SCRIPT_DIR")" == "modules" ]]; then
     SCRIPT_DIR="$(dirname "$SCRIPT_DIR")"
 fi
-ZOOLANDIA_CONFIG_DIR="${HOME}/.config/zoolandia"
-ZOOLANDIA_CACHE_DIR="/var/tmp/zoolandia"
+NEXUS_CONFIG_DIR="${HOME}/.config/nexus"
+NEXUS_CACHE_DIR="/var/tmp/nexus"
 
 # Helper function to convert absolute paths to display-friendly relative paths
 display_path() {
@@ -46,7 +46,7 @@ display_path() {
 # User preferences and settings
 TELEMETRY_ENABLED="${TELEMETRY_ENABLED:-minimum}"
 SHOW_INTRO_MESSAGES="${SHOW_INTRO_MESSAGES:-ON}"
-ZOOLANDIA_MODE="${ZOOLANDIA_MODE:-NORMAL}"
+NEXUS_MODE="${NEXUS_MODE:-NORMAL}"
 
 # Default directories
 DEFAULT_DOCKER_DIR="${HOME}/docker"
@@ -85,11 +85,11 @@ DOMAIN_1=""
 GITHUB_USERNAME=""
 
 # Project-local config directory (gitignored) — stores non-sensitive runtime config
-ZL_PROJECT_CONFIG_DIR="${SCRIPT_DIR}/.config"
+NX_PROJECT_CONFIG_DIR="${SCRIPT_DIR}/.config"
 
 # Load saved GitHub username if exists
-if [[ -f "${ZL_PROJECT_CONFIG_DIR}/github" ]]; then
-    GITHUB_USERNAME=$(cat "${ZL_PROJECT_CONFIG_DIR}/github" 2>/dev/null)
+if [[ -f "${NX_PROJECT_CONFIG_DIR}/github" ]]; then
+    GITHUB_USERNAME=$(cat "${NX_PROJECT_CONFIG_DIR}/github" 2>/dev/null)
 fi
 
 ################################################################################
@@ -153,14 +153,15 @@ display_banner() {
     clear
     cat << "EOF"
 
- ███████╗ ██████╗  ██████╗ ██╗      █████╗ ███╗   ██╗██████╗ ██╗ █████╗
- ╚══███╔╝██╔═══██╗██╔═══██╗██║     ██╔══██╗████╗  ██║██╔══██╗██║██╔══██╗
-   ███╔╝ ██║   ██║██║   ██║██║     ███████║██╔██╗ ██║██║  ██║██║███████║
-  ███╔╝  ██║   ██║██║   ██║██║     ██╔══██║██║╚██╗██║██║  ██║██║██╔══██║
- ███████╗╚██████╔╝╚██████╔╝███████╗██║  ██║██║ ╚████║██████╔╝██║██║  ██║
- ╚══════╝ ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝ ╚═╝╚═╝  ╚═╝
-
-                         by D.Garner -  http://hack3r.gg
+ ██████   █████                                  █████████ 
+▒▒██████ ▒▒███                                  ███▒▒▒▒▒███
+ ▒███▒███ ▒███   ██████  █████ █████ █████ ████▒███    ▒▒▒ 
+ ▒███▒▒███▒███  ███▒▒███▒▒███ ▒▒███ ▒▒███ ▒███ ▒▒█████████ 
+ ▒███ ▒▒██████ ▒███████  ▒▒▒█████▒   ▒███ ▒███  ▒▒▒▒▒▒▒▒███
+ ▒███  ▒▒█████ ▒███▒▒▒    ███▒▒▒███  ▒███ ▒███  ███    ▒███
+ █████  ▒▒█████▒▒██████  █████ █████ ▒▒████████▒▒█████████ 
+▒▒▒▒▒    ▒▒▒▒▒  ▒▒▒▒▒▒  ▒▒▒▒▒ ▒▒▒▒▒   ▒▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒▒▒  
+https://hack3r.gg                              by: D.Garner
 
 EOF
     echo ""
@@ -171,17 +172,18 @@ display_splash() {
     clear
     cat << "EOF"
 
- ███████╗ ██████╗  ██████╗ ██╗      █████╗ ███╗   ██╗██████╗ ██╗ █████╗
- ╚══███╔╝██╔═══██╗██╔═══██╗██║     ██╔══██╗████╗  ██║██╔══██╗██║██╔══██╗
-   ███╔╝ ██║   ██║██║   ██║██║     ███████║██╔██╗ ██║██║  ██║██║███████║
-  ███╔╝  ██║   ██║██║   ██║██║     ██╔══██║██║╚██╗██║██║  ██║██║██╔══██║
- ███████╗╚██████╔╝╚██████╔╝███████╗██║  ██║██║ ╚████║██████╔╝██║██║  ██║
- ╚══════╝ ╚═════╝  ╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝ ╚═╝╚═╝  ╚═╝
+ ██████   █████                                  █████████ 
+▒▒██████ ▒▒███                                  ███▒▒▒▒▒███
+ ▒███▒███ ▒███   ██████  █████ █████ █████ ████▒███    ▒▒▒ 
+ ▒███▒▒███▒███  ███▒▒███▒▒███ ▒▒███ ▒▒███ ▒███ ▒▒█████████ 
+ ▒███ ▒▒██████ ▒███████  ▒▒▒█████▒   ▒███ ▒███  ▒▒▒▒▒▒▒▒███
+ ▒███  ▒▒█████ ▒███▒▒▒    ███▒▒▒███  ▒███ ▒███  ███    ▒███
+ █████  ▒▒█████▒▒██████  █████ █████ ▒▒████████▒▒█████████ 
+▒▒▒▒▒    ▒▒▒▒▒  ▒▒▒▒▒▒  ▒▒▒▒▒ ▒▒▒▒▒   ▒▒▒▒▒▒▒▒  ▒▒▒▒▒▒▒▒▒  
+https://hack3r.gg                              by: D.Garner
 
-                         by D.Garner -  http://hack3r.gg
-
-                   Automated Docker Homelab Deployment System
-                              Version 6.0.18
+      Automated Homelab and Server Deployment System
+                  ---Version 6.0.18---
 
 EOF
     echo ""
@@ -190,4 +192,65 @@ EOF
 
     # Read with 10 second timeout (|| true prevents script exit on timeout)
     read -t 10 -r || true
+}
+
+################################################################################
+# Module Integrity Verification
+################################################################################
+# Hash table is embedded here and regenerated at release time by:
+#   ./scripts/nx-update-hashes.sh
+#
+# To bypass for development: NX_SKIP_INTEGRITY=1 ./nexus.sh
+#
+# Each entry: "filename|sha256hash"
+# Empty hash = not yet locked (skipped). Run nx-update-hashes.sh to lock.
+
+_NX_MODULE_HASHES=(
+    "license.sh|6be0afe0aed65bdda30e6c3908b38dc1ae3b3f0cff412c136568dfa9d1a3c508"
+    "01_homepage.sh|28417ed882153287290f385786756b2616790ffd3424b8c66c7b678d6e7b9925"
+    "02_main_menu.sh|e07277551f78a75157c41b37ebf7bfc5c847836739a89037f28fbc2fbcff13ba"
+    "10_prerequisites.sh|3b11e7b234216379d951f714d8665d6d27852a943e4e675ed191ba7f45813cdb"
+    "11_system.sh|adb00e7f9d605f77b376f47b52c3f0dc012d87b100ff3c2b3c18430870bf6792"
+    "12_docker.sh|c7506a756ca826129f71035a9c46d68508afefbe08827ae989bfa578e0124921"
+    "13_reverse_proxy.sh|4b81996d3e2a39fbebc80ccc1c882fabd7a128b6694d1b8f492936b5fbe1e6a5"
+    "14_security.sh|d634243d0cd51b37cd4d6b811cce84d70444f795eef46b6c7ab1ca1598cb7ebb"
+    "20_apps.sh|14f6ef2ce6da5a4ef68324c7161217a16b8bc9801fc5f36b977c0bef1418664a"
+    "21_docker_apps.sh|b4c5116b493425108c3f1a7fe6199f370f34d7a4ffcebdb4e0ec80360c6f7c40"
+    "22_system_apps.sh|7376b6794aa2259adbc270b984bd6bf76c2c47f5fc3a4e58b167a1c42da0ca1c"
+    "30_tools.sh|a7d682e74722045c342f540e7ca659837084e7df9cb50f8ebdd6355e736def0b"
+    "31_backup.sh|62c1d14150967efb804c268621abbcbe46360eb8dd80fa18243ef370a9ee49db"
+    "40_settings.sh|dcb20ccf90e8c70c381ef2463868ea183b7061ddc7c6e10a4b217f83c10f681b"
+    "41_ansible.sh|1e1fbbb752b3f2b6bcfd4ec9477cef1417765819e0d71a0dc5fffe64a0896927"
+    "50_about.sh|06d319df6117e692e1f1ecbb4878bbbbbd91e792e22c53346e437a2a87bc8098"
+    "60_personal.sh|bad5c65e0f0ba9e590e964ffb60603cc5ad8de59264da72fa39f560e86d055f4"
+)
+
+_nx_verify_integrity() {
+    [[ "${NX_SKIP_INTEGRITY:-0}" == "1" ]] && return 0
+
+    local dir="${SCRIPT_DIR}/modules"
+    local fail=0
+
+    for entry in "${_NX_MODULE_HASHES[@]}"; do
+        local file="${entry%%|*}"
+        local expected="${entry##*|}"
+
+        # Skip unlocked entries (empty hash = development mode)
+        [[ -z "$expected" ]] && continue
+
+        local actual
+        actual=$(sha256sum "${dir}/${file}" 2>/dev/null | awk '{print $1}')
+
+        if [[ "$actual" != "$expected" ]]; then
+            echo "Nexus: integrity check failed — modules/${file} has been modified." >&2
+            (( fail++ )) || true
+        fi
+    done
+
+    if [[ $fail -gt 0 ]]; then
+        echo "Nexus: $fail module(s) failed integrity check." >&2
+        echo "       If you are a developer, run: NX_SKIP_INTEGRITY=1 ./nexus.sh" >&2
+        echo "       To re-lock hashes after changes: ./scripts/nx-update-hashes.sh" >&2
+        exit 1
+    fi
 }

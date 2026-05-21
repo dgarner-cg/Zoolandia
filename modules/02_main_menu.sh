@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - Main Menu Module
+# Nexus v5.10 - Main Menu Module
 #
 # Description: Main menu interface and quick search functionality
 ################################################################################
@@ -33,12 +33,12 @@ show_main_menu() {
             "Ansible" "System Onboarding, Apps, Power, Touchpad, Updates"
             "Secret" "Secret Projects and Custom Playbooks"
             "Tools" "Stack Manager, Backups, Diagnostics, etc."
-            "Settings" "Zoolandia Mode, Status, Logs, Reset, and Remove"
+            "Settings" "Nexus Mode, Status, Logs, Reset, and Remove"
             "About" "Licenses, Offers, Feedback, Changelog, etc."
         )
 
         local choice
-        choice=$(dialog --clear --colors --backtitle "$SCRIPT_NAME by hack3r.gg - v$ZOOLANDIA_VERSION" \
+        choice=$(dialog --clear --colors --backtitle "$SCRIPT_NAME by hack3r.gg - v$NEXUS_VERSION" \
             --title "Main Menu (Hostname: $HOSTNAME | License: $license_type | Mode: $mode)" \
             --ok-label "Select" \
             --cancel-label "Quit" \
@@ -246,7 +246,7 @@ view_online_changelog() {
     dialog --infobox "Fetching changelog from GitHub...\n\nPlease wait..." 6 50
 
     local changelog_url="https://raw.githubusercontent.com/community-scripts/ProxmoxVE/main/CHANGELOG.md"
-    local temp_file="/tmp/zoolandia_online_changelog.md"
+    local temp_file="/tmp/nexus_online_changelog.md"
 
     # Fetch changelog
     if curl -fsSL "$changelog_url" -o "$temp_file" 2>/dev/null; then
@@ -263,14 +263,14 @@ view_api_data() {
     dialog --infobox "Fetching API data...\n\nPlease wait..." 6 50
 
     local api_url="https://community-scripts.github.io/ProxmoxVE/data"
-    local temp_file="/tmp/zoolandia_api_data.txt"
+    local temp_file="/tmp/nexus_api_data.txt"
 
     # Fetch API data
     if curl -fsSL "$api_url" -o "$temp_file" 2>/dev/null; then
         # Check if it's HTML and extract useful information
         if grep -q "<html" "$temp_file"; then
             # It's HTML, let's extract text content
-            local text_file="/tmp/zoolandia_api_data_text.txt"
+            local text_file="/tmp/nexus_api_data_text.txt"
 
             # Use lynx if available, otherwise sed
             if command -v lynx &>/dev/null; then

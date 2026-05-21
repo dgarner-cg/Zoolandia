@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia System Configuration
+# Nexus System Configuration
 # File: playbooks/configs.yml
 # Purpose: Apply system settings (power, touchpad, mouse, NTFS, Nautilus, etc.)
 #

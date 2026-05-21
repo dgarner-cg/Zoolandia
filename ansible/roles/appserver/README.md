@@ -34,7 +34,7 @@ None.
 
 ## Installation
 
-### Via Zoolandia Menu
+### Via Nexus Menu
 
 1. **Set GitHub Username** (recommended):
    ```
@@ -221,4 +221,4 @@ MIT
 
 ## Author
 
-Zoolandia by hack3r.gg
+Nexus by hack3r.gg

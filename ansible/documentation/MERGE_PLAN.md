@@ -183,11 +183,11 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 11. ⚠️ Add "Install All" option
 12. ⚠️ Add checkbox selection for individual apps
 13. ⚠️ Generate YAML config from user selections
-14. ⚠️ Integrate menu into Zoolandia (if applicable)
+14. ⚠️ Integrate menu into Nexus (if applicable)
 
 ### Phase 4: Testing & Validation
 15. ⚠️ Test standalone CLI execution
-16. ⚠️ Test with Zoolandia platform
+16. ⚠️ Test with Nexus platform
 17. ⚠️ Validate all tags work correctly
 18. ⚠️ Verify documentation accuracy
 
@@ -233,8 +233,8 @@ ssh_args = -o ControlMaster=auto -o ControlPersist=60s
 | Hardcoded "dgarner" | `workstation_user` | Auto-detects or accepts from env |
 | Hardcoded "/home/dgarner" | `workstation_home` | Auto-detects based on user |
 | Hardcoded paths | `docker_dir`, `backup_dir` | Configurable with smart defaults |
-| N/A | `CURRENT_USER` env | Zoolandia integration |
-| N/A | `DOCKER_DIR` env | Zoolandia integration |
+| N/A | `CURRENT_USER` env | Nexus integration |
+| N/A | `DOCKER_DIR` env | Nexus integration |
 
 ---
 

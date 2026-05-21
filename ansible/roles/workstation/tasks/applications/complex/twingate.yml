@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Workstation Setup - Production Edition
+# Nexus Workstation Setup - Production Edition
 # File: roles/workstation/tasks/applications/complex/twingate.yml
 # Purpose: Twingate installation with SECURITY FIX
 #

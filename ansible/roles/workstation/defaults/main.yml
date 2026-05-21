@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Workstation Setup - Production Edition
+# Nexus Workstation Setup - Production Edition
 # File: roles/workstation/defaults/main.yml
 # Purpose: Centralized variable configuration
 #
@@ -9,14 +9,14 @@
 #   2. vars/main.yml
 #   3. Inventory variables
 #   4. Playbook variables
-#   5. Command-line extra vars (-e) ← Highest (from Zoolandia)
+#   5. Command-line extra vars (-e) ← Highest (from Nexus)
 #
 # Dual Compatibility:
-#   - Zoolandia: Variables passed via -e flag from modules/41_ansible.sh
+#   - Nexus: Variables passed via -e flag from modules/41_ansible.sh
 #   - CLI: Auto-detects using Ansible facts
 #
 # Usage:
-#   # From Zoolandia (variables auto-passed)
+#   # From Nexus (variables auto-passed)
 #   Called automatically with CURRENT_USER, DOCKER_DIR, etc.
 #
 #   # From CLI (auto-detects)
@@ -29,10 +29,10 @@
 
 ################################################################################
 # USER CONFIGURATION
-# Auto-detects current user, can be overridden by Zoolandia
+# Auto-detects current user, can be overridden by Nexus
 ################################################################################
 
-# Target user for setup (Zoolandia passes CURRENT_USER, CLI auto-detects)
+# Target user for setup (Nexus passes CURRENT_USER, CLI auto-detects)
 workstation_user: "{{ lookup('env', 'CURRENT_USER') | default(ansible_user_id, true) }}"
 workstation_home: "{{ lookup('env', 'HOME') | default(ansible_env.HOME, true) }}"
 workstation_uid: "{{ ansible_user_uid | default(1000) }}"
@@ -40,22 +40,22 @@ workstation_gid: "{{ ansible_user_gid | default(1000) }}"
 
 ################################################################################
 # DIRECTORY CONFIGURATION
-# Zoolandia passes DOCKER_DIR, BACKUP_DIR; CLI uses smart defaults
+# Nexus passes DOCKER_DIR, BACKUP_DIR; CLI uses smart defaults
 ################################################################################
 
-# Docker directory (Zoolandia: $DOCKER_DIR, CLI: ~/docker)
+# Docker directory (Nexus: $DOCKER_DIR, CLI: ~/docker)
 docker_dir: "{{ lookup('env', 'DOCKER_DIR') | default(workstation_home + '/docker', true) }}"
 
-# Backup directory (Zoolandia: $BACKUP_DIR, CLI: ~/backups)
+# Backup directory (Nexus: $BACKUP_DIR, CLI: ~/backups)
 backup_dir: "{{ lookup('env', 'BACKUP_DIR') | default(workstation_home + '/backups', true) }}"
 
-# Zoolandia directories
-zoolandia_base_dir: "{{ workstation_home }}/.zoolandia"
-zoolandia_logs_dir: "{{ zoolandia_base_dir }}/logs"
-zoolandia_config_dir: "{{ zoolandia_base_dir }}/config"
+# Nexus directories
+nexus_base_dir: "{{ workstation_home }}/.nexus"
+nexus_logs_dir: "{{ nexus_base_dir }}/logs"
+nexus_config_dir: "{{ nexus_base_dir }}/config"
 
 # Temporary download directory
-temp_download_dir: "/tmp/zoolandia_ansible_downloads"
+temp_download_dir: "/tmp/nexus_ansible_downloads"
 
 ################################################################################
 # APPLICATION SELECTION - SIMPLE APPS (Loop-based installation)
@@ -384,9 +384,9 @@ logging:
   enabled: true
 
   # Log files
-  log_directory: "{{ zoolandia_logs_dir }}"
-  audit_trail: "{{ zoolandia_logs_dir }}/setup_{{ ansible_date_time.date }}.log"
-  manifest_file: "{{ zoolandia_base_dir }}/manifest.yml"
+  log_directory: "{{ nexus_logs_dir }}"
+  audit_trail: "{{ nexus_logs_dir }}/setup_{{ ansible_date_time.date }}.log"
+  manifest_file: "{{ nexus_base_dir }}/manifest.yml"
 
   # Log levels
   verbose: true
@@ -394,7 +394,7 @@ logging:
 
   # Statistics tracking
   track_statistics: true
-  statistics_file: "{{ zoolandia_logs_dir }}/statistics_{{ ansible_date_time.date }}.yml"
+  statistics_file: "{{ nexus_logs_dir }}/statistics_{{ ansible_date_time.date }}.yml"
 
 ################################################################################
 # USER EXPERIENCE
@@ -494,5 +494,5 @@ tag_categories:
 
 workstation_role_version: "1.0.0"
 workstation_role_date: "2026-01-06"
-workstation_role_author: "Zoolandia Production"
+workstation_role_author: "Nexus Production"
 workstation_role_description: "Enterprise-grade workstation setup with homelab-friendly UX"

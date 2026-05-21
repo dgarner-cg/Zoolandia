@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - Apps Module
+# Nexus v5.10 - Apps Module
 #
 # Description: Application management functions including app descriptions,
 #              installation checks, and app installation (Docker and Ansible)
@@ -81,7 +81,7 @@ get_app_description() {
         "flame") echo "Self-hosted startpage and dashboard" ;;
         "homer") echo "Simple static dashboard" ;;
         "organizr") echo "Unified dashboard with authentication" ;;
-        "deployrr-dashboard") echo "Zoolandia custom dashboard" ;;
+        "deployrr-dashboard") echo "Nexus custom dashboard" ;;
 
         # System Monitoring
         "uptime-kuma") echo "Self-hosted uptime monitoring tool" ;;
@@ -349,7 +349,7 @@ install_app() {
 
                 if [[ -n "$port" ]]; then
                     # Create labels from template
-                    local temp_labels="/tmp/zoolandia_labels_${app_name}.yml"
+                    local temp_labels="/tmp/nexus_labels_${app_name}.yml"
                     cp "$SCRIPT_DIR/includes/traefik/labels-template.yml" "$temp_labels"
 
                     # Replace placeholders
@@ -496,7 +496,7 @@ install_app_batch() {
             if [[ -n "$port" ]] || true; then
                 # For batch mode, use app name as subdomain
                 # Port will need to be configured manually or we use a default
-                local temp_labels="/tmp/zoolandia_labels_${app_name}.yml"
+                local temp_labels="/tmp/nexus_labels_${app_name}.yml"
                 cp "$SCRIPT_DIR/includes/traefik/labels-template.yml" "$temp_labels"
 
                 # Replace placeholders with defaults
@@ -563,7 +563,7 @@ install_ansible_app() {
     fi
 
     # Create a temporary playbook that includes this task
-    local temp_playbook="/tmp/zoolandia_${app_name}_playbook.yml"
+    local temp_playbook="/tmp/nexus_${app_name}_playbook.yml"
     cat > "$temp_playbook" <<EOF
 ---
 - name: Install $app_name

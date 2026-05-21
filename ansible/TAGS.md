@@ -1,6 +1,6 @@
 # Ansible Workstation Role - Available Tags
 
-This document lists all available tags in the Zoolandia Workstation Setup role.
+This document lists all available tags in the Nexus Workstation Setup role.
 
 ## Usage
 

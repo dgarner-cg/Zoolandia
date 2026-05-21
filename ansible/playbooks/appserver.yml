@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia App Server Setup
+# Nexus App Server Setup
 # File: playbooks/appserver.yml
 # Purpose: Install and configure application server tools and services
 #
@@ -25,7 +25,7 @@
     vscode_tunnel_user: "{{ vscode_tunnel_user | default(ansible_user_id) }}"
     vscode_tunnel_group: "{{ vscode_tunnel_group | default(ansible_user_id) }}"
 
-    # GitHub username (passed from Zoolandia or via -e flag)
+    # GitHub username (passed from Nexus or via -e flag)
     github_username: "{{ github_username | default('') }}"
 
   roles:

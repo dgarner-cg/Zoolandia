@@ -75,7 +75,7 @@
   - Smart Dry-Run Detection (NEW in v1.1.0)
 - Reorganized Quick Start section:
   - Option 1: Interactive Menu (Recommended) 🆕
-  - Option 2: Zoolandia Platform
+  - Option 2: Nexus Platform
   - Option 3: ansible-playbook CLI
 - Updated all paths: ansible_production → ansible
 - Updated playbook name: setup.yml → setup-workstation.yml
@@ -213,4 +213,4 @@ All documentation has been successfully updated to reflect:
 
 **Generated:** 2026-01-07
 **By:** Documentation update process
-**For:** Zoolandia Ansible Workstation Setup v1.1.0
+**For:** Nexus Ansible Workstation Setup v1.1.0

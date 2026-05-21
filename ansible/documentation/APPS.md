@@ -1,6 +1,6 @@
 # Applications & Configurations Reference
 
-**Zoolandia Ansible Workstation Setup - Production Edition**
+**Nexus Ansible Workstation Setup - Production Edition**
 **Version:** 1.0.0
 **Last Updated:** 2026-01-06
 
@@ -72,7 +72,7 @@ snap_apps:
 | 4 | **OnlyOffice** | onlyoffice.com | Productivity | ✅ Enabled | Free office suite (docs, spreadsheets, presentations) |
 
 ### Installation Process
-1. Download .deb package to `/tmp/zoolandia_ansible_downloads/`
+1. Download .deb package to `/tmp/nexus_ansible_downloads/`
 2. Install via `apt` with dependency resolution
 3. Cleanup downloaded files (optional)
 

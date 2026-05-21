@@ -1,19 +1,19 @@
-# Zoolandia Workstation Setup - Production Edition
+# Nexus Workstation Setup - Production Edition
 
 **Version:** 1.1.0
 **Date:** 2026-01-07
 **Status:** Production Ready - Merge Complete
-**License:** Same as Zoolandia
+**License:** Same as Nexus
 
 ---
 
 ## 🎯 Overview
 
-Enterprise-grade Ansible role for automated workstation setup with homelab-friendly user experience. Designed for dual compatibility with both the Zoolandia platform and standalone ansible-playbook CLI execution.
+Enterprise-grade Ansible role for automated workstation setup with homelab-friendly user experience. Designed for dual compatibility with both the Nexus platform and standalone ansible-playbook CLI execution.
 
 ### Key Features
 
-- ✅ **Dual Compatibility** - Works with Zoolandia platform AND ansible-playbook CLI
+- ✅ **Dual Compatibility** - Works with Nexus platform AND ansible-playbook CLI
 - ✅ **Interactive Menu** - Dialog-based checkbox selection (NEW in v1.1.0)
 - ✅ **Smart Defaults** - Auto-detects user, paths, system configuration
 - ✅ **Loop-Based Architecture** - 87% code reduction via intelligent loops
@@ -74,7 +74,7 @@ Enterprise-grade Ansible role for automated workstation setup with homelab-frien
 ### Option 1: Interactive Menu (Recommended) 🆕
 
 ```bash
-cd /home/cicero/Documents/Zoolandia/ansible
+cd /home/cicero/Documents/Nexus/ansible
 ./ansible-menu.sh
 ```
 
@@ -84,19 +84,19 @@ cd /home/cicero/Documents/Zoolandia/ansible
 - Dry run capability built-in
 - Documentation viewer
 
-### Option 2: Run with Zoolandia Platform
+### Option 2: Run with Nexus Platform
 
-The playbook will be called automatically by Zoolandia with all necessary variables pre-configured.
+The playbook will be called automatically by Nexus with all necessary variables pre-configured.
 
 ```bash
-# Zoolandia calls it automatically
+# Nexus calls it automatically
 # No user action required!
 ```
 
 ### Option 3: Run with ansible-playbook CLI
 
 ```bash
-cd /home/cicero/Documents/Zoolandia/ansible
+cd /home/cicero/Documents/Nexus/ansible
 
 # Complete installation
 ansible-playbook setup-workstation.yml
@@ -142,7 +142,7 @@ ansible_production/
 
 Variables are loaded in this order (highest wins):
 
-1. Command-line (`-e` flag) ← **Zoolandia uses this**
+1. Command-line (`-e` flag) ← **Nexus uses this**
 2. Playbook variables
 3. Inventory variables
 4. Role defaults ← **CLI uses this**
@@ -154,7 +154,7 @@ Variables are loaded in this order (highest wins):
 workstation_user: "{{ lookup('env', 'CURRENT_USER') | default(ansible_user_id) }}"
 workstation_home: "{{ lookup('env', 'HOME') | default(ansible_env.HOME) }}"
 
-# Directories (Zoolandia values or smart defaults)
+# Directories (Nexus values or smart defaults)
 docker_dir: "{{ lookup('env', 'DOCKER_DIR') | default(workstation_home + '/docker') }}"
 backup_dir: "{{ lookup('env', 'BACKUP_DIR') | default(workstation_home + '/backups') }}"
 
@@ -234,13 +234,13 @@ All installations are comprehensively logged:
 
 ```bash
 # Audit trail (timestamped events)
-~/.zoolandia/logs/setup_2026-01-06.log
+~/.nexus/logs/setup_2026-01-06.log
 
 # Installation manifest (YAML)
-~/.zoolandia/manifest.yml
+~/.nexus/manifest.yml
 
 # Statistics (optional)
-~/.zoolandia/logs/statistics_2026-01-06.yml
+~/.nexus/logs/statistics_2026-01-06.yml
 ```
 
 ### Audit Trail Format
@@ -307,7 +307,7 @@ The production version:
 
 ```
 ═══════════════════════════════════════════════════════════
-🚀 ZOOLANDIA WORKSTATION SETUP - PRODUCTION EDITION
+🚀 NEXUS WORKSTATION SETUP - PRODUCTION EDITION
 ═══════════════════════════════════════════════════════════
 
 🔍 PRE-FLIGHT CHECKS | Step 1/7 - Checking disk space...
@@ -330,7 +330,7 @@ The production version:
   - mailspring (Email client)
 
 ═══════════════════════════════════════════════════════════
-✅ ZOOLANDIA WORKSTATION SETUP COMPLETE!
+✅ NEXUS WORKSTATION SETUP COMPLETE!
 ═══════════════════════════════════════════════════════════
 ```
 
@@ -528,14 +528,14 @@ See existing complex app files for examples.
 
 ## 📜 License
 
-Same as Zoolandia/Deployrr project.
+Same as Nexus/Deployrr project.
 
 ---
 
 ## 🙏 Credits
 
 **Based on:**
-- Original Zoolandia Ansible structure
+- Original Nexus Ansible structure
 - Analysis and recommendations from honest_review.md
 - Best practices from ansible_resume refactor
 - Documentation excellence from 5star_ansible_proposed refactor
@@ -556,8 +556,8 @@ Same as Zoolandia/Deployrr project.
 - ARCHITECTURE.md (design decisions)
 
 **Logs:**
-- Audit Trail: `~/.zoolandia/logs/setup_*.log`
-- Manifest: `~/.zoolandia/manifest.yml`
+- Audit Trail: `~/.nexus/logs/setup_*.log`
+- Manifest: `~/.nexus/manifest.yml`
 
 **Change Tracking:**
 - CHANGES_TRACKING.csv (65 tracked changes with issue resolution)
@@ -590,5 +590,5 @@ See `CHANGELOG.md` for detailed version history.
 
 ---
 
-*Built with ❤️ for the Zoolandia community*
+*Built with ❤️ for the Nexus community*
 *Enterprise-grade | Homelab-friendly | Production-ready*

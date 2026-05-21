@@ -9,7 +9,7 @@ vscode_tunnel_user: "{{ ansible_user_id }}"
 vscode_tunnel_group: "{{ ansible_user_id }}"
 
 # GitHub username for VS Code tunnel authentication
-# Passed from Zoolandia prerequisites or via -e github_username=<username>
+# Passed from Nexus prerequisites or via -e github_username=<username>
 github_username: ""
 
 # Jenkins configuration

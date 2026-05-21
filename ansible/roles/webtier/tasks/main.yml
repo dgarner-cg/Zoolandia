@@ -217,7 +217,7 @@
   when: haproxy_result is succeeded
   tags: ['haproxy', 'reverseproxy']
 
-# Traefik is installed via Docker in Zoolandia
+# Traefik is installed via Docker in Nexus
 # No apt package installation needed - handled by compose files
 
 - name: Display web tier installation summary

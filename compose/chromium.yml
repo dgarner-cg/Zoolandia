@@ -21,5 +21,5 @@ services:
       TZ: $TZ
       PUID: $PUID
       PGID: $PGID
-      # CHROME_CLI: https://www.zoolandia.app/ #optional
+      # CHROME_CLI: https://www.nexus.app/ #optional
     # DOCKER-LABELS-PLACEHOLDER

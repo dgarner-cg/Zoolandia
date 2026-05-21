@@ -92,7 +92,7 @@ user_experience:
 
 logging:
   enabled: true
-  audit_trail: "{{ lookup('env', 'HOME') | default(ansible_env.HOME, true) }}/.zoolandia/logs/configs.log"
+  audit_trail: "{{ lookup('env', 'HOME') | default(ansible_env.HOME, true) }}/.nexus/logs/configs.log"
 
 ################################################################################
 # VERSION INFO

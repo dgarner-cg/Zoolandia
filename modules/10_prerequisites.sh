@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - Prerequisites Module
+# Nexus v5.10 - Prerequisites Module
 #
 # Description: Prerequisites menu and system setup functions including package
 #              installation, Docker setup, and system validation checks
@@ -11,7 +11,7 @@ show_prerequisites_menu() {
         # Get current status for each item with color codes
 
         # Disclaimer status - check if acknowledged
-        if [[ -f "$ZOOLANDIA_CONFIG_DIR/disclaimer_acknowledged" ]]; then
+        if [[ -f "$NEXUS_CONFIG_DIR/disclaimer_acknowledged" ]]; then
             local disclaimer_status="\Z2DONE\Zn"
         else
             local disclaimer_status="\Z1NOT DONE\Zn"
@@ -127,7 +127,7 @@ show_prerequisites_menu() {
         )
 
         local choice
-        choice=$(dialog --clear --backtitle "$SCRIPT_NAME by hack3r.gg - v$ZOOLANDIA_VERSION" \
+        choice=$(dialog --clear --backtitle "$SCRIPT_NAME by hack3r.gg - v$NEXUS_VERSION" \
             --title "Prerequisites" \
             --ok-label "Select" \
             --cancel-label "Back" \
@@ -294,7 +294,7 @@ show_packages_menu() {
         )
 
         local choice
-        choice=$(dialog --clear --backtitle "$SCRIPT_NAME by hack3r.gg - v$ZOOLANDIA_VERSION" \
+        choice=$(dialog --clear --backtitle "$SCRIPT_NAME by hack3r.gg - v$NEXUS_VERSION" \
             --title "Software Packages" \
             --ok-label "Select" \
             --cancel-label "Back" \
@@ -324,9 +324,9 @@ show_packages_menu() {
 }
 
 show_packages_info() {
-    local info_text="ZOOLANDIA PACKAGE TIERS\n\n"
+    local info_text="NEXUS PACKAGE TIERS\n\n"
     info_text+="=== REQUIRED (Pre-installed) ===\n"
-    info_text+="These are installed before Zoolandia runs:\n"
+    info_text+="These are installed before Nexus runs:\n"
     info_text+="• dialog - Interactive menus\n"
     info_text+="• curl, wget - Download utilities\n"
     info_text+="• git - Version control\n"
@@ -401,7 +401,7 @@ show_packages_info() {
 
 view_required_packages() {
     local msg="REQUIRED PACKAGES (Pre-installed)\n\n"
-    msg+="These packages are installed before Zoolandia runs and are required for basic functionality.\n\n"
+    msg+="These packages are installed before Nexus runs and are required for basic functionality.\n\n"
     msg+="Pre-installed packages:\n"
     msg+="• dialog - Interactive menus\n"
     msg+="• curl, wget - Download utilities\n"
@@ -1070,7 +1070,7 @@ run_system_checks() {
     fi
 
     if [[ $checks_passed == true ]]; then
-        touch "$ZOOLANDIA_CONFIG_DIR/prerequisites_done"
+        touch "$NEXUS_CONFIG_DIR/prerequisites_done"
         PREREQUISITES_DONE=true
         dialog --msgbox "System Checks Passed!\n\n$check_results" 15 60
     else
@@ -1100,7 +1100,7 @@ install_docker() {
         -o /usr/local/lib/docker/cli-plugins/docker-compose
     sudo chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 
-    touch "$ZOOLANDIA_CONFIG_DIR/docker_setup_done"
+    touch "$NEXUS_CONFIG_DIR/docker_setup_done"
     DOCKER_SETUP_DONE=true
 
     dialog --msgbox "Docker installed successfully!\n\nVersion: $(docker --version)\nDocker Compose: $(docker compose version)" 12 60
@@ -1246,7 +1246,7 @@ install_required_packages() {
     echo ""
     echo "############# Install Required Packages #############"
     echo ""
-    echo "This step will install some packages required for Zoolandia, and for a well-functioning Docker server."
+    echo "This step will install some packages required for Nexus, and for a well-functioning Docker server."
     echo ""
     echo -n "Press Y/y to continue or any other key to go back: "
     read -r response
@@ -1305,10 +1305,10 @@ install_required_packages() {
 }
 
 show_disclaimer() {
-    dialog --title "Disclaimer" --msgbox "ZOOLANDIA DISCLAIMER\n\nThis software is provided 'as is' without warranty of any kind.\n\nBy using Zoolandia, you acknowledge that:\n- You are responsible for your server and data\n- Zoolandia automates Docker container deployment\n- You should review configurations before deploying\n- Backup your data regularly\n\nPress OK to acknowledge." 16 70
+    dialog --title "Disclaimer" --msgbox "NEXUS DISCLAIMER\n\nThis software is provided 'as is' without warranty of any kind.\n\nBy using Nexus, you acknowledge that:\n- You are responsible for your server and data\n- Nexus automates Docker container deployment\n- You should review configurations before deploying\n- Backup your data regularly\n\nPress OK to acknowledge." 16 70
 
     # Mark disclaimer as acknowledged
-    touch "$ZOOLANDIA_CONFIG_DIR/disclaimer_acknowledged"
+    touch "$NEXUS_CONFIG_DIR/disclaimer_acknowledged"
 }
 
 set_github_username() {
@@ -1318,7 +1318,7 @@ set_github_username() {
     fi
 
     local new_username
-    new_username=$(dialog --clear --backtitle "$SCRIPT_NAME by hack3r.gg - v$ZOOLANDIA_VERSION" \
+    new_username=$(dialog --clear --backtitle "$SCRIPT_NAME by hack3r.gg - v$NEXUS_VERSION" \
         --title "GitHub Username" \
         --ok-label "Save" \
         --cancel-label "Cancel" \
@@ -1339,14 +1339,14 @@ set_github_username() {
 
         # Save the username
         GITHUB_USERNAME="$new_username"
-        mkdir -p "$ZL_PROJECT_CONFIG_DIR"
-        echo "$GITHUB_USERNAME" > "${ZL_PROJECT_CONFIG_DIR}/github"
+        mkdir -p "$NX_PROJECT_CONFIG_DIR"
+        echo "$GITHUB_USERNAME" > "${NX_PROJECT_CONFIG_DIR}/github"
 
         dialog --msgbox "GitHub username saved!\n\nUsername: $GITHUB_USERNAME\n\nThis will be used for VS Code Tunnel and other GitHub integrations." 12 60
     else
         # Clear the username if empty
         GITHUB_USERNAME=""
-        rm -f "${ZL_PROJECT_CONFIG_DIR}/github"
+        rm -f "${NX_PROJECT_CONFIG_DIR}/github"
         dialog --msgbox "GitHub username cleared." 8 50
     fi
 }

@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Workstation Setup - Chrome Extensions Installer
+# Nexus Workstation Setup - Chrome Extensions Installer
 # File: roles/workstation/tasks/applications/complex/chrome_extensions.yml
 # Purpose: Install Chrome/Chromium browser extensions for development
 #

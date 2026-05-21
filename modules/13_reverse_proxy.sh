@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia - Reverse Proxy Management Module
+# Nexus - Reverse Proxy Management Module
 ################################################################################
 # Description: Traefik and reverse proxy configuration functions
 # Version: 2.0.0
@@ -15,12 +15,12 @@ EXPOSURE_MODE="${EXPOSURE_MODE:-Simple}"
 DNS_PROVIDER="${DNS_PROVIDER:-cloudflare}"
 
 # Load saved DNS provider
-if [[ -f "$ZOOLANDIA_CONFIG_DIR/dns_provider" ]]; then
-    DNS_PROVIDER=$(cat "$ZOOLANDIA_CONFIG_DIR/dns_provider")
+if [[ -f "$NEXUS_CONFIG_DIR/dns_provider" ]]; then
+    DNS_PROVIDER=$(cat "$NEXUS_CONFIG_DIR/dns_provider")
 fi
 
 # Load Vault address if previously persisted
-[[ -f "$ZOOLANDIA_CONFIG_DIR/vault.env" ]] && source "$ZOOLANDIA_CONFIG_DIR/vault.env"
+[[ -f "$NEXUS_CONFIG_DIR/vault.env" ]] && source "$NEXUS_CONFIG_DIR/vault.env"
 
 ################################################################################
 # Tiered Secret Backend — helper functions
@@ -28,56 +28,56 @@ fi
 
 # Detect a GNOME/graphical desktop session where keyring can work (D-Bus only)
 # secret-tool does not need to be installed yet — it is installed on first use
-_zl_keyring_available() {
+_nx_keyring_available() {
     [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]] || [[ -S "/run/user/$(id -u)/bus" ]]
 }
 
 # Ensure secret-tool (libsecret-tools) is installed; prompt to install if missing
-_zl_ensure_secret_tool() {
+_nx_ensure_secret_tool() {
     command -v secret-tool &>/dev/null && return 0
     dialog --yesno "GNOME Keyring requires 'secret-tool' (libsecret-tools).\n\nInstall it now?" 8 55 || return 1
     apt-get install -y libsecret-tools &>/dev/null
     command -v secret-tool &>/dev/null || {
         dialog --msgbox "Installation failed. Falling back to file backend." 7 55
-        _zl_save_backend "file"
+        _nx_save_backend "file"
         return 1
     }
 }
 
 # Return the currently saved backend (keyring | file | vault)
-_zl_get_backend() {
-    local f="$ZOOLANDIA_CONFIG_DIR/secret_backend"
+_nx_get_backend() {
+    local f="$NEXUS_CONFIG_DIR/secret_backend"
     [[ -f "$f" ]] && cat "$f" && return
-    _zl_keyring_available && echo "keyring" || echo "file"
+    _nx_keyring_available && echo "keyring" || echo "file"
 }
 
 # Persist the chosen backend
-_zl_save_backend() { mkdir -p "$ZOOLANDIA_CONFIG_DIR"; echo "$1" > "$ZOOLANDIA_CONFIG_DIR/secret_backend"; }
+_nx_save_backend() { mkdir -p "$NEXUS_CONFIG_DIR"; echo "$1" > "$NEXUS_CONFIG_DIR/secret_backend"; }
 
 # Vault KV path helper
-_zl_vault_path() { echo "secret/zoolandia/dns/$1"; }
+_nx_vault_path() { echo "secret/nexus/dns/$1"; }
 
-_zl_vault_write() {
+_nx_vault_write() {
     local key="$1" value="$2"
-    vault kv put "$(_zl_vault_path "$key")" value="$value" 2>/dev/null
+    vault kv put "$(_nx_vault_path "$key")" value="$value" 2>/dev/null
 }
 
-_zl_vault_read() {
-    vault kv get -field=value "$(_zl_vault_path "$1")" 2>/dev/null
+_nx_vault_read() {
+    vault kv get -field=value "$(_nx_vault_path "$1")" 2>/dev/null
 }
 
-_zl_vault_delete() {
-    vault kv delete "$(_zl_vault_path "$1")" 2>/dev/null
+_nx_vault_delete() {
+    vault kv delete "$(_nx_vault_path "$1")" 2>/dev/null
 }
 
 # Write a secret to the active backend
-_zl_secret_write() {
+_nx_secret_write() {
     local key="$1" value="$2"
-    case "$(_zl_get_backend)" in
+    case "$(_nx_get_backend)" in
         keyring)
-            if _zl_ensure_secret_tool; then
+            if _nx_ensure_secret_tool; then
                 if printf '%s' "$value" | secret-tool store \
-                        --label="Zoolandia: $key" service zoolandia username "$key" 2>/dev/null; then
+                        --label="Nexus: $key" service nexus username "$key" 2>/dev/null; then
                     rm -f "$SECRETS_DIR/$key"   # remove stale plaintext
                     return 0
                 fi
@@ -93,34 +93,34 @@ _zl_secret_write() {
             chmod 600 "$SECRETS_DIR/$key"
             ;;
         vault)
-            _zl_vault_write "$key" "$value"
+            _nx_vault_write "$key" "$value"
             ;;
     esac
 }
 
 # Read a secret from the active backend; keyring falls back to file on miss or if secret-tool absent
-_zl_secret_read() {
+_nx_secret_read() {
     local key="$1"
-    case "$(_zl_get_backend)" in
+    case "$(_nx_get_backend)" in
         keyring)
             if command -v secret-tool &>/dev/null; then
-                local v; v=$(secret-tool lookup service zoolandia username "$key" 2>/dev/null)
+                local v; v=$(secret-tool lookup service nexus username "$key" 2>/dev/null)
                 [[ -n "$v" ]] && printf '%s' "$v" && return
             fi
             # secret-tool absent or keyring miss — fall back to file
             [[ -f "$SECRETS_DIR/$key" ]] && cat "$SECRETS_DIR/$key"
             ;;
         file)   [[ -f "$SECRETS_DIR/$key" ]] && cat "$SECRETS_DIR/$key" ;;
-        vault)  _zl_vault_read "$key" ;;
+        vault)  _nx_vault_read "$key" ;;
     esac
 }
 
 # Delete a secret from all backends
-_zl_secret_delete() {
+_nx_secret_delete() {
     local key="$1"
-    secret-tool clear service zoolandia username "$key" 2>/dev/null
+    secret-tool clear service nexus username "$key" 2>/dev/null
     rm -f "$SECRETS_DIR/$key"
-    _zl_vault_delete "$key" 2>/dev/null
+    _nx_vault_delete "$key" 2>/dev/null
 }
 
 # Install Vault CLI (via Ansible) and authenticate if needed
@@ -140,7 +140,7 @@ ensure_vault() {
         addr=$(dialog --inputbox "Vault server address:" 8 65 "http://127.0.0.1:8200" \
             3>&1 1>&2 2>&3 3>&-) || return 1
         export VAULT_ADDR="$addr"
-        echo "VAULT_ADDR=$addr" >> "$ZOOLANDIA_CONFIG_DIR/vault.env"
+        echo "VAULT_ADDR=$addr" >> "$NEXUS_CONFIG_DIR/vault.env"
     fi
 
     # 3. Authenticate if not already
@@ -169,9 +169,9 @@ ensure_vault() {
 
 # Dialog menu for choosing the secret storage backend
 show_secret_backend_menu() {
-    local current; current=$(_zl_get_backend)
+    local current; current=$(_nx_get_backend)
     local options=("file" "File — chmod 600 in ~/docker/secrets/ (always available)")
-    _zl_keyring_available && options+=("keyring" "GNOME Keyring — encrypted, no plaintext file")
+    _nx_keyring_available && options+=("keyring" "GNOME Keyring — encrypted, no plaintext file")
     options+=("vault" "HashiCorp Vault — centralized secrets server")
 
     local choice
@@ -182,7 +182,7 @@ show_secret_backend_menu() {
     if [[ "$choice" == "vault" ]]; then
         ensure_vault || return
     fi
-    _zl_save_backend "$choice"
+    _nx_save_backend "$choice"
     dialog --msgbox "Backend set to: $choice" 6 40
 }
 
@@ -192,7 +192,7 @@ show_reverse_proxy_menu() {
     while true; do
         # Get Traefik preparation status
         local prep_status="\Z1NOT DONE\Zn"
-        if [[ -f "$ZOOLANDIA_CONFIG_DIR/traefik_done" ]]; then
+        if [[ -f "$NEXUS_CONFIG_DIR/traefik_done" ]]; then
             prep_status="\Z2DONE\Zn"
         fi
 
@@ -275,7 +275,7 @@ toggle_exposure_mode() {
 
     if [[ -n "$choice" ]]; then
         EXPOSURE_MODE="$choice"
-        echo "$EXPOSURE_MODE" > "$ZOOLANDIA_CONFIG_DIR/exposure_mode"
+        echo "$EXPOSURE_MODE" > "$NEXUS_CONFIG_DIR/exposure_mode"
         dialog --msgbox "Exposure mode set to: $EXPOSURE_MODE" 8 50
     fi
 }
@@ -285,7 +285,7 @@ toggle_exposure_mode() {
 ################################################################################
 
 configure_dns_provider() {
-    zl_require_license "traefik" "Reverse Proxy / DNS Provider" || return 0
+    nx_require_license "traefik" "Reverse Proxy / DNS Provider" || return 0
 
     local choice
     choice=$(dialog --clear --backtitle "$SCRIPT_NAME - DNS Provider" \
@@ -303,8 +303,8 @@ configure_dns_provider() {
 
     if [[ -n "$choice" ]]; then
         DNS_PROVIDER="$choice"
-        mkdir -p "$ZOOLANDIA_CONFIG_DIR"
-        echo "$DNS_PROVIDER" > "$ZOOLANDIA_CONFIG_DIR/dns_provider"
+        mkdir -p "$NEXUS_CONFIG_DIR"
+        echo "$DNS_PROVIDER" > "$NEXUS_CONFIG_DIR/dns_provider"
 
         # Configure the selected provider
         case "$DNS_PROVIDER" in
@@ -416,8 +416,8 @@ test_cloudflare_api() {
 configure_clouddns() {
     while true; do
         local current_id current_secret id_display secret_display
-        current_id=$(_zl_secret_read "clouddns_client_id")
-        current_secret=$(_zl_secret_read "clouddns_client_secret")
+        current_id=$(_nx_secret_read "clouddns_client_id")
+        current_secret=$(_nx_secret_read "clouddns_client_secret")
 
         if [[ -n "$current_id" ]]; then
             id_display="****${current_id: -4}"
@@ -435,12 +435,12 @@ configure_clouddns() {
             --title "ManageEngine CloudDNS Configuration" \
             --ok-label "Select" \
             --cancel-label "Back" \
-            --menu "Configure ManageEngine CloudDNS API credentials:\n\nClient ID: ${id_display}\nClient Secret: ${secret_display}\nBackend: $(_zl_get_backend)" 20 75 6 \
+            --menu "Configure ManageEngine CloudDNS API credentials:\n\nClient ID: ${id_display}\nClient Secret: ${secret_display}\nBackend: $(_nx_get_backend)" 20 75 6 \
             "Client ID" "Set CloudDNS Client ID" \
             "Client Secret" "Set CloudDNS Client Secret" \
             "Test" "Test CloudDNS API connection" \
             "Clear" "Clear all CloudDNS credentials" \
-            "Storage Backend" "Current: $(_zl_get_backend) (change)" \
+            "Storage Backend" "Current: $(_nx_get_backend) (change)" \
             "Back" "Return to DNS provider menu" \
             3>&1 1>&2 2>&3 3>&-) || return
 
@@ -450,7 +450,7 @@ configure_clouddns() {
                 client_id=$(dialog --inputbox "Enter ManageEngine CloudDNS Client ID:" 10 70 "$current_id" \
                     3>&1 1>&2 2>&3 3>&-)
                 if [[ -n "$client_id" ]]; then
-                    _zl_secret_write "clouddns_client_id" "$client_id"
+                    _nx_secret_write "clouddns_client_id" "$client_id"
                     dialog --yesno "Saved. Run API test now?" 7 40 && test_clouddns_api
                 fi
                 ;;
@@ -459,7 +459,7 @@ configure_clouddns() {
                 client_secret=$(dialog --passwordbox "Enter ManageEngine CloudDNS Client Secret:" 10 70 "$current_secret" \
                     3>&1 1>&2 2>&3 3>&-)
                 if [[ -n "$client_secret" ]]; then
-                    _zl_secret_write "clouddns_client_secret" "$client_secret"
+                    _nx_secret_write "clouddns_client_secret" "$client_secret"
                     dialog --yesno "Saved. Run API test now?" 7 40 && test_clouddns_api
                 fi
                 ;;
@@ -468,8 +468,8 @@ configure_clouddns() {
                 ;;
             "Clear")
                 if dialog --yesno "Clear all CloudDNS credentials?" 8 45; then
-                    _zl_secret_delete "clouddns_client_id"
-                    _zl_secret_delete "clouddns_client_secret"
+                    _nx_secret_delete "clouddns_client_id"
+                    _nx_secret_delete "clouddns_client_secret"
                 fi
                 ;;
             "Storage Backend")
@@ -484,8 +484,8 @@ configure_clouddns() {
 
 test_clouddns_api() {
     local client_id client_secret
-    client_id=$(_zl_secret_read "clouddns_client_id")
-    client_secret=$(_zl_secret_read "clouddns_client_secret")
+    client_id=$(_nx_secret_read "clouddns_client_id")
+    client_secret=$(_nx_secret_read "clouddns_client_secret")
 
     if [[ -z "$client_id" ]] || [[ -z "$client_secret" ]]; then
         dialog --msgbox "CloudDNS API credentials not fully configured.\n\nPlease set Client ID and Client Secret." 10 55
@@ -1075,7 +1075,7 @@ traefik_preparation() {
 
     # Mark Traefik preparation as done
     TRAEFIK_DONE=true
-    touch "$ZOOLANDIA_CONFIG_DIR/traefik_done"
+    touch "$NEXUS_CONFIG_DIR/traefik_done"
 
     dialog --msgbox "Traefik preparation complete!\n\nMiddleware files copied to:\n$traefik_rules_dir\n\nNext steps:\n1. Setup Staging or Production\n2. Configure your .env file\n3. Set up Cloudflare DNS" 16 70
 }

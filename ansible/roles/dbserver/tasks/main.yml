@@ -309,7 +309,7 @@
       {% endif %}
 
       Credentials stored in:
-        - ~/.zoolandia/credentials.txt
+        - ~/.nexus/credentials.txt
         - Bitwarden vault (if configured)
         - HashiCorp Vault (if configured)
   tags: ['always']

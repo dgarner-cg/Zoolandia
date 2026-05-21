@@ -1,6 +1,6 @@
 ---
 ################################################################################
-# Zoolandia Monitoring Stack
+# Nexus Monitoring Stack
 # File: playbooks/monitoring.yml
 # Purpose: Deploy monitoring and observability containers
 #

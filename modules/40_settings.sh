@@ -1,8 +1,8 @@
 #!/bin/bash
 ################################################################################
-# Zoolandia v5.10 - Settings Module
+# Nexus v5.10 - Settings Module
 #
-# Description: Settings menu for Zoolandia configuration, updates, and management
+# Description: Settings menu for Nexus configuration, updates, and management
 ################################################################################
 
 # Settings menu
@@ -10,21 +10,21 @@ show_settings_menu() {
     while true; do
         # Get current settings for display
         local intro_status="${SHOW_INTRO_MESSAGES:-ON}"
-        local mode_status="${ZOOLANDIA_MODE:-NORMAL}"
+        local mode_status="${NEXUS_MODE:-NORMAL}"
 
         local license_summary
-        license_summary=$(zl_license_status 2>/dev/null || echo "No license")
+        license_summary=$(nx_license_status 2>/dev/null || echo "No license")
 
         local menu_items=(
             "License" "Manage License — $license_summary"
             "Intro" "Toggle Intro Messages - $intro_status"
-            "Mode" "Toggle Zoolandia Mode - $mode_status"
-            "Status" "View Zoolandia configuration status"
-            "Logs" "Generate Sanitized Zoolandia Log"
-            "Refresh" "Clear Zoolandia Cache"
+            "Mode" "Toggle Nexus Mode - $mode_status"
+            "Status" "View Nexus configuration status"
+            "Logs" "Generate Sanitized Nexus Log"
+            "Refresh" "Clear Nexus Cache"
             "Update" "Check for and install updates"
-            "Reset" "Reset Zoolandia configuration"
-            "Remove" "Completely remove Zoolandia"
+            "Reset" "Reset Nexus configuration"
+            "Remove" "Completely remove Nexus"
             "Back" "Return to main menu"
         )
 
@@ -40,10 +40,10 @@ show_settings_menu() {
         case "$choice" in
             "License") show_license_menu ;;
             "Intro") toggle_intro_messages ;;
-            "Mode") toggle_zoolandia_mode ;;
+            "Mode") toggle_nexus_mode ;;
             "Status") view_status ;;
             "Logs") generate_sanitized_log ;;
-            "Refresh") clear_zoolandia_cache ;;
+            "Refresh") clear_nexus_cache ;;
             "Update") update_script ;;
             "Reset") reset_deployrr ;;
             "Remove") remove_deployrr ;;
@@ -57,7 +57,7 @@ show_license_menu() {
     while true; do
         # Build current status summary for the menu header
         local status_line
-        status_line=$(zl_license_status 2>/dev/null || echo "No license installed")
+        status_line=$(nx_license_status 2>/dev/null || echo "No license installed")
 
         local key_file_info="Not installed"
         local features_line="None"
@@ -68,19 +68,19 @@ show_license_menu() {
         if [[ -f "$LICENSE_FILE" ]]; then
             local key payload rc
             key=$(cat "$LICENSE_FILE")
-            payload=$(zl_validate_key "$key" 2>/dev/null); rc=$?
+            payload=$(nx_validate_key "$key" 2>/dev/null); rc=$?
             if [[ $rc -eq 0 ]]; then
-                email_line=$(_zl_json_field "$payload" "email")
-                tier_line=$(_zl_json_field "$payload" "tier")
-                expires_line=$(_zl_json_field "$payload" "expires")
+                email_line=$(_nx_json_field "$payload" "email")
+                tier_line=$(_nx_json_field "$payload" "tier")
+                expires_line=$(_nx_json_field "$payload" "expires")
                 features_line=$(echo "$payload" | grep -oP '"features":\[[^\]]*\]' | \
                     grep -oP '"[^"]*"' | tr -d '"' | tr '\n' ',' | sed 's/,$//')
                 key_file_info="Installed"
             elif [[ $rc -eq 2 ]]; then
                 key_file_info="EXPIRED"
-                email_line=$(_zl_json_field "$payload" "email" 2>/dev/null || echo "—")
-                tier_line=$(_zl_json_field "$payload" "tier" 2>/dev/null || echo "—")
-                expires_line=$(_zl_json_field "$payload" "expires" 2>/dev/null || echo "—")
+                email_line=$(_nx_json_field "$payload" "email" 2>/dev/null || echo "—")
+                tier_line=$(_nx_json_field "$payload" "tier" 2>/dev/null || echo "—")
+                expires_line=$(_nx_json_field "$payload" "expires" 2>/dev/null || echo "—")
             else
                 key_file_info="INVALID"
             fi
@@ -91,7 +91,6 @@ show_license_menu() {
   Email:    ${email_line}\n\
   Tier:     ${tier_line}\n\
   Expires:  ${expires_line}\n\
-  Features: ${features_line}\n\
   Location: ${LICENSE_FILE}"
 
         local choice
@@ -100,16 +99,28 @@ show_license_menu() {
             --title "License & Activation" \
             --ok-label "Select" \
             --cancel-label "Back" \
-            --menu "${header}" 22 72 4 \
+            --menu "${header}" 22 72 5 \
             "Activate"  "Enter or replace license key" \
             "Validate"  "Re-validate current license key" \
+            "Features"  "View license features" \
             "Remove"    "Remove installed license key" \
             "Back"      "Return to Settings" \
             3>&1 1>&2 2>&3 3>&-) || return
 
         case "$choice" in
             "Activate")
-                zl_activate_license
+                nx_activate_license
+                ;;
+            "Features")
+                if [[ "$features_line" == "None" ]]; then
+                    dialog --title " License Features " --msgbox "\nNo license installed — running Free tier.\n" 7 45
+                else
+                    local bullet_features=""
+                    while IFS= read -r feat; do
+                        [[ -n "$feat" ]] && bullet_features+="  • ${feat}\n"
+                    done < <(echo "$features_line" | tr ',' '\n')
+                    dialog --title " License Features " --msgbox "\nFeatures included with your license:\n\n${bullet_features}" 20 55
+                fi
                 ;;
             "Validate")
                 if [[ ! -f "$LICENSE_FILE" ]]; then
@@ -117,28 +128,31 @@ show_license_menu() {
                 else
                     local vkey vpayload vrc
                     vkey=$(cat "$LICENSE_FILE")
-                    vpayload=$(zl_validate_key "$vkey" 2>/dev/null); vrc=$?
+                    vpayload=$(nx_validate_key "$vkey" 2>/dev/null); vrc=$?
                     case $vrc in
                         0)
-                            local vemail vtier vexpires vfeatures
-                            vemail=$(_zl_json_field "$vpayload" "email")
-                            vtier=$(_zl_json_field "$vpayload" "tier")
-                            vexpires=$(_zl_json_field "$vpayload" "expires")
-                            vfeatures=$(echo "$vpayload" | grep -oP '"features":\[[^\]]*\]' | \
+                            local vemail vtier vexpires vfeatures_csv vfeatures_bullets=""
+                            vemail=$(_nx_json_field "$vpayload" "email")
+                            vtier=$(_nx_json_field "$vpayload" "tier")
+                            vexpires=$(_nx_json_field "$vpayload" "expires")
+                            vfeatures_csv=$(echo "$vpayload" | grep -oP '"features":\[[^\]]*\]' | \
                                 grep -oP '"[^"]*"' | tr -d '"' | tr '\n' ',' | sed 's/,$//')
+                            while IFS= read -r feat; do
+                                [[ -n "$feat" ]] && vfeatures_bullets+="    • ${feat}\n"
+                            done < <(echo "$vfeatures_csv" | tr ',' '\n')
                             dialog --title " License Valid " --msgbox "\
 \n\
   Signature:  VALID (Ed25519 verified)\n\
   Email:      ${vemail}\n\
   Tier:       ${vtier}\n\
   Expires:    ${vexpires}\n\
-  Features:   ${vfeatures}\n" 13 65
+  Features:\n${vfeatures_bullets}" 20 65
                             ;;
                         2)
                             dialog --title " License Expired " --msgbox "\
 \n\
   Signature verified — but this license has EXPIRED.\n\n\
-  Renew at: https://zoolandia.dev/pricing\n" 10 60
+  Renew at: https://nexus.dev/pricing\n" 10 60
                             ;;
                         *)
                             dialog --title " License Invalid " --msgbox "\

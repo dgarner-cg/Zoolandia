@@ -2,12 +2,12 @@
 # For configuration options and examples, please see:
 # https://gethomepage.dev/configs/settings/
 
-title: Zoolandia Dashboard
+title: Nexus Dashboard
 theme: dark
 color: slate
 headerStyle: boxed
 hideErrors: true
-favicon: /images/zoolandia_icon.ico
+favicon: /images/nexus_icon.ico
 providers:
   openweathermap: openweathermapapikey
   weatherapi: weatherapiapikey
